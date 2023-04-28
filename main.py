@@ -179,6 +179,8 @@ X_train = imputer.fit_transform(X_train)
 X_test = imputer.transform(X_test)
 
 # # Model selection and performance analysis
+#
+# https://github.com/shankarpandala/lazypredict
 
 # +
 # Train and evaluate multiple models
