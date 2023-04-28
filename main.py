@@ -129,8 +129,17 @@ sns.heatmap(corr_matrix,
 
 
 # Add x-axis and y-axis labels
-plt.xticks(range(len(corr_matrix.columns)), corr_matrix.columns, rotation=90)
-plt.yticks(range(len(corr_matrix.columns)), corr_matrix.columns)
+#plt.xticks(range(len(corr_matrix.columns)), corr_matrix.columns, rotation=90)
+#plt.yticks(range(len(corr_matrix.columns)), corr_matrix.columns)
+
+ax.tick_params(
+    axis='both',          # changes apply to both x-y-axis
+    which='both',      # both major and minor ticks are affected
+    bottom=False,      # ticks along the bottom edge are off
+    top=False,         # ticks along the top edge are off
+    labelbottom=False) # labels along the bottom edge are off
+
+ax.set_aspect("equal")
 
 # Show the plot
 plt.show()
