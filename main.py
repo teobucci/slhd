@@ -117,10 +117,16 @@ plt.show()
 # Compute the correlation matrix
 corr_matrix = df.corr(numeric_only=True)
 
+# +
 # Plot the correlation matrix using seaborn
-fig, ax = plt.subplots(figsize=(10, 8))
-sns.heatmap(corr_matrix, annot=False, fmt='.2f', cmap='coolwarm', center=0,
-            linewidths=.5, cbar=True, ax=ax, mask=np.tril(corr_matrix, k=-1))
+fig, ax = plt.subplots(figsize=(10, 10))
+sns.heatmap(corr_matrix,
+            annot=False, fmt='.2f',
+            cmap='coolwarm', center=0, cbar=True,
+            linewidths=.5,
+            ax=ax,
+            mask=np.tril(corr_matrix, k=-1))
+
 
 # Add x-axis and y-axis labels
 plt.xticks(range(len(corr_matrix.columns)), corr_matrix.columns, rotation=90)
