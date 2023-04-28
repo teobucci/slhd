@@ -114,9 +114,8 @@ plt.show()
 
 # prepare confronto tra distribuzioni di variabili discrete, continue, categoriche con kde
 
-# +
 # Compute the correlation matrix
-corr_matrix = df.corr()
+corr_matrix = df.corr(numeric_only=True)
 
 # Plot the correlation matrix using seaborn
 fig, ax = plt.subplots(figsize=(10, 8))
