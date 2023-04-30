@@ -102,10 +102,10 @@ palette = sns.color_palette("RdYlGn",n_colors=len(continuous_missing_percentages
 sns.barplot(orient='h', y=continuous_missing_percentages.index, x=continuous_missing_percentages, ax=ax, palette=palette)
 
 # Set axis labels and titles for each subplot
-ax2.set_title('Percentage of Missing Values in Continuous Variables')
-ax2.set_xlabel('Column')
-ax2.set_ylabel('Percentage Missing (%)')
-ax2.tick_params(axis='x', labelrotation=90)
+ax.set_title('Percentage of Missing Values in Continuous Variables')
+ax.set_xlabel('Column')
+ax.set_ylabel('Percentage Missing (%)')
+ax.tick_params(axis='x', labelrotation=90)
 
 plt.show()
 # -
@@ -116,6 +116,7 @@ plt.show()
 
 # Compute the correlation matrix
 corr_matrix = df.corr(numeric_only=True)
+
 
 # +
 # Plot the correlation matrix using seaborn
@@ -149,6 +150,43 @@ plt.show()
 
 # Visualize the distribution of the target variable
 sns.countplot(data=df) # TODO capire
+
+# Mosaic plot to visualize the distribution of categorical variable with respect to the target 
+
+from statsmodels.graphics.mosaicplot import mosaic
+
+# +
+# Visualize the distribution of the categorical variable with respect to the target variable
+target_var = 're.admission.within.6.months'
+
+binary_vars = [col for col in categorical_vars if df[col].nunique()==2]
+nonbinary_vars = [col for col in categorical_vars if df[col].nunique()!=2]
+
+# Setting some parameters for mosaic function
+# labelizer
+def empty_labelizer(k):
+    return ""
+
+# properties
+props = lambda key: {'color': 'r' if '1' in key else 'green'}
+# Create the figure and axis
+fig, axs = plt.subplots(nrows=len(categorical_vars), ncols=1, figsize=(20, 40))
+
+# Iterate over categorical variables and create mosaic plots
+for i, var in enumerate(categorical_vars):
+    # Create the mosaic plot
+    mosaic(df,index=[var, target_var], ax=axs[i], title=f'Mosaic plot of {var} by {target_var}',axes_label=True, 
+           horizontal = False, gap =0.07, labelizer=empty_labelizer,properties = props)
+# Adjust spacing between subplots
+fig.tight_layout()
+
+# Show the plot
+for ax in axs.flat:
+    ax.set_xlabel('')
+    ax.set_title('')
+    ax.set_ylabel('')
+plt.show()
+# -
 
 # # Preprocessing
 
