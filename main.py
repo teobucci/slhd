@@ -170,7 +170,7 @@ def empty_labelizer(k):
 # properties
 props = lambda key: {'color': 'r' if '1' in key else 'green'}
 # Create the figure and axis
-fig, axs = plt.subplots(nrows=len(categorical_vars), ncols=1, figsize=(20, 40))
+fig, axs = plt.subplots(nrows=len(categorical_vars), ncols=1, figsize = (20,40))
 
 # Iterate over categorical variables and create mosaic plots
 for i, var in enumerate(categorical_vars):
@@ -186,6 +186,29 @@ for ax in axs.flat:
     ax.set_title('')
     ax.set_ylabel('')
 plt.show()
+# -
+
+# 3 opzioni per visualizzare le variabili continue
+
+# +
+fig, axs = plt.subplots(nrows= 1 , ncols=3,figsize = (15,10))
+# Create grouped violin plots
+sns.swarmplot(x=target_var, y='map', data=df, ax=axs[0])
+sns.violinplot(x=target_var, y='map', data = df, ax= axs[1])
+
+sns.kdeplot(df[df[target_var] == 0]['map'], shade=True, label="Target 0",ax=axs[2])
+sns.kdeplot(df[df[target_var] == 1]['map'], shade=True, label="Target 1",ax=axs[2])
+# -
+
+
+# Sono 119 variabili è perciò difficile visualizzarle tutte in un unico blocco. Potremmo forse fare blocchi con una decina di variabili max che siano "simili" tra loro. 
+# Come parametro per dire quanto sono simili potremmo sia usare la correlazione che vedere effettivamente cosa descrivono (i.e. weight, hight, BMI nello stesso blocco) TODO
+
+# +
+fig, axs = plt.subplots(nrows = 1, ncols = 1, figsize=(20,5))
+
+data = pd.melt(df, id_vars=[target_var], value_vars=continuous_vars[0:8])
+sns.violinplot(x="variable", y="value", hue=target_var, data=data, split=True)
 # -
 
 # # Preprocessing
