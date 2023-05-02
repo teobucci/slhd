@@ -278,8 +278,8 @@ df_encoded.shape
 
 # +
 # Separate the target variable from the features
-X = df.drop(['target'], axis=1)
-y = df['target']
+X = df_encoded.drop(['re.admission.within.6.months'], axis=1)
+y = df_encoded['re.admission.within.6.months']
 
 # Split the dataset into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
