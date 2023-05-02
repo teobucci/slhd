@@ -159,15 +159,30 @@ df.info(verbose=True, show_counts=False)
 # Check the shape of the dataset
 df.shape
 
-# Display the first five rows of the dataset
-df.head()
+# Check for the presence of duplicate rows.
 
-# Check the summary statistics of the dataset
-df.describe()
+df.duplicated().sum()
+
+# Describe the categorical and boolean features
+
+df.describe(include=["category", "bool"]).T
+
+# Deep dive into the `ageCat` feature
+
+# +
+fig, ax = plt.subplots()
+
+sns.countplot(x="ageCat", hue="re.admission.within.6.months", data=df);
+
+plt.show()
+
+# +
+#df.sort_values(by=["Churn", "Total day charge"], ascending=[True, False]).head()
+
+#pd.crosstab(df["Churn"], df["International plan"], margins=True)
+# -
 
 # ## Missing values
-
-df.dtypes.unique()
 
 # Identify discrete and continuous variables
 discrete_vars = [col for col in df.columns if df[col].dtype == 'int64']
