@@ -339,6 +339,10 @@ X_test = pd.DataFrame(imputer.transform(X_test)) # TODO a volte dà un warning
 #
 # https://github.com/shankarpandala/lazypredict
 
+# !pip install lazypredict
+
+from lazypredict.Supervised import LazyClassifier
+
 from mlxtend.plotting import plot_confusion_matrix
 
 # +
