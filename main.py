@@ -216,6 +216,19 @@ ax2.tick_params(axis='x', labelrotation=90)
 plt.show()
 # -
 
+# Check for columns with all NaNs
+nan_cols = df.columns[df.isnull().all()].tolist()
+print('Columns with all NaNs:', nan_cols)
+
+# Check for columns with all the same value
+same_cols = df.columns[df.apply(lambda x: len(x.unique()) == 1)].tolist()
+print('Columns with all the same value:', same_cols)
+
+# Drop the columns with all NaNs or all the same value
+drop_cols = list(set(nan_cols + same_cols))
+df = df.drop(drop_cols, axis=1)
+print('Columns dropped:', drop_cols)
+
 # ## Correlation
 
 # prepare confronto tra distribuzioni di variabili discrete, continue, categoriche con kde
