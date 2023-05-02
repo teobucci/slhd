@@ -303,6 +303,8 @@ df_encoded = pd.concat([df.drop(cat_cols, axis=1).reset_index(drop=True),
 df_encoded.shape
 # -
 
+# # Train test split
+
 # +
 # Separate the target variable from the features
 X = df_encoded.drop(['re.admission.within.6.months'], axis=1)
