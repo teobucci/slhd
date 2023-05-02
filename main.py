@@ -279,10 +279,10 @@ ax.set_aspect("equal")
 plt.show()
 # -
 
-# ## Visualizations of continuous and discrete data distributions
-
 # importante da vedere
 df['NYHA.cardiac.function.classification'].unique()
+
+# ## Visualizations of continuous and discrete data distributions
 
 # Mosaic plot to visualize the distribution of categorical variable with respect to the target 
 
@@ -364,9 +364,9 @@ df_encoded = pd.concat([df.drop(cat_cols, axis=1).reset_index(drop=True),
 df_encoded.shape
 # -
 
-# # Train test split
-
 # # Preprocessing
+
+# # Train test split
 
 # +
 # Separate the target variable from the features
