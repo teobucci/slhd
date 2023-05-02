@@ -12,6 +12,8 @@
 #
 # The goal of this problem is to predict the readmission at 6 months from a dataset TODO scrivere bene la descrizione dell'obiettivo e in cosa consiste il dataset, cos'è ogni riga.
 
+# TODO qualcosa su https://www.kaggle.com/code/residentmario/simple-techniques-for-missing-data-imputation
+
 # # Import external libraries
 #
 # Here we import all the libraries we will use.
