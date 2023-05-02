@@ -250,6 +250,7 @@ print('Columns dropped:', drop_cols)
 # Compute the correlation matrix
 corr_matrix = df.corr(numeric_only=True)
 
+
 # +
 # Plot the correlation matrix using seaborn
 fig, ax = plt.subplots(figsize=(10, 10))
@@ -283,6 +284,66 @@ plt.show()
 # importante da vedere
 df['NYHA.cardiac.function.classification'].unique()
 
+# Mosaic plot to visualize the distribution of categorical variable with respect to the target 
+
+from statsmodels.graphics.mosaicplot import mosaic
+
+# +
+# Visualize the distribution of the categorical variable with respect to the target variable
+target_var = 're.admission.within.6.months'
+
+binary_vars = [col for col in categorical_vars if df[col].nunique()==2]
+nonbinary_vars = [col for col in categorical_vars if df[col].nunique()!=2]
+
+# Setting some parameters for mosaic function
+# labelizer
+def empty_labelizer(k):
+    return ""
+
+# properties
+props = lambda key: {'color': 'r' if '1' in key else 'green'}
+# Create the figure and axis
+fig, axs = plt.subplots(nrows=len(categorical_vars), ncols=1, figsize = (20,40))
+
+# Iterate over categorical variables and create mosaic plots
+for i, var in enumerate(categorical_vars):
+    # Create the mosaic plot
+    mosaic(df,index=[var, target_var], ax=axs[i], title=f'Mosaic plot of {var} by {target_var}',axes_label=True, 
+           horizontal = False, gap =0.07, labelizer=empty_labelizer,properties = props)
+# Adjust spacing between subplots
+fig.tight_layout()
+
+# Show the plot
+for ax in axs.flat:
+    ax.set_xlabel('')
+    ax.set_title('')
+    ax.set_ylabel('')
+plt.show()
+# -
+
+# 3 opzioni per visualizzare le variabili continue
+
+# +
+fig, axs = plt.subplots(nrows= 1 , ncols=3,figsize = (15,10))
+# Create grouped violin plots
+sns.swarmplot(x=target_var, y='map', data=df, ax=axs[0])
+sns.violinplot(x=target_var, y='map', data = df, ax= axs[1])
+
+sns.kdeplot(df[df[target_var] == 0]['map'], shade=True, label="Target 0",ax=axs[2])
+sns.kdeplot(df[df[target_var] == 1]['map'], shade=True, label="Target 1",ax=axs[2])
+# -
+
+
+# Sono 119 variabili è perciò difficile visualizzarle tutte in un unico blocco. Potremmo forse fare blocchi con una decina di variabili max che siano "simili" tra loro. 
+# Come parametro per dire quanto sono simili potremmo sia usare la correlazione che vedere effettivamente cosa descrivono (i.e. weight, hight, BMI nello stesso blocco) TODO
+
+# +
+fig, axs = plt.subplots(nrows = 1, ncols = 1, figsize=(20,5))
+
+data = pd.melt(df, id_vars=[target_var], value_vars=continuous_vars[0:8])
+sns.violinplot(x="variable", y="value", hue=target_var, data=data, split=True)
+# -
+
 # ## One-hot encode
 
 cat_cols = df.select_dtypes(include=['category']).columns.tolist()
@@ -304,6 +365,8 @@ df_encoded.shape
 # -
 
 # # Train test split
+
+# # Preprocessing
 
 # +
 # Separate the target variable from the features
