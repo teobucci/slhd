@@ -42,15 +42,119 @@ from pathlib import Path
 # -
 
 # # Load data
+#
+# As first step we load the data, setting the index to the first column since it's already numbered
 
 # Load the dataset
 DATA_FOLDER = Path() / "hospitalized-patients-with-heart-failure-integrating-electronic-healthcare-records-and-external-outcome-data-1.2"
 df = pd.read_csv((DATA_FOLDER / "dat.csv"), index_col=0)
-df
+
+# For the time being, we drop the `inpatient.number` column since it's not statistically significant 
+
+df = df.drop(['inpatient.number'], axis=1)
 
 # # Data exploration
 #
-# ## Information about the 
+# ## Information about the memory usage
+#
+# We check the memory usage of the dataframe.
+
+df.info(memory_usage='deep')
+
+# ## Setting the correct column type
+#
+# Currently we're using 4.2 MB, let's set properly the column types. Let's start by investigating which types Pandas has assigned to the columns
+
+# +
+# get the data types of each column
+dtypes = df.dtypes
+
+# count the number of columns of each type
+counts = dtypes.value_counts()
+
+# print the counts
+print(counts)
+# -
+
+# Now let's look closer to which columns have which type
+
+# +
+# group the column names by type
+type_dict = {}
+for col, dtype in dtypes.items():
+    if dtype not in type_dict:
+        type_dict[dtype] = []
+    type_dict[dtype].append(col)
+
+# print the number of columns of each type
+print("Number of columns by type:")
+for dtype, cols in type_dict.items():
+    print(f"• {dtype}: {len(cols)} columns ({', '.join(cols)})")
+    print('-'*80)
+# -
+
+# Now let's dive even deeper and see the values per feature to see if the type is correct
+
+# print value counts for categorical and boolean columns
+for dtype, cols in type_dict.items():
+    if dtype == 'float64': # skip continuous
+        continue
+    if not cols:
+        continue
+    print(f"Value counts for {dtype} columns:\n")
+    for col in cols:
+        print(df[col].value_counts(), '\n')
+    print('-'*80)
+
+# Now that we know what to correct, let's perform the changes
+
+df = df.astype({
+    'DestinationDischarge': 'category',
+    'admission.ward': 'category',
+    'admission.way': 'category',
+    'occupation': 'category',
+    'discharge.department': 'category',
+    'gender': 'category',
+    'type.of.heart.failure': 'category',
+    'NYHA.cardiac.function.classification': 'category',
+    'Killip.grade': 'category',
+    'type.II.respiratory.failure': 'category',
+    'consciousness': 'category',
+    'respiratory.support.': 'category',
+    'oxygen.inhalation': 'category',
+    'outcome.during.hospitalization': 'category',
+    'ageCat': 'category',
+    'myocardial.infarction': 'bool',
+    'congestive.heart.failure': 'bool',
+    'peripheral.vascular.disease': 'bool',
+    'cerebrovascular.disease': 'bool',
+    'dementia': 'bool',
+    'Chronic.obstructive.pulmonary.disease': 'bool',
+    'connective.tissue.disease': 'bool',
+    'diabetes': 'bool',
+    'hemiplegia': 'bool',
+    'leukemia': 'bool',
+    'malignant.lymphoma': 'bool',
+    'solid.tumor': 'bool',
+    'AIDS': 'bool',
+    'acute.renal.failure': 'bool',
+    'death.within.28.days': 'bool',
+    're.admission.within.28.days': 'bool',
+    'death.within.3.months': 'bool',
+    're.admission.within.3.months': 'bool',
+    'death.within.6.months': 'bool',
+    're.admission.within.6.months': 'bool'
+})
+
+# and see if there has been a memory reduce
+
+df.info(memory_usage='deep')
+
+# We now use only 2.1 MB.
+#
+# Here is a recap of the columns types.
+
+df.info(verbose=True, show_counts=False)
 
 # Check the shape of the dataset
 df.shape
