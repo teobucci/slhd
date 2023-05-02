@@ -207,10 +207,10 @@ palette = sns.color_palette("RdYlGn",n_colors=len(continuous_missing_percentages
 sns.barplot(orient='h', y=continuous_missing_percentages.index, x=continuous_missing_percentages, ax=ax, palette=palette)
 
 # Set axis labels and titles for each subplot
-ax2.set_title('Percentage of Missing Values in Continuous Variables')
-ax2.set_xlabel('Column')
-ax2.set_ylabel('Percentage Missing (%)')
-ax2.tick_params(axis='x', labelrotation=90)
+ax.set_title('Percentage of Missing Values in Continuous Variables')
+ax.set_xlabel('Column')
+ax.set_ylabel('Percentage Missing (%)')
+ax.tick_params(axis='x', labelrotation=90)
 
 plt.show()
 # -
