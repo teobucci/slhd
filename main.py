@@ -337,11 +337,18 @@ X_test = pd.DataFrame(imputer.transform(X_test)) # TODO a volte dà un warning
 #
 # https://github.com/shankarpandala/lazypredict
 
+from mlxtend.plotting import plot_confusion_matrix
+
 # +
 # Train and evaluate multiple models
-models = [LogisticRegression(), DecisionTreeClassifier(), RandomForestClassifier(), SVC()]
+models = [LogisticRegression(max_iter=100000), DecisionTreeClassifier(), RandomForestClassifier(), SVC(probability=True)]
 
-for model in models:
+
+
+fig, axes = plt.subplots(nrows=2, ncols=len(models), figsize=(20,8))#, height_ratios = [1,3])
+
+
+for i, model in enumerate(models):
     # Train the model on the training set
     model.fit(X_train, y_train)
 
@@ -354,9 +361,13 @@ for model in models:
 
     # Calculate the confusion matrix
     cm = confusion_matrix(y_test, y_pred)
-    sns.heatmap(cm, annot=True, cmap='coolwarm')
-    plt.title(model.__class__.__name__ + ' Confusion Matrix')
-    plt.show()
+    #sns.heatmap(cm, annot=True, cmap='coolwarm', fmt='d', ax=axes[0,i])
+    axes[0,i].set_title(model.__class__.__name__ + ' Confusion Matrix')
+    plot_confusion_matrix(conf_mat=cm,
+                                show_absolute=True,
+                                show_normed=True,
+                                colorbar=True, figure=fig, axis=axes[0,i])
+
 
     # Calculate the ROC curve
     y_score = model.predict_proba(X_test)[:,1]
@@ -364,15 +375,19 @@ for model in models:
     roc_auc = auc(fpr, tpr)
 
     # Plot the ROC curve
-    plt.plot(fpr, tpr, label=model.__class__.__name__ + ' (AUC = %0.2f)' % roc_auc)
-    plt.plot([0, 1], [0, 1], linestyle='--', color='gray')
-    plt.xlim([0.0, 1.0])
-    plt.ylim([0.0, 1.05])
-    plt.xlabel('False Positive Rate')
-    plt.ylabel('True Positive Rate')
-    plt.title(model.__class__.__name__ + ' ROC Curve')
-    plt.legend(loc="lower right")
+    axes[1,i].plot(fpr, tpr, label=model.__class__.__name__ + ' (AUC = %0.2f)' % roc_auc)
+    axes[1,i].plot([0, 1], [0, 1], linestyle='--', color='gray')
+    axes[1,i].set_xlim([0.0, 1.0])
+    axes[1,i].set_ylim([0.0, 1.05])
+    axes[1,i].set_xlabel('False Positive Rate')
+    axes[1,i].set_ylabel('True Positive Rate')
+    axes[1,i].set_title(model.__class__.__name__ + ' ROC Curve')
+    axes[1,i].legend(loc="lower right")
+    
+    axes[1,i].set_aspect('equal')
+    axes[0,i].set_aspect('equal')
 
+plt.tight_layout()
 plt.show()
 # -
 
