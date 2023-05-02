@@ -402,9 +402,14 @@ X_test = pd.DataFrame(imputer.transform(X_test)) # TODO a volte dà un warning
 #
 # https://github.com/shankarpandala/lazypredict
 
-# !pip install lazypredict
-
 from lazypredict.Supervised import LazyClassifier
+
+clf = LazyClassifier(verbose=0,ignore_warnings=True, custom_metric=None)
+models, predictions = clf.fit(X_train, X_test, y_train, y_test)
+
+models
+
+model_dictionary = clf.provide_models(X_train,X_test,y_train,y_test)
 
 from mlxtend.plotting import plot_confusion_matrix
 
