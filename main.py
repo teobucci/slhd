@@ -296,11 +296,15 @@ X_test = k_best.transform(X_test)
 # -
 
 # # Imputing missing values
+# KNNImputer
+# Since we only need to impute numerical features, let us use the mean with a KNNImputer
 
 # Impute missing values using the mean strategy
-imputer = SimpleImputer(missing_values=np.nan, strategy='mean')
-X_train = imputer.fit_transform(X_train)
-X_test = imputer.transform(X_test)
+imputer = KNNImputer(n_neighbors=5)
+X_train = pd.DataFrame(imputer.fit_transform(X_train))
+X_test = pd.DataFrame(imputer.transform(X_test)) # TODO a volte dà un warning
+
+# # Preprocessing
 
 # # Model selection and performance analysis
 #
