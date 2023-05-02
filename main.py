@@ -253,10 +253,28 @@ plt.show()
 
 # ## Visualizations of continuous and discrete data distributions
 
-# Visualize the distribution of the target variable
-sns.countplot(data=df) # TODO capire
+# importante da vedere
+df['NYHA.cardiac.function.classification'].unique()
 
-# # Preprocessing
+# ## One-hot encode
+
+cat_cols = df.select_dtypes(include=['category']).columns.tolist()
+cat_cols
+
+# One hot encode the categorical and boolean variables
+encoder = OneHotEncoder(sparse=False, handle_unknown='ignore', drop='if_binary')
+encoded_cols = pd.DataFrame(encoder.fit_transform(df[cat_cols]))
+
+# +
+encoded_cols.columns = encoder.get_feature_names_out(cat_cols)
+
+# Replace the original categorical and boolean columns with the encoded ones
+df_encoded = pd.concat([df.drop(cat_cols, axis=1).reset_index(drop=True),
+                        encoded_cols.reset_index(drop=True)],
+                       axis=1)
+
+df_encoded.shape
+# -
 
 # +
 # Separate the target variable from the features
