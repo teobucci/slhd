@@ -172,7 +172,8 @@ df.dtypes.unique()
 # Identify discrete and continuous variables
 discrete_vars = [col for col in df.columns if df[col].dtype == 'int64']
 continuous_vars = [col for col in df.columns if df[col].dtype == 'float64']
-categorical_vars = [col for col in df.columns if df[col].dtype == 'O']
+categorical_vars = [col for col in df.columns if df[col].dtype == 'cateogry']
+binary_vars = [col for col in df.columns if df[col].dtype == 'bool']
 
 
 # +
@@ -186,14 +187,12 @@ def process_var_list(df, list_vars):
 discrete_missing_percentages = process_var_list(df, discrete_vars)
 continuous_missing_percentages = process_var_list(df, continuous_vars)
 categorical_missing_percentages = process_var_list(df, categorical_vars)
+binary_missing_percentages = process_var_list(df, binary_vars)
 
 print(f"List discrete_missing_percentages contains {len(discrete_missing_percentages)} elements")
 print(f"List continuous_missing_percentages contains {len(continuous_missing_percentages)} elements")
 print(f"List categorical_missing_percentages contains {len(categorical_missing_percentages)} element")
-# -
-
-# importante da vedere
-df['NYHA.cardiac.function.classification'].unique()
+print(f"List binary_missing_percentages contains {len(binary_missing_percentages)} element")
 
 # +
 # Create subplots for discrete and continuous variables
