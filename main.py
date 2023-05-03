@@ -291,6 +291,8 @@ df['NYHA.cardiac.function.classification'].unique()
 
 from statsmodels.graphics.mosaicplot import mosaic
 
+# Visualization of categorical variables of type 'category'
+
 # +
 # Visualize the distribution of the categorical variable with respect to the target variable
 target_var = 're.admission.within.6.months'
@@ -304,7 +306,7 @@ def empty_labelizer(k):
     return ""
 
 # properties
-props = lambda key: {'color': 'r' if '1' in key else 'green'}
+props = lambda key: {'color': 'r' if 'False' in key else 'green'}
 # Create the figure and axis
 fig, axs = plt.subplots(nrows=len(categorical_vars), ncols=1, figsize = (20,40))
 
@@ -321,6 +323,55 @@ for ax in axs.flat:
     ax.set_xlabel('')
     ax.set_title('')
     ax.set_ylabel('')
+plt.show()
+# -
+
+# Visualization of categorical variable of type 'bool'
+
+# +
+binary_cat1 = [df[col].unique()[0] for col in binary_vars]
+binary_cat2 = [df[col].unique()[1] for col in binary_vars]
+
+concat = pd.DataFrame()
+for i,var in enumerate(binary_vars):
+    count = df[[target_var]+[var]].groupby([target_var]+[var])[var].count().unstack()
+    concat = pd.concat([concat,count],axis=1)
+
+cat1Count = concat[binary_cat1]
+cat2Count = concat[binary_cat2]
+
+bar_width = 0.25
+gap = 100
+
+fig,ax = plt.subplots(figsize =(12,6))
+
+x = np.arange(len(binary_vars))
+
+bars1 = ax.bar(x-bar_width/2, cat1Count.loc[True], bar_width, label ='True' ,color = 'green')
+bars2 = ax.bar(x-bar_width/2, cat1Count.loc[False], bar_width, label='False',bottom =  [b.get_height() for b in bars1], color='red')
+
+height = [x + y for x, y in zip([b.get_height() for b in bars1], [b.get_height() for b in bars2])]
+for i,bar in enumerate(bars2):
+    ax.text(bar.get_x() + bar.get_width()/2, height[i], str(binary_cat1[i]), ha='center', va='bottom', color='black')
+ax.legend()
+
+bars3 = ax.bar(x-bar_width/2, cat2Count.loc[True], bar_width, label ='True', 
+               bottom = [x + y +gap for x, y in zip([b.get_height() for b in bars1], [b.get_height() for b in bars2])], color='green')
+bars4 = ax.bar(x-bar_width/2, cat2Count.loc[False], bar_width, label='False',
+               bottom = [x + y +z +gap for x, y,z in zip([b.get_height() for b in bars1], [b.get_height() for b in bars2],[b.get_height() for b in bars3])],color='red')
+height = [x+y+z+w +gap for x,y,z,w in zip([b.get_height() for b in bars1], [b.get_height() for b in bars2],[b.get_height() for b in bars3],[b.get_height() for b in bars4])]
+for i,bar in enumerate(bars4):
+    ax.text(bar.get_x() + bar.get_width()/2, height[i], str(binary_cat2[i]), ha='center', va='bottom', color='black')
+# set the labels and title
+ax.set_xticks(x)
+ax.set_xticklabels(binary_vars)
+ax.set_ylabel('Count')
+ax.set_title('Stacked Bar Plot')
+
+
+# show the plot
+plt.show()
+
 plt.show()
 # -
 
