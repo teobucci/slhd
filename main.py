@@ -398,6 +398,13 @@ data = pd.melt(df, id_vars=[target_var], value_vars=continuous_vars[0:8])
 sns.violinplot(x="variable", y="value", hue=target_var, data=data, split=True)
 # -
 
+# Discrete variable visualization
+
+for var in discrete_vars:
+    print('Unique values of the discrete variable',var, 'are: ',sorted(df[var].unique()))
+
+# Create a range for each one of this value, based on medical knowledge (i.e. instead of having values for systolic.blood.pressure between 0 and 252 we can create three categories that are 'low','normal','high') TODO
+
 # ## One-hot encode
 
 cat_cols = df.select_dtypes(include=['category']).columns.tolist()
