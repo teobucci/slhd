@@ -189,7 +189,8 @@ plt.show()
 # Identify discrete and continuous variables
 discrete_vars = [col for col in df.columns if df[col].dtype == 'int64']
 continuous_vars = [col for col in df.columns if df[col].dtype == 'float64']
-categorical_vars = [col for col in df.columns if df[col].dtype == 'cateogry']
+#categorical_vars = [col for col in df.columns if df[col].dtype == 'cateogry']
+categorical_vars = df.select_dtypes(include=['category']).columns.tolist()
 binary_vars = [col for col in df.columns if df[col].dtype == 'bool']
 
 
