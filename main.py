@@ -259,24 +259,26 @@ for col, dtype in dtypes.items():
     type_dict[dtype].append(col)
 
 # print the number of columns of each type
-print("Number of columns by type:")
-for dtype, cols in type_dict.items():
-    print(f"• {dtype}: {len(cols)} columns ({', '.join(cols)})")
-    print('-'*80)
+# print("Number of columns by type:")
+# for dtype, cols in type_dict.items():
+#     print(f"• {dtype}: {len(cols)} columns ({', '.join(cols)})")
+#     print('-'*80)
 # -
 
 # Now let's dive even deeper and see the values per feature to see if the type is correct
 
+# +
 # print value counts for categorical and boolean columns
-for dtype, cols in type_dict.items():
-    if dtype == 'float64': # skip continuous
-        continue
-    if not cols:
-        continue
-    print(f"Value counts for {dtype} columns:\n")
-    for col in cols:
-        print(df[col].value_counts(), '\n')
-    print('-'*80)
+# for dtype, cols in type_dict.items():
+#     if dtype == 'float64': # skip continuous
+#         continue
+#     if not cols:
+#         continue
+#     print(f"Value counts for {dtype} columns:\n")
+#     for col in cols:
+#         print(df[col].value_counts(), '\n')
+#     print('-'*80)
+# -
 
 # Now that we know what to correct, let's perform the changes
 
@@ -345,8 +347,7 @@ df.duplicated().sum()
 # Identify discrete and continuous variables
 discrete_vars = [col for col in df.columns if df[col].dtype == 'int64']
 continuous_vars = [col for col in df.columns if df[col].dtype == 'float64']
-#categorical_vars = [col for col in df.columns if df[col].dtype == 'cateogry']
-categorical_vars = df.select_dtypes(include=['category']).columns.tolist()
+categorical_vars = [col for col in df.columns if df[col].dtype == 'category']
 binary_vars = [col for col in df.columns if df[col].dtype == 'bool']
 
 
@@ -367,9 +368,7 @@ print(f"List discrete_missing_percentages contains {len(discrete_missing_percent
 print(f"List continuous_missing_percentages contains {len(continuous_missing_percentages)} elements")
 print(f"List categorical_missing_percentages contains {len(categorical_missing_percentages)} element")
 print(f"List binary_missing_percentages contains {len(binary_missing_percentages)} element")
-
-# +
-# Create subplots for discrete and continuous variables
+# -
 
 continuous_missing_percentages = continuous_missing_percentages[continuous_missing_percentages > 50]
 
@@ -413,10 +412,6 @@ print('Columns dropped:', drop_cols)
 
 # ## 3. Exploratory Data Analysis (EDA)
 
-# For the time being, we drop the `inpatient.number` column since it's not statistically significant 
-
-df = df.drop(['inpatient.number'], axis=1)
-
 # Describe the categorical and boolean features
 
 df.describe(include=["category", "bool"]).T
@@ -437,51 +432,8 @@ plt.show()
 # -
 
 # ### Descriptive statistics
-#
+
 # ### Data visualization
-#
-# ### Correlation analysis
-
-# prepare confronto tra distribuzioni di variabili discrete, continue, categoriche con kde
-
-# Compute the correlation matrix
-corr_matrix = df.corr(numeric_only=True)
-
-
-# +
-# Plot the correlation matrix using seaborn
-fig, ax = plt.subplots(figsize=(10, 10))
-sns.heatmap(corr_matrix,
-            annot=False, fmt='.2f',
-            cmap='coolwarm', center=0, cbar=True,
-            linewidths=.5,
-            ax=ax,
-            mask=np.tril(corr_matrix, k=-1))
-
-
-# Add x-axis and y-axis labels
-#plt.xticks(range(len(corr_matrix.columns)), corr_matrix.columns, rotation=90)
-#plt.yticks(range(len(corr_matrix.columns)), corr_matrix.columns)
-
-ax.tick_params(
-    axis='both',          # changes apply to both x-y-axis
-    which='both',      # both major and minor ticks are affected
-    bottom=False,      # ticks along the bottom edge are off
-    top=False,         # ticks along the top edge are off
-    labelbottom=False) # labels along the bottom edge are off
-
-ax.set_aspect("equal")
-
-# Show the plot
-plt.show()
-# -
-
-# ### Feature engineering
-
-# importante da vedere
-df['NYHA.cardiac.function.classification'].unique()
-
-# ### Visualizations of continuous and discrete data distributions
 
 # Mosaic plot to visualize the distribution of categorical variable with respect to the target 
 
@@ -600,6 +552,47 @@ for var in discrete_vars:
     print('Unique values of the discrete variable',var, 'are: ',sorted(df[var].unique()))
 
 # Create a range for each one of this value, based on medical knowledge (i.e. instead of having values for systolic.blood.pressure between 0 and 252 we can create three categories that are 'low','normal','high') TODO
+
+# ### Correlation analysis
+
+# prepare confronto tra distribuzioni di variabili discrete, continue, categoriche con kde
+
+# Compute the correlation matrix
+corr_matrix = df.corr(numeric_only=True)
+
+
+# +
+# Plot the correlation matrix using seaborn
+fig, ax = plt.subplots(figsize=(10, 10))
+sns.heatmap(corr_matrix,
+            annot=False, fmt='.2f',
+            cmap='coolwarm', center=0, cbar=True,
+            linewidths=.5,
+            ax=ax,
+            mask=np.tril(corr_matrix, k=-1))
+
+
+# Add x-axis and y-axis labels
+#plt.xticks(range(len(corr_matrix.columns)), corr_matrix.columns, rotation=90)
+#plt.yticks(range(len(corr_matrix.columns)), corr_matrix.columns)
+
+ax.tick_params(
+    axis='both',          # changes apply to both x-y-axis
+    which='both',      # both major and minor ticks are affected
+    bottom=False,      # ticks along the bottom edge are off
+    top=False,         # ticks along the top edge are off
+    labelbottom=False) # labels along the bottom edge are off
+
+ax.set_aspect("equal")
+
+# Show the plot
+plt.show()
+# -
+
+# ### Feature engineering
+
+# importante da vedere
+df['NYHA.cardiac.function.classification'].unique()
 
 # ## 4. Data Preprocessing
 
