@@ -644,6 +644,15 @@ for col in cat_cols:
     df[col] = le.fit_transform(df[col])
 # -
 
+# #### Cat boost encoder
+
+import category_encoders as ce
+
+encoder=ce.cat_boost.CatBoostEncoder(cols=cat_cols,
+                                     random_state=None, sigma=None, a=1)
+encoder.fit(df,target_var)
+df = encoder.transform(df)
+
 # ### Splitting data into training and testing sets
 #
 # Separate the target variable from the features
