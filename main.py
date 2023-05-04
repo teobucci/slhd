@@ -598,6 +598,17 @@ df['NYHA.cardiac.function.classification'].unique()
 
 # ### Encoding categorical variables
 
+# Three common encoding methods are: one-hot encoding, label encoding, and CatBoost encoding.
+# Look at the advantages and disadvantages.
+#
+# First up is **one-hot encoding**. This technique is great for nominal or unordered categorical variables, as it keeps all the information of the categorical variable without introducing any ordinal relationship. However, one-hot encoding can result in high dimensionality, which makes it computationally expensive. Additionally, this method can lead to overfitting, especially when there are a large number of categories, and there is a loss of information about the frequency or distribution of the categories in the original feature.
+#
+# Next up is **label encoding**, which is simple and computationally efficient. This method is useful for categorical features that have an inherent order or ranking, but it does not capture the non-linear relationship between the categorical feature and the target variable. Label encoding can lead to biased results if the order of the labels is arbitrary, and it can result in overfitting if there is a large number of categories in the feature.
+#
+# Finally, we have **CatBoost encoding**, which is a powerful technique that takes into account the target variable and helps capture the non-linear relationship between the categorical feature and the target variable. CatBoost encoding can handle high cardinality categorical features with many categories, and it helps to reduce dimensionality by producing a single feature instead of multiple features like one-hot encoding. However, CatBoost encoding is computationally expensive compared to one-hot encoding and label encoding, and it requires a large amount of data to train the encoding parameters. Additionally, this method can lead to overfitting if the encoding parameters are not regularized properly.
+#
+# In summary, one-hot encoding is a great choice for nominal or unordered categorical variables, while label encoding can be useful for ordinal or ordered categorical variables. CatBoost encoding can be a good choice if there is a non-linear relationship between the categorical feature and the target variable, but it may not always be necessary or feasible to use, especially for small datasets or linear models. Ultimately, the choice of encoding technique depends on the nature of the data and the modeling task at hand.
+
 cat_cols = df.select_dtypes(include=['category']).columns.tolist()
 cat_cols
 
