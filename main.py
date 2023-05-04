@@ -222,7 +222,6 @@ from pathlib import Path
 
 # As first step we load the data, setting the index to the first column since it's already numbered
 
-# Load the dataset
 DATA_FOLDER = Path() / "hospitalized-patients-with-heart-failure-integrating-electronic-healthcare-records-and-external-outcome-data-1.2"
 df = pd.read_csv((DATA_FOLDER / "dat.csv"), index_col=0)
 
@@ -232,9 +231,11 @@ df = pd.read_csv((DATA_FOLDER / "dat.csv"), index_col=0)
 
 df.info(memory_usage='deep')
 
+# Currently we're using 4.2 MB.
+
 # ### Setting the correct column type
 #
-# Currently we're using 4.2 MB, let's set properly the column types. Let's start by investigating which types Pandas has assigned to the columns
+# To reduce the memory usage and facilitate the overall performance, let's set properly the column types, starting by investigating which types Pandas has assigned to the columns.
 
 # +
 # get the data types of each column
@@ -328,6 +329,7 @@ df.info(memory_usage='deep')
 df.info(verbose=True, show_counts=False)
 
 # Check the shape of the dataset
+
 df.shape
 
 # ### Handling duplicates
@@ -336,28 +338,7 @@ df.shape
 
 df.duplicated().sum()
 
-# Describe the categorical and boolean features
-
-df.describe(include=["category", "bool"]).T
-
-# Deep dive into the `ageCat` feature
-
-# +
-fig, ax = plt.subplots()
-
-sns.countplot(x="ageCat", hue="re.admission.within.6.months", data=df);
-
-plt.show()
-
-# +
-#df.sort_values(by=["Churn", "Total day charge"], ascending=[True, False]).head()
-
-#pd.crosstab(df["Churn"], df["International plan"], margins=True)
-# -
-
-# For the time being, we drop the `inpatient.number` column since it's not statistically significant 
-
-df = df.drop(['inpatient.number'], axis=1)
+# There are no duplicate rows.
 
 # ### Analizing presence of missing values
 
@@ -389,7 +370,11 @@ print(f"List binary_missing_percentages contains {len(binary_missing_percentages
 
 # +
 # Create subplots for discrete and continuous variables
-fig, ax = plt.subplots(figsize=(10,20))
+
+continuous_missing_percentages = continuous_missing_percentages[continuous_missing_percentages > 50]
+
+# +
+fig, ax = plt.subplots(figsize=(6,6))
 
 palette = sns.color_palette("RdYlGn",n_colors=len(continuous_missing_percentages))
 # https://r02b.github.io/seaborn_palettes/
@@ -409,21 +394,47 @@ plt.show()
 # -
 
 # ### Handling meaningless columns
+#
+# Check for the columns with all NaNs.
 
-# Check for columns with all NaNs
 nan_cols = df.columns[df.isnull().all()].tolist()
 print('Columns with all NaNs:', nan_cols)
 
-# Check for columns with all the same value
+# And check for columns with all the same value, which are then not significant.
+
 same_cols = df.columns[df.apply(lambda x: len(x.unique()) == 1)].tolist()
 print('Columns with all the same value:', same_cols)
 
 # Drop the columns with all NaNs or all the same value
+
 drop_cols = list(set(nan_cols + same_cols))
 df = df.drop(drop_cols, axis=1)
 print('Columns dropped:', drop_cols)
 
 # ## 3. Exploratory Data Analysis (EDA)
+
+# For the time being, we drop the `inpatient.number` column since it's not statistically significant 
+
+df = df.drop(['inpatient.number'], axis=1)
+
+# Describe the categorical and boolean features
+
+df.describe(include=["category", "bool"]).T
+
+# Deep dive into the `ageCat` feature
+
+# +
+fig, ax = plt.subplots()
+
+sns.countplot(x="ageCat", hue="re.admission.within.6.months", data=df);
+
+plt.show()
+
+# +
+#df.sort_values(by=["Churn", "Total day charge"], ascending=[True, False]).head()
+
+#pd.crosstab(df["Churn"], df["International plan"], margins=True)
+# -
 
 # ### Descriptive statistics
 #
@@ -608,36 +619,37 @@ encoded_cols.columns = encoder.get_feature_names_out(cat_cols)
 df_encoded = pd.concat([df.drop(cat_cols, axis=1).reset_index(drop=True),
                         encoded_cols.reset_index(drop=True)],
                        axis=1)
-
-df_encoded.shape
 # -
 
-# ### Splitting data into training and testing sets
+df_encoded.shape
 
-# +
+# ### Splitting data into training and testing sets
+#
 # Separate the target variable from the features
+
 X = df_encoded.drop(['re.admission.within.6.months'], axis=1)
 y = df_encoded['re.admission.within.6.months']
 
 # Split the dataset into training and testing sets
+
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-# -
 
 # ### Feature scaling
+#
+# Standardize the features
+
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# ### Feature selection
 
 # +
-# Standardize the features
-#scaler = StandardScaler()
-#X_train = scaler.fit_transform(X_train)
-#X_test = scaler.transform(X_test)
-#
 ## Select the top k features using the ANOVA F-value
 #k_best = SelectKBest(f_classif, k=10)
 #X_train = k_best.fit_transform(X_train, y_train)
 #X_test = k_best.transform(X_test)
 # -
-
-# ### Feature selection
 
 # ### Imputing missing values
 #
@@ -676,12 +688,12 @@ models
 
 model_dictionary = clf.provide_models(X_train,X_test,y_train,y_test)
 
-from mlxtend.plotting import plot_confusion_matrix
+# ### Evaluating model performance
 
 # Train and evaluate multiple models
 models = [LogisticRegression(max_iter=100000), DecisionTreeClassifier(), RandomForestClassifier(), SVC(probability=True)]
 
-# ### Evaluating model performance
+from mlxtend.plotting import plot_confusion_matrix
 
 # +
 fig, axes = plt.subplots(nrows=2, ncols=len(models), figsize=(20,8))#, height_ratios = [1,3])
