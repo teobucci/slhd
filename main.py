@@ -526,7 +526,7 @@ plt.show()
 # 3 opzioni per visualizzare le variabili continue
 
 # +
-fig, axs = plt.subplots(nrows= 1 , ncols=3,figsize = (15,10))
+fig, axs = plt.subplots(nrows= 1 , ncols=3,figsize = (10,6))
 # Create grouped violin plots
 sns.swarmplot(x=target_var, y='map', data=df, ax=axs[0])
 sns.violinplot(x=target_var, y='map', data = df, ax= axs[1])
@@ -601,6 +601,8 @@ df['NYHA.cardiac.function.classification'].unique()
 cat_cols = df.select_dtypes(include=['category']).columns.tolist()
 cat_cols
 
+# #### One hot encoder
+
 # One hot encode the categorical and boolean variables
 encoder = OneHotEncoder(sparse=False, handle_unknown='ignore', drop='if_binary')
 encoded_cols = pd.DataFrame(encoder.fit_transform(df[cat_cols]))
@@ -615,6 +617,21 @@ df_encoded = pd.concat([df.drop(cat_cols, axis=1).reset_index(drop=True),
 # -
 
 df_encoded.shape
+
+# #### Label encoder
+
+# LabelEncoder assigns a unique integer value to each category in the categorical feature, such that each category is mapped to a different integer
+
+from sklearn.preprocessing import LabelEncoder
+
+# +
+# create LabelEncoder object
+le = LabelEncoder()
+
+# apply LabelEncoder to each categorical feature
+for col in cat_cols:
+    df[col] = le.fit_transform(df[col])
+# -
 
 # ### Splitting data into training and testing sets
 #
