@@ -437,9 +437,7 @@ plt.show()
 
 # ### Data visualization
 
-# Mosaic plot to visualize the distribution of categorical variable with respect to the target 
-
-# Visualization of categorical variables of type 'category'
+# **Mosaic plot** to visualize the distribution of categorical variable of type 'category' with respect to the target 
 
 # +
 # Visualize the distribution of the categorical variable with respect to the target variable
@@ -474,7 +472,7 @@ for ax in axs.flat:
 plt.show()
 # -
 
-# Visualization of categorical variable of type 'bool'
+# **Stacked bar plot** to visualize categorical variable of type 'bool'
 
 # +
 binary_cat1 = [df[col].unique()[0] for col in binary_vars]
@@ -523,7 +521,7 @@ plt.show()
 plt.show()
 # -
 
-# 3 opzioni per visualizzare le variabili continue
+# **Swarmplot, violinplot or kdeplot** 3 opzioni per visualizzare le variabili continue
 
 # +
 fig, axs = plt.subplots(nrows= 1 , ncols=3,figsize = (10,6))
