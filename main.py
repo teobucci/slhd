@@ -8,13 +8,13 @@
 #
 # For the analysis to be reproducible the folder `hospitalized-patients-with-heart-failure-integrating-electronic-healthcare-records-and-external-outcome-data-1.2` provided must be in the same directory as this script.
 #
-# ## Project Goal
+# ## The problem domain
 #
 # The goal of this problem is to predict the readmission at 6 months from a dataset TODO scrivere bene la descrizione dell'obiettivo e in cosa consiste il dataset, cos'è ogni riga.
 
 # TODO qualcosa su https://www.kaggle.com/code/residentmario/simple-techniques-for-missing-data-imputation
 
-# # Import external libraries
+# ## Import external libraries and dataset
 #
 # Here we import all the libraries we will use.
 #
@@ -43,27 +43,21 @@ from sklearn.preprocessing import OneHotEncoder
 from pathlib import Path
 # -
 
-# # Load data
-#
 # As first step we load the data, setting the index to the first column since it's already numbered
 
 # Load the dataset
 DATA_FOLDER = Path() / "hospitalized-patients-with-heart-failure-integrating-electronic-healthcare-records-and-external-outcome-data-1.2"
 df = pd.read_csv((DATA_FOLDER / "dat.csv"), index_col=0)
 
-# For the time being, we drop the `inpatient.number` column since it's not statistically significant 
-
-df = df.drop(['inpatient.number'], axis=1)
-
-# # Data exploration
+# ## Dataset inspection
 #
-# ## Information about the memory usage
+# ### Information about the memory usage
 #
 # We check the memory usage of the dataframe.
 
 df.info(memory_usage='deep')
 
-# ## Setting the correct column type
+# ### Setting the correct column type
 #
 # Currently we're using 4.2 MB, let's set properly the column types. Let's start by investigating which types Pandas has assigned to the columns
 
@@ -184,7 +178,11 @@ plt.show()
 #pd.crosstab(df["Churn"], df["International plan"], margins=True)
 # -
 
-# ## Missing values
+# For the time being, we drop the `inpatient.number` column since it's not statistically significant 
+
+df = df.drop(['inpatient.number'], axis=1)
+
+# ### Visualizing `NaN`s
 
 # Identify discrete and continuous variables
 discrete_vars = [col for col in df.columns if df[col].dtype == 'int64']
@@ -232,6 +230,8 @@ ax.tick_params(axis='x', labelrotation=90)
 
 plt.show()
 # -
+
+# ### Consistency checks
 
 # Check for columns with all NaNs
 nan_cols = df.columns[df.isnull().all()].tolist()
@@ -425,9 +425,9 @@ df_encoded = pd.concat([df.drop(cat_cols, axis=1).reset_index(drop=True),
 df_encoded.shape
 # -
 
-# # Preprocessing
+# ## Preprocessing
 
-# # Train test split
+# ### Train-test split
 
 # +
 # Separate the target variable from the features
@@ -436,7 +436,11 @@ y = df_encoded['re.admission.within.6.months']
 
 # Split the dataset into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+# -
 
+# ### Normalizing the features
+
+# +
 # Standardize the features
 #scaler = StandardScaler()
 #X_train = scaler.fit_transform(X_train)
@@ -448,8 +452,8 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_
 #X_test = k_best.transform(X_test)
 # -
 
-# # Imputing missing values
-# KNNImputer
+# ### Imputing missing values
+#
 # Since we only need to impute numerical features, let us use the mean with a KNNImputer
 
 # Impute missing values using the mean strategy
@@ -457,9 +461,7 @@ imputer = KNNImputer(n_neighbors=5)
 X_train = pd.DataFrame(imputer.fit_transform(X_train))
 X_test = pd.DataFrame(imputer.transform(X_test)) # TODO a volte dà un warning
 
-# # Preprocessing
-
-# # Model selection and performance analysis
+# ## Model selection and performance analysis
 #
 # https://github.com/shankarpandala/lazypredict
 
@@ -695,3 +697,5 @@ plt.show()
 # | 165 | dischargeDay                                                  | dischargeDay: days from admission to hospital discharge                                                                                                                                                                                                                                                             |
 # | 166 | ageCat                                                        | ageCat:the age is categorized in decades                                                                                                                                                                                                                                                                            |
 #
+
+# ## Conclusions
