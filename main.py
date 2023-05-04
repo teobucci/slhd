@@ -218,6 +218,8 @@ from sklearn.metrics import accuracy_score, confusion_matrix, roc_curve, auc
 from sklearn.preprocessing import OneHotEncoder
 
 from pathlib import Path
+
+from statsmodels.graphics.mosaicplot import mosaic
 # -
 
 # As first step we load the data, setting the index to the first column since it's already numbered
@@ -436,8 +438,6 @@ plt.show()
 # ### Data visualization
 
 # Mosaic plot to visualize the distribution of categorical variable with respect to the target 
-
-from statsmodels.graphics.mosaicplot import mosaic
 
 # Visualization of categorical variables of type 'category'
 
