@@ -1,4 +1,6 @@
-# # Statistical Learning for Healthcare Data
+# # Heart Failure re-hospitalizations
+#
+# Project for the _Statistical Learning for Healthcare Data_ course held at Politecnico di Milano in the academic year 2022-2023 by Professor Manuela Ferrario and Professor Anna Maria Paganoni.
 #
 # Authors:
 #
@@ -6,538 +8,16 @@
 # - Giulia Montani ([@GiuliaMontani](https://github.com/GiuliaMontani))
 # - Alice Traversa ([@AliceTraversa](https://github.com/AliceTraversa))
 #
-# For the analysis to be reproducible the folder `hospitalized-patients-with-heart-failure-integrating-electronic-healthcare-records-and-external-outcome-data-1.2` provided must be in the same directory as this script.
+# ## 1. Introduction
 #
-# ## The problem domain
+# ### Explanation of the problem and objective
 #
 # The goal of this problem is to predict the readmission at 6 months from a dataset TODO scrivere bene la descrizione dell'obiettivo e in cosa consiste il dataset, cos'è ogni riga.
-
-# TODO qualcosa su https://www.kaggle.com/code/residentmario/simple-techniques-for-missing-data-imputation
-
-# ## Import external libraries and dataset
 #
-# Here we import all the libraries we will use.
+# ### Data description
 #
-# TODO qualcosa sull'environment
-
-# +
-import numpy as np
-import pandas as pd
-import seaborn as sns
-import matplotlib.pyplot as plt
-# %matplotlib inline
-# Graphics in retina format are more sharp and legible
-# %config InlineBackend.figure_format='retina'
-
-from sklearn.model_selection import train_test_split, cross_val_score
-from sklearn.impute import SimpleImputer, KNNImputer
-from sklearn.preprocessing import StandardScaler
-from sklearn.feature_selection import SelectKBest, f_classif
-from sklearn.linear_model import LogisticRegression
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.svm import SVC
-from sklearn.metrics import accuracy_score, confusion_matrix, roc_curve, auc
-from sklearn.preprocessing import OneHotEncoder
-
-from pathlib import Path
-# -
-
-# As first step we load the data, setting the index to the first column since it's already numbered
-
-# Load the dataset
-DATA_FOLDER = Path() / "hospitalized-patients-with-heart-failure-integrating-electronic-healthcare-records-and-external-outcome-data-1.2"
-df = pd.read_csv((DATA_FOLDER / "dat.csv"), index_col=0)
-
-# ## Dataset inspection
+# The data has been provided in the folder `hospitalized-patients-with-heart-failure-integrating-electronic-healthcare-records-and-external-outcome-data-1.2` and for the analysis to be reproducible it must be in the same directory as this script.
 #
-# ### Information about the memory usage
-#
-# We check the memory usage of the dataframe.
-
-df.info(memory_usage='deep')
-
-# ### Setting the correct column type
-#
-# Currently we're using 4.2 MB, let's set properly the column types. Let's start by investigating which types Pandas has assigned to the columns
-
-# +
-# get the data types of each column
-dtypes = df.dtypes
-
-# count the number of columns of each type
-counts = dtypes.value_counts()
-
-# print the counts
-print(counts)
-# -
-
-# Now let's look closer to which columns have which type
-
-# +
-# group the column names by type
-type_dict = {}
-for col, dtype in dtypes.items():
-    if dtype not in type_dict:
-        type_dict[dtype] = []
-    type_dict[dtype].append(col)
-
-# print the number of columns of each type
-print("Number of columns by type:")
-for dtype, cols in type_dict.items():
-    print(f"• {dtype}: {len(cols)} columns ({', '.join(cols)})")
-    print('-'*80)
-# -
-
-# Now let's dive even deeper and see the values per feature to see if the type is correct
-
-# print value counts for categorical and boolean columns
-for dtype, cols in type_dict.items():
-    if dtype == 'float64': # skip continuous
-        continue
-    if not cols:
-        continue
-    print(f"Value counts for {dtype} columns:\n")
-    for col in cols:
-        print(df[col].value_counts(), '\n')
-    print('-'*80)
-
-# Now that we know what to correct, let's perform the changes
-
-df = df.astype({
-    'DestinationDischarge': 'category',
-    'admission.ward': 'category',
-    'admission.way': 'category',
-    'occupation': 'category',
-    'discharge.department': 'category',
-    'gender': 'category',
-    'type.of.heart.failure': 'category',
-    'NYHA.cardiac.function.classification': 'category',
-    'Killip.grade': 'category',
-    'type.II.respiratory.failure': 'category',
-    'consciousness': 'category',
-    'respiratory.support.': 'category',
-    'oxygen.inhalation': 'category',
-    'outcome.during.hospitalization': 'category',
-    'ageCat': 'category',
-    'myocardial.infarction': 'bool',
-    'congestive.heart.failure': 'bool',
-    'peripheral.vascular.disease': 'bool',
-    'cerebrovascular.disease': 'bool',
-    'dementia': 'bool',
-    'Chronic.obstructive.pulmonary.disease': 'bool',
-    'connective.tissue.disease': 'bool',
-    'diabetes': 'bool',
-    'hemiplegia': 'bool',
-    'leukemia': 'bool',
-    'malignant.lymphoma': 'bool',
-    'solid.tumor': 'bool',
-    'AIDS': 'bool',
-    'acute.renal.failure': 'bool',
-    'death.within.28.days': 'bool',
-    're.admission.within.28.days': 'bool',
-    'death.within.3.months': 'bool',
-    're.admission.within.3.months': 'bool',
-    'death.within.6.months': 'bool',
-    're.admission.within.6.months': 'bool'
-})
-
-# and see if there has been a memory reduce
-
-df.info(memory_usage='deep')
-
-# We now use only 2.1 MB.
-#
-# Here is a recap of the columns types.
-
-df.info(verbose=True, show_counts=False)
-
-# Check the shape of the dataset
-df.shape
-
-# Check for the presence of duplicate rows.
-
-df.duplicated().sum()
-
-# Describe the categorical and boolean features
-
-df.describe(include=["category", "bool"]).T
-
-# Deep dive into the `ageCat` feature
-
-# +
-fig, ax = plt.subplots()
-
-sns.countplot(x="ageCat", hue="re.admission.within.6.months", data=df);
-
-plt.show()
-
-# +
-#df.sort_values(by=["Churn", "Total day charge"], ascending=[True, False]).head()
-
-#pd.crosstab(df["Churn"], df["International plan"], margins=True)
-# -
-
-# For the time being, we drop the `inpatient.number` column since it's not statistically significant 
-
-df = df.drop(['inpatient.number'], axis=1)
-
-# ### Visualizing `NaN`s
-
-# Identify discrete and continuous variables
-discrete_vars = [col for col in df.columns if df[col].dtype == 'int64']
-continuous_vars = [col for col in df.columns if df[col].dtype == 'float64']
-#categorical_vars = [col for col in df.columns if df[col].dtype == 'cateogry']
-categorical_vars = df.select_dtypes(include=['category']).columns.tolist()
-binary_vars = [col for col in df.columns if df[col].dtype == 'bool']
-
-
-# +
-def process_var_list(df, list_vars):
-    df_na = df[list_vars].isnull()
-    list_vars = df_na.sum() / len(df_na.index) * 100
-    list_vars = list_vars.sort_values(ascending=False)
-    list_vars = list_vars[list_vars != 0]
-    return list_vars
-
-discrete_missing_percentages = process_var_list(df, discrete_vars)
-continuous_missing_percentages = process_var_list(df, continuous_vars)
-categorical_missing_percentages = process_var_list(df, categorical_vars)
-binary_missing_percentages = process_var_list(df, binary_vars)
-
-print(f"List discrete_missing_percentages contains {len(discrete_missing_percentages)} elements")
-print(f"List continuous_missing_percentages contains {len(continuous_missing_percentages)} elements")
-print(f"List categorical_missing_percentages contains {len(categorical_missing_percentages)} element")
-print(f"List binary_missing_percentages contains {len(binary_missing_percentages)} element")
-
-# +
-# Create subplots for discrete and continuous variables
-fig, ax = plt.subplots(figsize=(10,20))
-
-palette = sns.color_palette("RdYlGn",n_colors=len(continuous_missing_percentages))
-# https://r02b.github.io/seaborn_palettes/
-# palette.reverse()
-# in realtà meglio l'approccio con la norma perché così tanti alla stessa lunghezza sono di colore diverso (sbagliato)
-
-# Plot bar charts for discrete and continuous variables
-sns.barplot(orient='h', y=continuous_missing_percentages.index, x=continuous_missing_percentages, ax=ax, palette=palette)
-
-# Set axis labels and titles for each subplot
-ax.set_title('Percentage of Missing Values in Continuous Variables')
-ax.set_xlabel('Column')
-ax.set_ylabel('Percentage Missing (%)')
-ax.tick_params(axis='x', labelrotation=90)
-
-plt.show()
-# -
-
-# ### Consistency checks
-
-# Check for columns with all NaNs
-nan_cols = df.columns[df.isnull().all()].tolist()
-print('Columns with all NaNs:', nan_cols)
-
-# Check for columns with all the same value
-same_cols = df.columns[df.apply(lambda x: len(x.unique()) == 1)].tolist()
-print('Columns with all the same value:', same_cols)
-
-# Drop the columns with all NaNs or all the same value
-drop_cols = list(set(nan_cols + same_cols))
-df = df.drop(drop_cols, axis=1)
-print('Columns dropped:', drop_cols)
-
-# ## Correlation
-
-# prepare confronto tra distribuzioni di variabili discrete, continue, categoriche con kde
-
-# Compute the correlation matrix
-corr_matrix = df.corr(numeric_only=True)
-
-
-# +
-# Plot the correlation matrix using seaborn
-fig, ax = plt.subplots(figsize=(10, 10))
-sns.heatmap(corr_matrix,
-            annot=False, fmt='.2f',
-            cmap='coolwarm', center=0, cbar=True,
-            linewidths=.5,
-            ax=ax,
-            mask=np.tril(corr_matrix, k=-1))
-
-
-# Add x-axis and y-axis labels
-#plt.xticks(range(len(corr_matrix.columns)), corr_matrix.columns, rotation=90)
-#plt.yticks(range(len(corr_matrix.columns)), corr_matrix.columns)
-
-ax.tick_params(
-    axis='both',          # changes apply to both x-y-axis
-    which='both',      # both major and minor ticks are affected
-    bottom=False,      # ticks along the bottom edge are off
-    top=False,         # ticks along the top edge are off
-    labelbottom=False) # labels along the bottom edge are off
-
-ax.set_aspect("equal")
-
-# Show the plot
-plt.show()
-# -
-
-# importante da vedere
-df['NYHA.cardiac.function.classification'].unique()
-
-# ## Visualizations of continuous and discrete data distributions
-
-# Mosaic plot to visualize the distribution of categorical variable with respect to the target 
-
-from statsmodels.graphics.mosaicplot import mosaic
-
-# Visualization of categorical variables of type 'category'
-
-# +
-# Visualize the distribution of the categorical variable with respect to the target variable
-target_var = 're.admission.within.6.months'
-
-binary_vars = [col for col in categorical_vars if df[col].nunique()==2]
-nonbinary_vars = [col for col in categorical_vars if df[col].nunique()!=2]
-
-# Setting some parameters for mosaic function
-# labelizer
-def empty_labelizer(k):
-    return ""
-
-# properties
-props = lambda key: {'color': 'r' if 'False' in key else 'green'}
-# Create the figure and axis
-fig, axs = plt.subplots(nrows=len(categorical_vars), ncols=1, figsize = (20,40))
-
-# Iterate over categorical variables and create mosaic plots
-for i, var in enumerate(categorical_vars):
-    # Create the mosaic plot
-    mosaic(df,index=[var, target_var], ax=axs[i], title=f'Mosaic plot of {var} by {target_var}',axes_label=True, 
-           horizontal = False, gap =0.07, labelizer=empty_labelizer,properties = props)
-# Adjust spacing between subplots
-fig.tight_layout()
-
-# Show the plot
-for ax in axs.flat:
-    ax.set_xlabel('')
-    ax.set_title('')
-    ax.set_ylabel('')
-plt.show()
-# -
-
-# Visualization of categorical variable of type 'bool'
-
-# +
-binary_cat1 = [df[col].unique()[0] for col in binary_vars]
-binary_cat2 = [df[col].unique()[1] for col in binary_vars]
-
-concat = pd.DataFrame()
-for i,var in enumerate(binary_vars):
-    count = df[[target_var]+[var]].groupby([target_var]+[var])[var].count().unstack()
-    concat = pd.concat([concat,count],axis=1)
-
-cat1Count = concat[binary_cat1]
-cat2Count = concat[binary_cat2]
-
-bar_width = 0.25
-gap = 100
-
-fig,ax = plt.subplots(figsize =(12,6))
-
-x = np.arange(len(binary_vars))
-
-bars1 = ax.bar(x-bar_width/2, cat1Count.loc[True], bar_width, label ='True' ,color = 'green')
-bars2 = ax.bar(x-bar_width/2, cat1Count.loc[False], bar_width, label='False',bottom =  [b.get_height() for b in bars1], color='red')
-
-height = [x + y for x, y in zip([b.get_height() for b in bars1], [b.get_height() for b in bars2])]
-for i,bar in enumerate(bars2):
-    ax.text(bar.get_x() + bar.get_width()/2, height[i], str(binary_cat1[i]), ha='center', va='bottom', color='black')
-ax.legend()
-
-bars3 = ax.bar(x-bar_width/2, cat2Count.loc[True], bar_width, label ='True', 
-               bottom = [x + y +gap for x, y in zip([b.get_height() for b in bars1], [b.get_height() for b in bars2])], color='green')
-bars4 = ax.bar(x-bar_width/2, cat2Count.loc[False], bar_width, label='False',
-               bottom = [x + y +z +gap for x, y,z in zip([b.get_height() for b in bars1], [b.get_height() for b in bars2],[b.get_height() for b in bars3])],color='red')
-height = [x+y+z+w +gap for x,y,z,w in zip([b.get_height() for b in bars1], [b.get_height() for b in bars2],[b.get_height() for b in bars3],[b.get_height() for b in bars4])]
-for i,bar in enumerate(bars4):
-    ax.text(bar.get_x() + bar.get_width()/2, height[i], str(binary_cat2[i]), ha='center', va='bottom', color='black')
-# set the labels and title
-ax.set_xticks(x)
-ax.set_xticklabels(binary_vars)
-ax.set_ylabel('Count')
-ax.set_title('Stacked Bar Plot')
-
-
-# show the plot
-plt.show()
-
-plt.show()
-# -
-
-# 3 opzioni per visualizzare le variabili continue
-
-# +
-fig, axs = plt.subplots(nrows= 1 , ncols=3,figsize = (15,10))
-# Create grouped violin plots
-sns.swarmplot(x=target_var, y='map', data=df, ax=axs[0])
-sns.violinplot(x=target_var, y='map', data = df, ax= axs[1])
-
-sns.kdeplot(df[df[target_var] == 0]['map'], shade=True, label="Target 0",ax=axs[2])
-sns.kdeplot(df[df[target_var] == 1]['map'], shade=True, label="Target 1",ax=axs[2])
-# -
-
-
-# Sono 119 variabili è perciò difficile visualizzarle tutte in un unico blocco. Potremmo forse fare blocchi con una decina di variabili max che siano "simili" tra loro. 
-# Come parametro per dire quanto sono simili potremmo sia usare la correlazione che vedere effettivamente cosa descrivono (i.e. weight, hight, BMI nello stesso blocco) TODO
-
-# +
-fig, axs = plt.subplots(nrows = 1, ncols = 1, figsize=(20,5))
-
-data = pd.melt(df, id_vars=[target_var], value_vars=continuous_vars[0:8])
-sns.violinplot(x="variable", y="value", hue=target_var, data=data, split=True)
-# -
-
-# Discrete variable visualization
-
-for var in discrete_vars:
-    print('Unique values of the discrete variable',var, 'are: ',sorted(df[var].unique()))
-
-# Create a range for each one of this value, based on medical knowledge (i.e. instead of having values for systolic.blood.pressure between 0 and 252 we can create three categories that are 'low','normal','high') TODO
-
-# ## One-hot encode
-
-cat_cols = df.select_dtypes(include=['category']).columns.tolist()
-cat_cols
-
-# One hot encode the categorical and boolean variables
-encoder = OneHotEncoder(sparse=False, handle_unknown='ignore', drop='if_binary')
-encoded_cols = pd.DataFrame(encoder.fit_transform(df[cat_cols]))
-
-# +
-encoded_cols.columns = encoder.get_feature_names_out(cat_cols)
-
-# Replace the original categorical and boolean columns with the encoded ones
-df_encoded = pd.concat([df.drop(cat_cols, axis=1).reset_index(drop=True),
-                        encoded_cols.reset_index(drop=True)],
-                       axis=1)
-
-df_encoded.shape
-# -
-
-# ## Preprocessing
-
-# ### Train-test split
-
-# +
-# Separate the target variable from the features
-X = df_encoded.drop(['re.admission.within.6.months'], axis=1)
-y = df_encoded['re.admission.within.6.months']
-
-# Split the dataset into training and testing sets
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-# -
-
-# ### Normalizing the features
-
-# +
-# Standardize the features
-#scaler = StandardScaler()
-#X_train = scaler.fit_transform(X_train)
-#X_test = scaler.transform(X_test)
-#
-## Select the top k features using the ANOVA F-value
-#k_best = SelectKBest(f_classif, k=10)
-#X_train = k_best.fit_transform(X_train, y_train)
-#X_test = k_best.transform(X_test)
-# -
-
-# ### Imputing missing values
-#
-# Since we only need to impute numerical features, let us use the mean with a KNNImputer
-
-# Impute missing values using the mean strategy
-imputer = KNNImputer(n_neighbors=5)
-X_train = pd.DataFrame(imputer.fit_transform(X_train))
-X_test = pd.DataFrame(imputer.transform(X_test)) # TODO a volte dà un warning
-
-# ## Model selection and performance analysis
-#
-# [`lazypredict`](https://github.com/shankarpandala/lazypredict) is a Python library that is able to quickly check through many models, without any specific fine-tuning, but is able to give an initial look at which could be the best performing models on the task.
-#
-# Let's begin by importing the `LazyClassifier` class.
-
-from lazypredict.Supervised import LazyClassifier
-
-# We now instantiate it with basic settings
-
-clf = LazyClassifier(verbose=0,ignore_warnings=True, custom_metric=None)
-
-# And then we fit it using our data
-
-models, predictions = clf.fit(X_train, X_test, y_train, y_test)
-
-# We can retrieve a dictionary of all the models trained
-
-models
-
-# And TODO
-
-model_dictionary = clf.provide_models(X_train,X_test,y_train,y_test)
-
-from mlxtend.plotting import plot_confusion_matrix
-
-# +
-# Train and evaluate multiple models
-models = [LogisticRegression(max_iter=100000), DecisionTreeClassifier(), RandomForestClassifier(), SVC(probability=True)]
-
-
-
-fig, axes = plt.subplots(nrows=2, ncols=len(models), figsize=(20,8))#, height_ratios = [1,3])
-
-
-for i, model in enumerate(models):
-    # Train the model on the training set
-    model.fit(X_train, y_train)
-
-    # Make predictions on the testing set
-    y_pred = model.predict(X_test)
-
-    # Calculate the accuracy score
-    accuracy = accuracy_score(y_test, y_pred)
-    print(model.__class__.__name__, 'Accuracy:', accuracy)
-
-    # Calculate the confusion matrix
-    cm = confusion_matrix(y_test, y_pred)
-    #sns.heatmap(cm, annot=True, cmap='coolwarm', fmt='d', ax=axes[0,i])
-    axes[0,i].set_title(model.__class__.__name__ + ' Confusion Matrix')
-    plot_confusion_matrix(conf_mat=cm,
-                                show_absolute=True,
-                                show_normed=True,
-                                colorbar=True, figure=fig, axis=axes[0,i])
-
-
-    # Calculate the ROC curve
-    y_score = model.predict_proba(X_test)[:,1]
-    fpr, tpr, _ = roc_curve(y_test, y_score)
-    roc_auc = auc(fpr, tpr)
-
-    # Plot the ROC curve
-    axes[1,i].plot(fpr, tpr, label=model.__class__.__name__ + ' (AUC = %0.2f)' % roc_auc)
-    axes[1,i].plot([0, 1], [0, 1], linestyle='--', color='gray')
-    axes[1,i].set_xlim([0.0, 1.0])
-    axes[1,i].set_ylim([0.0, 1.05])
-    axes[1,i].set_xlabel('False Positive Rate')
-    axes[1,i].set_ylabel('True Positive Rate')
-    axes[1,i].set_title(model.__class__.__name__ + ' ROC Curve')
-    axes[1,i].legend(loc="lower right")
-    
-    axes[1,i].set_aspect('equal')
-    axes[0,i].set_aspect('equal')
-
-plt.tight_layout()
-plt.show()
-# -
 
 # |     | Variables                                                     | Description                                                                                                                                                                                                                                                                                                         |
 # |-------|-----------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -709,4 +189,557 @@ plt.show()
 # | 166 | ageCat                                                        | ageCat:the age is categorized in decades                                                                                                                                                                                                                                                                            |
 #
 
-# ## Conclusions
+# ## 2. Data Cleaning
+#
+# ### Importing necessary libraries and dataset
+#
+# Here we import all the libraries we will use.
+#
+# TODO qualcosa sull'environment
+
+# +
+import numpy as np
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+# %matplotlib inline
+# Graphics in retina format are more sharp and legible
+# %config InlineBackend.figure_format='retina'
+
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.impute import SimpleImputer, KNNImputer
+from sklearn.preprocessing import StandardScaler
+from sklearn.feature_selection import SelectKBest, f_classif
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score, confusion_matrix, roc_curve, auc
+from sklearn.preprocessing import OneHotEncoder
+
+from pathlib import Path
+# -
+
+# As first step we load the data, setting the index to the first column since it's already numbered
+
+# Load the dataset
+DATA_FOLDER = Path() / "hospitalized-patients-with-heart-failure-integrating-electronic-healthcare-records-and-external-outcome-data-1.2"
+df = pd.read_csv((DATA_FOLDER / "dat.csv"), index_col=0)
+
+# ### Information about the memory usage
+#
+# We check the memory usage of the dataframe.
+
+df.info(memory_usage='deep')
+
+# ### Setting the correct column type
+#
+# Currently we're using 4.2 MB, let's set properly the column types. Let's start by investigating which types Pandas has assigned to the columns
+
+# +
+# get the data types of each column
+dtypes = df.dtypes
+
+# count the number of columns of each type
+counts = dtypes.value_counts()
+
+# print the counts
+print(counts)
+# -
+
+# Now let's look closer to which columns have which type
+
+# +
+# group the column names by type
+type_dict = {}
+for col, dtype in dtypes.items():
+    if dtype not in type_dict:
+        type_dict[dtype] = []
+    type_dict[dtype].append(col)
+
+# print the number of columns of each type
+print("Number of columns by type:")
+for dtype, cols in type_dict.items():
+    print(f"• {dtype}: {len(cols)} columns ({', '.join(cols)})")
+    print('-'*80)
+# -
+
+# Now let's dive even deeper and see the values per feature to see if the type is correct
+
+# print value counts for categorical and boolean columns
+for dtype, cols in type_dict.items():
+    if dtype == 'float64': # skip continuous
+        continue
+    if not cols:
+        continue
+    print(f"Value counts for {dtype} columns:\n")
+    for col in cols:
+        print(df[col].value_counts(), '\n')
+    print('-'*80)
+
+# Now that we know what to correct, let's perform the changes
+
+df = df.astype({
+    'DestinationDischarge': 'category',
+    'admission.ward': 'category',
+    'admission.way': 'category',
+    'occupation': 'category',
+    'discharge.department': 'category',
+    'gender': 'category',
+    'type.of.heart.failure': 'category',
+    'NYHA.cardiac.function.classification': 'category',
+    'Killip.grade': 'category',
+    'type.II.respiratory.failure': 'category',
+    'consciousness': 'category',
+    'respiratory.support.': 'category',
+    'oxygen.inhalation': 'category',
+    'outcome.during.hospitalization': 'category',
+    'ageCat': 'category',
+    'myocardial.infarction': 'bool',
+    'congestive.heart.failure': 'bool',
+    'peripheral.vascular.disease': 'bool',
+    'cerebrovascular.disease': 'bool',
+    'dementia': 'bool',
+    'Chronic.obstructive.pulmonary.disease': 'bool',
+    'connective.tissue.disease': 'bool',
+    'diabetes': 'bool',
+    'hemiplegia': 'bool',
+    'leukemia': 'bool',
+    'malignant.lymphoma': 'bool',
+    'solid.tumor': 'bool',
+    'AIDS': 'bool',
+    'acute.renal.failure': 'bool',
+    'death.within.28.days': 'bool',
+    're.admission.within.28.days': 'bool',
+    'death.within.3.months': 'bool',
+    're.admission.within.3.months': 'bool',
+    'death.within.6.months': 'bool',
+    're.admission.within.6.months': 'bool'
+})
+
+# and see if there has been a memory reduce
+
+df.info(memory_usage='deep')
+
+# We now use only 2.1 MB.
+#
+# Here is a recap of the columns types.
+
+df.info(verbose=True, show_counts=False)
+
+# Check the shape of the dataset
+df.shape
+
+# ### Handling duplicates
+
+# Check for the presence of duplicate rows.
+
+df.duplicated().sum()
+
+# Describe the categorical and boolean features
+
+df.describe(include=["category", "bool"]).T
+
+# Deep dive into the `ageCat` feature
+
+# +
+fig, ax = plt.subplots()
+
+sns.countplot(x="ageCat", hue="re.admission.within.6.months", data=df);
+
+plt.show()
+
+# +
+#df.sort_values(by=["Churn", "Total day charge"], ascending=[True, False]).head()
+
+#pd.crosstab(df["Churn"], df["International plan"], margins=True)
+# -
+
+# For the time being, we drop the `inpatient.number` column since it's not statistically significant 
+
+df = df.drop(['inpatient.number'], axis=1)
+
+# ### Analizing presence of missing values
+
+# Identify discrete and continuous variables
+discrete_vars = [col for col in df.columns if df[col].dtype == 'int64']
+continuous_vars = [col for col in df.columns if df[col].dtype == 'float64']
+#categorical_vars = [col for col in df.columns if df[col].dtype == 'cateogry']
+categorical_vars = df.select_dtypes(include=['category']).columns.tolist()
+binary_vars = [col for col in df.columns if df[col].dtype == 'bool']
+
+
+# +
+def process_var_list(df, list_vars):
+    df_na = df[list_vars].isnull()
+    list_vars = df_na.sum() / len(df_na.index) * 100
+    list_vars = list_vars.sort_values(ascending=False)
+    list_vars = list_vars[list_vars != 0]
+    return list_vars
+
+discrete_missing_percentages = process_var_list(df, discrete_vars)
+continuous_missing_percentages = process_var_list(df, continuous_vars)
+categorical_missing_percentages = process_var_list(df, categorical_vars)
+binary_missing_percentages = process_var_list(df, binary_vars)
+
+print(f"List discrete_missing_percentages contains {len(discrete_missing_percentages)} elements")
+print(f"List continuous_missing_percentages contains {len(continuous_missing_percentages)} elements")
+print(f"List categorical_missing_percentages contains {len(categorical_missing_percentages)} element")
+print(f"List binary_missing_percentages contains {len(binary_missing_percentages)} element")
+
+# +
+# Create subplots for discrete and continuous variables
+fig, ax = plt.subplots(figsize=(10,20))
+
+palette = sns.color_palette("RdYlGn",n_colors=len(continuous_missing_percentages))
+# https://r02b.github.io/seaborn_palettes/
+# palette.reverse()
+# in realtà meglio l'approccio con la norma perché così tanti alla stessa lunghezza sono di colore diverso (sbagliato)
+
+# Plot bar charts for discrete and continuous variables
+sns.barplot(orient='h', y=continuous_missing_percentages.index, x=continuous_missing_percentages, ax=ax, palette=palette)
+
+# Set axis labels and titles for each subplot
+ax.set_title('Percentage of Missing Values in Continuous Variables')
+ax.set_xlabel('Column')
+ax.set_ylabel('Percentage Missing (%)')
+ax.tick_params(axis='x', labelrotation=90)
+
+plt.show()
+# -
+
+# ### Handling meaningless columns
+
+# Check for columns with all NaNs
+nan_cols = df.columns[df.isnull().all()].tolist()
+print('Columns with all NaNs:', nan_cols)
+
+# Check for columns with all the same value
+same_cols = df.columns[df.apply(lambda x: len(x.unique()) == 1)].tolist()
+print('Columns with all the same value:', same_cols)
+
+# Drop the columns with all NaNs or all the same value
+drop_cols = list(set(nan_cols + same_cols))
+df = df.drop(drop_cols, axis=1)
+print('Columns dropped:', drop_cols)
+
+# ## 3. Exploratory Data Analysis (EDA)
+
+# ### Descriptive statistics
+#
+# ### Data visualization
+#
+# ### Correlation analysis
+
+# prepare confronto tra distribuzioni di variabili discrete, continue, categoriche con kde
+
+# Compute the correlation matrix
+corr_matrix = df.corr(numeric_only=True)
+
+
+# +
+# Plot the correlation matrix using seaborn
+fig, ax = plt.subplots(figsize=(10, 10))
+sns.heatmap(corr_matrix,
+            annot=False, fmt='.2f',
+            cmap='coolwarm', center=0, cbar=True,
+            linewidths=.5,
+            ax=ax,
+            mask=np.tril(corr_matrix, k=-1))
+
+
+# Add x-axis and y-axis labels
+#plt.xticks(range(len(corr_matrix.columns)), corr_matrix.columns, rotation=90)
+#plt.yticks(range(len(corr_matrix.columns)), corr_matrix.columns)
+
+ax.tick_params(
+    axis='both',          # changes apply to both x-y-axis
+    which='both',      # both major and minor ticks are affected
+    bottom=False,      # ticks along the bottom edge are off
+    top=False,         # ticks along the top edge are off
+    labelbottom=False) # labels along the bottom edge are off
+
+ax.set_aspect("equal")
+
+# Show the plot
+plt.show()
+# -
+
+# ### Feature engineering
+
+# importante da vedere
+df['NYHA.cardiac.function.classification'].unique()
+
+# ### Visualizations of continuous and discrete data distributions
+
+# Mosaic plot to visualize the distribution of categorical variable with respect to the target 
+
+from statsmodels.graphics.mosaicplot import mosaic
+
+# Visualization of categorical variables of type 'category'
+
+# +
+# Visualize the distribution of the categorical variable with respect to the target variable
+target_var = 're.admission.within.6.months'
+
+binary_vars = [col for col in categorical_vars if df[col].nunique()==2]
+nonbinary_vars = [col for col in categorical_vars if df[col].nunique()!=2]
+
+# Setting some parameters for mosaic function
+# labelizer
+def empty_labelizer(k):
+    return ""
+
+# properties
+props = lambda key: {'color': 'r' if 'False' in key else 'green'}
+# Create the figure and axis
+fig, axs = plt.subplots(nrows=len(categorical_vars), ncols=1, figsize = (20,40))
+
+# Iterate over categorical variables and create mosaic plots
+for i, var in enumerate(categorical_vars):
+    # Create the mosaic plot
+    mosaic(df,index=[var, target_var], ax=axs[i], title=f'Mosaic plot of {var} by {target_var}',axes_label=True, 
+           horizontal = False, gap =0.07, labelizer=empty_labelizer,properties = props)
+# Adjust spacing between subplots
+fig.tight_layout()
+
+# Show the plot
+for ax in axs.flat:
+    ax.set_xlabel('')
+    ax.set_title('')
+    ax.set_ylabel('')
+plt.show()
+# -
+
+# Visualization of categorical variable of type 'bool'
+
+# +
+binary_cat1 = [df[col].unique()[0] for col in binary_vars]
+binary_cat2 = [df[col].unique()[1] for col in binary_vars]
+
+concat = pd.DataFrame()
+for i,var in enumerate(binary_vars):
+    count = df[[target_var]+[var]].groupby([target_var]+[var])[var].count().unstack()
+    concat = pd.concat([concat,count],axis=1)
+
+cat1Count = concat[binary_cat1]
+cat2Count = concat[binary_cat2]
+
+bar_width = 0.25
+gap = 100
+
+fig,ax = plt.subplots(figsize =(12,6))
+
+x = np.arange(len(binary_vars))
+
+bars1 = ax.bar(x-bar_width/2, cat1Count.loc[True], bar_width, label ='True' ,color = 'green')
+bars2 = ax.bar(x-bar_width/2, cat1Count.loc[False], bar_width, label='False',bottom =  [b.get_height() for b in bars1], color='red')
+
+height = [x + y for x, y in zip([b.get_height() for b in bars1], [b.get_height() for b in bars2])]
+for i,bar in enumerate(bars2):
+    ax.text(bar.get_x() + bar.get_width()/2, height[i], str(binary_cat1[i]), ha='center', va='bottom', color='black')
+ax.legend()
+
+bars3 = ax.bar(x-bar_width/2, cat2Count.loc[True], bar_width, label ='True', 
+               bottom = [x + y +gap for x, y in zip([b.get_height() for b in bars1], [b.get_height() for b in bars2])], color='green')
+bars4 = ax.bar(x-bar_width/2, cat2Count.loc[False], bar_width, label='False',
+               bottom = [x + y +z +gap for x, y,z in zip([b.get_height() for b in bars1], [b.get_height() for b in bars2],[b.get_height() for b in bars3])],color='red')
+height = [x+y+z+w +gap for x,y,z,w in zip([b.get_height() for b in bars1], [b.get_height() for b in bars2],[b.get_height() for b in bars3],[b.get_height() for b in bars4])]
+for i,bar in enumerate(bars4):
+    ax.text(bar.get_x() + bar.get_width()/2, height[i], str(binary_cat2[i]), ha='center', va='bottom', color='black')
+# set the labels and title
+ax.set_xticks(x)
+ax.set_xticklabels(binary_vars)
+ax.set_ylabel('Count')
+ax.set_title('Stacked Bar Plot')
+
+
+# show the plot
+plt.show()
+
+plt.show()
+# -
+
+# 3 opzioni per visualizzare le variabili continue
+
+# +
+fig, axs = plt.subplots(nrows= 1 , ncols=3,figsize = (15,10))
+# Create grouped violin plots
+sns.swarmplot(x=target_var, y='map', data=df, ax=axs[0])
+sns.violinplot(x=target_var, y='map', data = df, ax= axs[1])
+
+sns.kdeplot(df[df[target_var] == 0]['map'], shade=True, label="Target 0",ax=axs[2])
+sns.kdeplot(df[df[target_var] == 1]['map'], shade=True, label="Target 1",ax=axs[2])
+# -
+
+
+# Sono 119 variabili è perciò difficile visualizzarle tutte in un unico blocco. Potremmo forse fare blocchi con una decina di variabili max che siano "simili" tra loro. 
+# Come parametro per dire quanto sono simili potremmo sia usare la correlazione che vedere effettivamente cosa descrivono (i.e. weight, hight, BMI nello stesso blocco) TODO
+
+# +
+fig, axs = plt.subplots(nrows = 1, ncols = 1, figsize=(20,5))
+
+data = pd.melt(df, id_vars=[target_var], value_vars=continuous_vars[0:8])
+sns.violinplot(x="variable", y="value", hue=target_var, data=data, split=True)
+# -
+
+# Discrete variable visualization
+
+for var in discrete_vars:
+    print('Unique values of the discrete variable',var, 'are: ',sorted(df[var].unique()))
+
+# Create a range for each one of this value, based on medical knowledge (i.e. instead of having values for systolic.blood.pressure between 0 and 252 we can create three categories that are 'low','normal','high') TODO
+
+# ## 4. Data Preprocessing
+
+# ### Encoding categorical variables
+
+cat_cols = df.select_dtypes(include=['category']).columns.tolist()
+cat_cols
+
+# One hot encode the categorical and boolean variables
+encoder = OneHotEncoder(sparse=False, handle_unknown='ignore', drop='if_binary')
+encoded_cols = pd.DataFrame(encoder.fit_transform(df[cat_cols]))
+
+# +
+encoded_cols.columns = encoder.get_feature_names_out(cat_cols)
+
+# Replace the original categorical and boolean columns with the encoded ones
+df_encoded = pd.concat([df.drop(cat_cols, axis=1).reset_index(drop=True),
+                        encoded_cols.reset_index(drop=True)],
+                       axis=1)
+
+df_encoded.shape
+# -
+
+# ### Splitting data into training and testing sets
+
+# +
+# Separate the target variable from the features
+X = df_encoded.drop(['re.admission.within.6.months'], axis=1)
+y = df_encoded['re.admission.within.6.months']
+
+# Split the dataset into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+# -
+
+# ### Feature scaling
+
+# +
+# Standardize the features
+#scaler = StandardScaler()
+#X_train = scaler.fit_transform(X_train)
+#X_test = scaler.transform(X_test)
+#
+## Select the top k features using the ANOVA F-value
+#k_best = SelectKBest(f_classif, k=10)
+#X_train = k_best.fit_transform(X_train, y_train)
+#X_test = k_best.transform(X_test)
+# -
+
+# ### Feature selection
+
+# ### Imputing missing values
+#
+# Since we only need to impute numerical features, let us use the mean with a KNNImputer
+
+# Impute missing values using the mean strategy
+imputer = KNNImputer(n_neighbors=5)
+X_train = pd.DataFrame(imputer.fit_transform(X_train))
+X_test = pd.DataFrame(imputer.transform(X_test)) # TODO a volte dà un warning
+
+# TODO qualcosa su https://www.kaggle.com/code/residentmario/simple-techniques-for-missing-data-imputation
+
+# ## 5. Modeling
+#
+# ### Training the models
+#
+# [`lazypredict`](https://github.com/shankarpandala/lazypredict) is a Python library that is able to quickly check through many models, without any specific fine-tuning, but is able to give an initial look at which could be the best performing models on the task.
+#
+# Let's begin by importing the `LazyClassifier` class.
+
+from lazypredict.Supervised import LazyClassifier
+
+# We now instantiate it with basic settings
+
+clf = LazyClassifier(verbose=0,ignore_warnings=True, custom_metric=None)
+
+# And then we fit it using our data
+
+models, predictions = clf.fit(X_train, X_test, y_train, y_test)
+
+# We can retrieve a dictionary of all the models trained
+
+models
+
+# And TODO
+
+model_dictionary = clf.provide_models(X_train,X_test,y_train,y_test)
+
+from mlxtend.plotting import plot_confusion_matrix
+
+# Train and evaluate multiple models
+models = [LogisticRegression(max_iter=100000), DecisionTreeClassifier(), RandomForestClassifier(), SVC(probability=True)]
+
+# ### Evaluating model performance
+
+# +
+fig, axes = plt.subplots(nrows=2, ncols=len(models), figsize=(20,8))#, height_ratios = [1,3])
+
+
+for i, model in enumerate(models):
+    # Train the model on the training set
+    model.fit(X_train, y_train)
+
+    # Make predictions on the testing set
+    y_pred = model.predict(X_test)
+
+    # Calculate the accuracy score
+    accuracy = accuracy_score(y_test, y_pred)
+    print(model.__class__.__name__, 'Accuracy:', accuracy)
+
+    # Calculate the confusion matrix
+    cm = confusion_matrix(y_test, y_pred)
+    #sns.heatmap(cm, annot=True, cmap='coolwarm', fmt='d', ax=axes[0,i])
+    axes[0,i].set_title(model.__class__.__name__ + ' Confusion Matrix')
+    plot_confusion_matrix(conf_mat=cm,
+                                show_absolute=True,
+                                show_normed=True,
+                                colorbar=True, figure=fig, axis=axes[0,i])
+
+
+    # Calculate the ROC curve
+    y_score = model.predict_proba(X_test)[:,1]
+    fpr, tpr, _ = roc_curve(y_test, y_score)
+    roc_auc = auc(fpr, tpr)
+
+    # Plot the ROC curve
+    axes[1,i].plot(fpr, tpr, label=model.__class__.__name__ + ' (AUC = %0.2f)' % roc_auc)
+    axes[1,i].plot([0, 1], [0, 1], linestyle='--', color='gray')
+    axes[1,i].set_xlim([0.0, 1.0])
+    axes[1,i].set_ylim([0.0, 1.05])
+    axes[1,i].set_xlabel('False Positive Rate')
+    axes[1,i].set_ylabel('True Positive Rate')
+    axes[1,i].set_title(model.__class__.__name__ + ' ROC Curve')
+    axes[1,i].legend(loc="lower right")
+    
+    axes[1,i].set_aspect('equal')
+    axes[0,i].set_aspect('equal')
+
+plt.tight_layout()
+plt.show()
+# -
+
+# ## 6. Model Improvement
+#
+# ### Hyperparameter tuning
+#
+# ### Cross-validation
+#
+# ## 7. Conclusion
+#
+# ### Summary of findings
+#
+# ### Recommendations for further research
+#
+# ### Limitations of the analysis
