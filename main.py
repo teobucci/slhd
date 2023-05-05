@@ -416,24 +416,23 @@ print('Columns dropped:', drop_cols)
 
 df.describe(include=["category", "bool"]).T
 
-# Deep dive into the `ageCat` feature
+# ### Descriptive statistics
 
-# +
-fig, ax = plt.subplots()
+# ### Data visualization
 
-sns.countplot(x="ageCat", hue="re.admission.within.6.months", data=df);
+# Deep dive into the some features
 
-plt.show()
+col_inspect = ['Killip.grade', 'diabetes', 'ageCat']
+for col_name in col_inspect:
+    sns.countplot(x = col_name, data = df, palette = 'magma') # optional hue="re.admission.within.6.months"
+    plt.title(col_name)
+    plt.show()
 
 # +
 #df.sort_values(by=["Churn", "Total day charge"], ascending=[True, False]).head()
 
 #pd.crosstab(df["Churn"], df["International plan"], margins=True)
 # -
-
-# ### Descriptive statistics
-
-# ### Data visualization
 
 # Mosaic plot to visualize the distribution of categorical variable with respect to the target 
 
@@ -535,6 +534,9 @@ sns.kdeplot(df[df[target_var] == 0]['map'], shade=True, label="Target 0",ax=axs[
 sns.kdeplot(df[df[target_var] == 1]['map'], shade=True, label="Target 1",ax=axs[2])
 # -
 
+
+sns.violinplot(x=target_var, y='weight', data = df, split=True)
+plt.show()
 
 # Sono 119 variabili è perciò difficile visualizzarle tutte in un unico blocco. Potremmo forse fare blocchi con una decina di variabili max che siano "simili" tra loro. 
 # Come parametro per dire quanto sono simili potremmo sia usare la correlazione che vedere effettivamente cosa descrivono (i.e. weight, hight, BMI nello stesso blocco) TODO
