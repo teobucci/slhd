@@ -218,6 +218,8 @@ from sklearn.metrics import accuracy_score, confusion_matrix, roc_curve, auc
 from sklearn.preprocessing import OneHotEncoder
 
 from pathlib import Path
+
+from statsmodels.graphics.mosaicplot import mosaic
 # -
 
 # As first step we load the data, setting the index to the first column since it's already numbered
@@ -434,11 +436,9 @@ for col_name in col_inspect:
 #pd.crosstab(df["Churn"], df["International plan"], margins=True)
 # -
 
-# Mosaic plot to visualize the distribution of categorical variable with respect to the target 
+# **Mosaic plot** to visualize the distribution of categorical variable of type 'category' with respect to the target 
 
 from statsmodels.graphics.mosaicplot import mosaic
-
-# Visualization of categorical variables of type 'category'
 
 # +
 # Visualize the distribution of the categorical variable with respect to the target variable
@@ -473,7 +473,7 @@ for ax in axs.flat:
 plt.show()
 # -
 
-# Visualization of categorical variable of type 'bool'
+# **Stacked bar plot** to visualize categorical variable of type 'bool'
 
 # +
 binary_cat1 = [df[col].unique()[0] for col in binary_vars]
@@ -522,10 +522,10 @@ plt.show()
 plt.show()
 # -
 
-# 3 opzioni per visualizzare le variabili continue
+# **Swarmplot, violinplot or kdeplot** 3 opzioni per visualizzare le variabili continue
 
 # +
-fig, axs = plt.subplots(nrows= 1 , ncols=3,figsize = (15,10))
+fig, axs = plt.subplots(nrows= 1 , ncols=3,figsize = (10,6))
 # Create grouped violin plots
 sns.swarmplot(x=target_var, y='map', data=df, ax=axs[0])
 sns.violinplot(x=target_var, y='map', data = df, ax= axs[1])
@@ -600,8 +600,21 @@ df['NYHA.cardiac.function.classification'].unique()
 
 # ### Encoding categorical variables
 
+# Three common encoding methods are: one-hot encoding, label encoding, and CatBoost encoding.
+# Look at the advantages and disadvantages.
+#
+# First up is **one-hot encoding**. This technique is great for nominal or unordered categorical variables, as it keeps all the information of the categorical variable without introducing any ordinal relationship. However, one-hot encoding can result in high dimensionality, which makes it computationally expensive. Additionally, this method can lead to overfitting, especially when there are a large number of categories, and there is a loss of information about the frequency or distribution of the categories in the original feature.
+#
+# Next up is **label encoding**, which is simple and computationally efficient, Works well with decision tree-based models. This method is useful for categorical features that have an inherent order or ranking, but it does not capture the non-linear relationship between the categorical feature and the target variable. Label encoding can lead to biased results if the order of the labels is arbitrary, and it can result in overfitting if there is a large number of categories in the feature.
+#
+# Finally, we have **CatBoost encoding**, which is a powerful technique that takes into account the target variable and helps capture the non-linear relationship between the categorical feature and the target variable. CatBoost encoding can handle high cardinality categorical features with many categories, and it helps to reduce dimensionality by producing a single feature instead of multiple features like one-hot encoding. However, CatBoost encoding is computationally expensive compared to one-hot encoding and label encoding, and it requires a large amount of data to train the encoding parameters. Additionally, this method can lead to overfitting if the encoding parameters are not regularized properly.
+#
+# In summary, one-hot encoding is a great choice for nominal or unordered categorical variables, while label encoding can be useful for ordinal or ordered categorical variables. CatBoost encoding can be a good choice if there is a non-linear relationship between the categorical feature and the target variable, but it may not always be necessary or feasible to use, especially for small datasets or linear models. Ultimately, the choice of encoding technique depends on the nature of the data and the modeling task at hand.
+
 cat_cols = df.select_dtypes(include=['category']).columns.tolist()
 cat_cols
+
+# #### One hot encoder
 
 # One hot encode the categorical and boolean variables
 encoder = OneHotEncoder(sparse=False, handle_unknown='ignore', drop='if_binary')
@@ -617,6 +630,30 @@ df_encoded = pd.concat([df.drop(cat_cols, axis=1).reset_index(drop=True),
 # -
 
 df_encoded.shape
+
+# #### Label encoder
+
+# LabelEncoder assigns a unique integer value to each category in the categorical feature, such that each category is mapped to a different integer
+
+from sklearn.preprocessing import LabelEncoder
+
+# +
+# create LabelEncoder object
+le = LabelEncoder()
+
+# apply LabelEncoder to each categorical feature
+for col in cat_cols:
+    df[col] = le.fit_transform(df[col])
+# -
+
+# #### Cat boost encoder
+
+import category_encoders as ce
+
+encoder=ce.cat_boost.CatBoostEncoder(cols=cat_cols,
+                                     random_state=None, sigma=None, a=1)
+encoder.fit(df,target_var)
+df = encoder.transform(df)
 
 # ### Splitting data into training and testing sets
 #
