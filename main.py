@@ -535,7 +535,9 @@ sns.kdeplot(df[df[target_var] == 1]['map'], shade=True, label="Target 1",ax=axs[
 # -
 
 
-sns.violinplot(x=target_var, y='weight', data = df, split=True)
+df['all'] = ''
+sns.violinplot(x='all', y='weight', hue=target_var, data = df, split=True)
+plt.xlabel("")
 plt.show()
 
 # Sono 119 variabili è perciò difficile visualizzarle tutte in un unico blocco. Potremmo forse fare blocchi con una decina di variabili max che siano "simili" tra loro. 
