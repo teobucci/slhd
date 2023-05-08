@@ -492,12 +492,10 @@ for idx, col_name in enumerate(col_inspect):
 
 fig.tight_layout()
 plt.show()
-
-# +
-#df.sort_values(by=["Churn", "Total day charge"], ascending=[True, False]).head()
-
-#pd.crosstab(df["Churn"], df["International plan"], margins=True)
 # -
+
+target_var = 're.admission.within.6.months'
+pd.crosstab(df[target_var], df["gender"], margins=True)
 
 # **Mosaic plot** to visualize the distribution of categorical variable of type 'category' with respect to the target 
 
@@ -505,7 +503,7 @@ from statsmodels.graphics.mosaicplot import mosaic
 
 # +
 # Visualize the distribution of the categorical variable with respect to the target variable
-target_var = 're.admission.within.6.months'
+
 categorical_vars = [col for col in df.columns if df[col].dtype == 'category']
 binary_vars = [col for col in categorical_vars if df[col].nunique()==2]
 nonbinary_vars = [col for col in categorical_vars if df[col].nunique()!=2]
