@@ -742,6 +742,9 @@ X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                     stratify=y, # preserve target propotions
                                                     random_state=SEED)
 
+X_train.columns = X.columns
+X_test.columns = X.columns
+
 # ### Feature scaling
 #
 # Standardize the features
