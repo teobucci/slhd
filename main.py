@@ -353,49 +353,68 @@ assert df.duplicated().sum() == 0
 
 # ### Analizing presence of missing values
 
-# Identify discrete and continuous variables
-discrete_vars = [col for col in df.columns if df[col].dtype == 'int64']
-continuous_vars = [col for col in df.columns if df[col].dtype == 'float64']
-categorical_vars = [col for col in df.columns if df[col].dtype == 'category']
-binary_vars = [col for col in df.columns if df[col].dtype == 'bool']
+# Identify categorical and numerical variables
+
+df_categorical = df.select_dtypes(include=['category', 'bool'])
+df_numerical = df.select_dtypes(include=['float64', 'int64'])
 
 
 # +
-def process_var_list(df, list_vars):
-    df_na = df[list_vars].isnull()
+def get_percentage_missing(df):
+    df_na = df.isnull()
     list_vars = df_na.sum() / len(df_na.index) * 100
     list_vars = list_vars.sort_values(ascending=False)
     list_vars = list_vars[list_vars != 0]
     return list_vars
 
-discrete_missing_percentages = process_var_list(df, discrete_vars)
-continuous_missing_percentages = process_var_list(df, continuous_vars)
-categorical_missing_percentages = process_var_list(df, categorical_vars)
-binary_missing_percentages = process_var_list(df, binary_vars)
+names = ['numerical', 'categorical']
+numerical_missing = get_percentage_missing(df_numerical)
+categorical_missing = get_percentage_missing(df_categorical)
 
-print(f"List discrete_missing_percentages contains {len(discrete_missing_percentages)} elements")
-print(f"List continuous_missing_percentages contains {len(continuous_missing_percentages)} elements")
-print(f"List categorical_missing_percentages contains {len(categorical_missing_percentages)} element")
-print(f"List binary_missing_percentages contains {len(binary_missing_percentages)} element")
+
+for name, features in zip(names, [numerical_missing, categorical_missing]):
+    print(f"Among the {name} features, {len(features)} contain missing values")
+
+
+#discrete_missing_percentages = get_features_with_nans(df, discrete_vars)
+#continuous_missing_percentages = get_features_with_nans(df, continuous_vars)
+#categorical_missing_percentages = get_features_with_nans(df, categorical_vars)
+#binary_missing_percentages = get_features_with_nans(df, binary_vars)
+
+#print(f"List discrete_missing_percentages contains {len(discrete_missing_percentages)} elements")
+#print(f"List continuous_missing_percentages contains {len(continuous_missing_percentages)} elements")
+#print(f"List categorical_missing_percentages contains {len(categorical_missing_percentages)} element")
+#print(f"List binary_missing_percentages contains {len(binary_missing_percentages)} element")
+
 # -
 
-continuous_missing_percentages = continuous_missing_percentages[continuous_missing_percentages > 50]
+# The single categorical feature that contains missing values is `occupation` with 1.34% of missing values.
+
+categorical_missing
+
+
+# There are many more numerical features with missing values, to understand the amplitude of it, let us plot the percentage of missing values per feature.
+
+def colors_from_values(values, palette_name):
+    # normalize the values to range [0, 1]
+    normalized = (values - min(values)) / (max(values) - min(values))
+    # convert to indices
+    indices = np.round(normalized * (len(values) - 1)).astype(np.int32)
+    # use the indices to get the colors
+    palette = sns.color_palette(palette_name, len(values))
+    return np.array(palette).take(indices, axis=0)
+
 
 # +
-fig, ax = plt.subplots(figsize=(6,6))
-
-palette = sns.color_palette("RdYlGn",n_colors=len(continuous_missing_percentages))
-# https://r02b.github.io/seaborn_palettes/
-# palette.reverse()
-# in realtà meglio l'approccio con la norma perché così tanti alla stessa lunghezza sono di colore diverso (sbagliato)
+fig, ax = plt.subplots(figsize=(16,16))
 
 # Plot bar charts for discrete and continuous variables
-sns.barplot(orient='h', y=continuous_missing_percentages.index, x=continuous_missing_percentages, ax=ax, palette=palette)
+sns.barplot(orient='h', y=numerical_missing.index, x=numerical_missing, ax=ax, palette=colors_from_values(numerical_missing, "RdYlGn_r"))
 
 # Set axis labels and titles for each subplot
-ax.set_title('Percentage of Missing Values in Continuous Variables')
-ax.set_xlabel('Column')
-ax.set_ylabel('Percentage Missing (%)')
+ax.set_title('Percentage of Missing Values in Numerical Variables')
+ax.set_ylabel('Column')
+ax.set_xlabel('Percentage Missing (%)')
 ax.tick_params(axis='x', labelrotation=90)
 
 plt.show()
@@ -420,10 +439,6 @@ df = df.drop(drop_cols, axis=1)
 print('Columns dropped:', drop_cols)
 
 # ## 3. Exploratory Data Analysis (EDA)
-
-# Describe the categorical and boolean features
-
-df.describe(include=["category", "bool"]).T
 
 # ### Descriptive statistics
 
@@ -450,7 +465,7 @@ from statsmodels.graphics.mosaicplot import mosaic
 # +
 # Visualize the distribution of the categorical variable with respect to the target variable
 target_var = 're.admission.within.6.months'
-
+categorical_vars = [col for col in df.columns if df[col].dtype == 'category']
 binary_vars = [col for col in categorical_vars if df[col].nunique()==2]
 nonbinary_vars = [col for col in categorical_vars if df[col].nunique()!=2]
 
@@ -550,15 +565,14 @@ plt.show()
 # Sono 119 variabili è perciò difficile visualizzarle tutte in un unico blocco. Potremmo forse fare blocchi con una decina di variabili max che siano "simili" tra loro. 
 # Come parametro per dire quanto sono simili potremmo sia usare la correlazione che vedere effettivamente cosa descrivono (i.e. weight, hight, BMI nello stesso blocco) TODO
 
-# +
 fig, axs = plt.subplots(nrows = 1, ncols = 1, figsize=(20,5))
-
+continuous_vars = [col for col in df.columns if df[col].dtype == 'float64']
 data = pd.melt(df, id_vars=[target_var], value_vars=continuous_vars[0:8])
 sns.violinplot(x="variable", y="value", hue=target_var, data=data, split=True)
-# -
 
 # Discrete variable visualization
 
+discrete_vars = [col for col in df.columns if df[col].dtype == 'int64']
 for var in discrete_vars:
     print('Unique values of the discrete variable',var, 'are: ',sorted(df[var].unique()))
 
@@ -620,6 +634,7 @@ df['NYHA.cardiac.function.classification'].unique()
 #
 # In summary, one-hot encoding is a great choice for nominal or unordered categorical variables, while label encoding can be useful for ordinal or ordered categorical variables. CatBoost encoding can be a good choice if there is a non-linear relationship between the categorical feature and the target variable, but it may not always be necessary or feasible to use, especially for small datasets or linear models. Ultimately, the choice of encoding technique depends on the nature of the data and the modeling task at hand.
 
+# No need to encode the binary variables
 cat_cols = df.select_dtypes(include=['category']).columns.tolist()
 cat_cols
 
