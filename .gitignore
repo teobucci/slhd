@@ -153,3 +153,4 @@ cython_debug/
 
 *DS_Store
 hospitalized-patients-with-heart-failure-integrating-electronic-healthcare-records-and-external-outcome-data-1.2*
+scaler.pkl

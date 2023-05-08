@@ -709,6 +709,17 @@ scaler = StandardScaler()
 X_train = scaler.fit_transform(X_train)
 X_test = scaler.transform(X_test)
 
+# Save the scaler
+
+import pickle
+with open('scaler.pkl', 'wb') as handle:
+    pickle.dump(scaler, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+# Load it back
+
+with open('scaler.pkl', 'rb') as handle:
+    scaler = pickle.load(handle)
+
 # ### Feature selection
 
 # +
