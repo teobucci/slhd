@@ -681,6 +681,7 @@ cat_cols
 # #### One hot encoder
 
 # One hot encode the categorical and boolean variables
+# drop='if_binary' drops one of male/female for example
 encoder = OneHotEncoder(sparse=False, handle_unknown='ignore', drop='if_binary')
 encoded_cols = pd.DataFrame(encoder.fit_transform(df[cat_cols]))
 
