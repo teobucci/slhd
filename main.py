@@ -347,11 +347,9 @@ df.shape
 
 # ### Handling duplicates
 
-# Check for the presence of duplicate rows.
+# Check that there are no duplicate rows.
 
-df.duplicated().sum()
-
-# There are no duplicate rows.
+assert df.duplicated().sum() == 0
 
 # ### Analizing presence of missing values
 
