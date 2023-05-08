@@ -213,16 +213,18 @@ import matplotlib.pyplot as plt
 # Graphics in retina format are more sharp and legible
 # %config InlineBackend.figure_format='retina'
 
-from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.model_selection import train_test_split, cross_val_score, cross_val_predict, GridSearchCV
 from sklearn.impute import SimpleImputer, KNNImputer
-from sklearn.preprocessing import StandardScaler
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
-from sklearn.metrics import accuracy_score, confusion_matrix, roc_curve, auc
-from sklearn.preprocessing import OneHotEncoder
+from sklearn.metrics import accuracy_score, confusion_matrix, roc_curve, auc, precision_recall_curve
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
 
 from pathlib import Path
 
