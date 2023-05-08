@@ -201,6 +201,10 @@
 # TODO qualcosa sull'environment
 
 # +
+# #!pipreqsnb . --force
+# #!pipreqs . --force
+
+# +
 import numpy as np
 import pandas as pd
 import seaborn as sns
