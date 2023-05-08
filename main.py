@@ -864,6 +864,41 @@ plt.tight_layout()
 plt.show()
 # -
 
+# coeff logistic
+classifier = LogisticRegression()
+classifier.fit(X_train,y_train)
+coeff=pd.DataFrame()
+coeff["feature"]=X_train.columns
+coeff["w"]=classifier.coef_[0]
+coeff = coeff.sort_values(by=['w'])
+sns.barplot(data=coeff, y="feature", x="w", palette="Blues_d", orient="h")
+plt.show()
+
+classifier = DecisionTreeClassifier()
+classifier.fit(X_train, y_train)
+
+from sklearn import tree
+text_representation = tree.export_text(classifier)
+with open("decistion_tree.log", "w") as f:
+    f.write(text_representation)
+
+# The `plot_tree` returns annotations for the plot, to not show them in the notebook I assigned returned value to `_`
+
+fig = plt.figure(figsize=(25,20))
+_ = tree.plot_tree(classifier,
+                   feature_names=X_train.columns,  
+                   class_names=['No','Yes'])
+
+# We can export as a figure but we must use `graphviz`
+
+from sklearn.tree import export_graphviz
+export_graphviz(classifier, out_file='decision_tree.dot', feature_names = X_test.columns.tolist(),class_names=['0','1'],
+                   filled=True)
+
+# !dot -Tpng decision_tree.dot -o decision_tree.png -Gdpi=600
+from IPython.display import Image
+Image(filename = 'decision_tree.png')
+
 # ## 6. Model Improvement
 #
 # ### Hyperparameter tuning
