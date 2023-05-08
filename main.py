@@ -453,11 +453,25 @@ df_numerical = df.select_dtypes(include=['float64', 'int64'])
 
 # Deep dive into the some features
 
-col_inspect = ['Killip.grade', 'ageCat']
-for col_name in col_inspect:
-    sns.countplot(x = col_name, data = df, palette = 'magma') # optional hue="re.admission.within.6.months"
+# +
+col_inspect = df_categorical.columns
+#col_inspect = ['Killip.grade', 'ageCat']
+
+# Adjust subplots and figsize
+fig, axes = plt.subplots(7, 5,figsize=[15,20])
+axes = axes.flatten()
+
+for idx, col_name in enumerate(col_inspect):
+    plt.sca(axes[idx]) # set the current Axes
+    #plt.hist(df_categorical[x],density=True)
+    sns.countplot(x = col_name, data = df_categorical, palette = 'magma')
+    plt.xticks(fontsize=8, rotation = 45) # Rotates X-Axis Ticks by 45-degrees
+    plt.ylabel('')
     plt.title(col_name)
-    plt.show()
+
+
+fig.tight_layout()
+plt.show()
 
 # +
 #df.sort_values(by=["Churn", "Total day charge"], ascending=[True, False]).head()
