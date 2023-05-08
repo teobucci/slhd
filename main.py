@@ -448,7 +448,7 @@ print('Columns dropped:', drop_cols)
 
 # Deep dive into the some features
 
-col_inspect = ['Killip.grade', 'diabetes', 'ageCat']
+col_inspect = ['Killip.grade', 'ageCat']
 for col_name in col_inspect:
     sns.countplot(x = col_name, data = df, palette = 'magma') # optional hue="re.admission.within.6.months"
     plt.title(col_name)
