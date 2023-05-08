@@ -229,6 +229,8 @@ from sklearn.compose import ColumnTransformer
 from pathlib import Path
 
 from statsmodels.graphics.mosaicplot import mosaic
+
+SEED = 42
 # -
 
 # For reproducibility purposes we load the (previously installed) `watermark` extension and print the current versions of the software.
@@ -737,7 +739,10 @@ y = df_encoded['re.admission.within.6.months']
 
 # Split the dataset into training and testing sets
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, y,
+                                                    test_size=0.2,
+                                                    stratify=y, # preserve target propotions
+                                                    random_state=SEED)
 
 # ### Feature scaling
 #
