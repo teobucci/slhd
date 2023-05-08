@@ -2,12 +2,16 @@
 #
 # Project for the _Statistical Learning for Healthcare Data_ course held at Politecnico di Milano in the academic year 2022-2023 by Professor Manuela Ferrario and Professor Anna Maria Paganoni.
 #
+# **It is recommended to [view this notebook in nbviewer](https://nbviewer.org/) for the best viewing experience.**
+#
+# **You can also [execute the code in this notebook on Binder](https://mybinder.org/) - no local installation required.**
+#
 # Authors:
 #
 # - Teo Bucci ([@teobucci](https://github.com/teobucci))
 # - Giulia Montani ([@GiuliaMontani](https://github.com/GiuliaMontani))
 # - Alice Traversa ([@AliceTraversa](https://github.com/AliceTraversa))
-#
+
 # ## 1. Introduction
 #
 # ### Explanation of the problem and objective
@@ -17,7 +21,6 @@
 # ### Data description
 #
 # The data has been provided in the folder `hospitalized-patients-with-heart-failure-integrating-electronic-healthcare-records-and-external-outcome-data-1.2` and for the analysis to be reproducible it must be in the same directory as this script.
-#
 
 # |     | Variables                                                     | Description                                                                                                                                                                                                                                                                                                         |
 # |-------|-----------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
