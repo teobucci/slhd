@@ -666,25 +666,29 @@ df_encoded.shape
 
 # LabelEncoder assigns a unique integer value to each category in the categorical feature, such that each category is mapped to a different integer
 
-from sklearn.preprocessing import LabelEncoder
+# +
+#from sklearn.preprocessing import LabelEncoder
 
 # +
 # create LabelEncoder object
-le = LabelEncoder()
+#le = LabelEncoder()
 
 # apply LabelEncoder to each categorical feature
-for col in cat_cols:
-    df[col] = le.fit_transform(df[col])
+#for col in cat_cols:
+#    df[col] = le.fit_transform(df[col])
 # -
 
 # #### Cat boost encoder
 
-import category_encoders as ce
+# +
+#import category_encoders as ce
 
-encoder=ce.cat_boost.CatBoostEncoder(cols=cat_cols,
-                                     random_state=None, sigma=None, a=1)
-encoder.fit(df,target_var)
-df = encoder.transform(df)
+# +
+#encoder=ce.cat_boost.CatBoostEncoder(cols=cat_cols,
+#                                     random_state=None, sigma=None, a=1)
+#encoder.fit(df,target_var)
+#df = encoder.transform(df)
+# -
 
 # ### Splitting data into training and testing sets
 #
@@ -726,7 +730,7 @@ X_test = pd.DataFrame(imputer.transform(X_test)) # TODO a volte dà un warning
 # TODO qualcosa su https://www.kaggle.com/code/residentmario/simple-techniques-for-missing-data-imputation
 
 # ## 5. Modeling
-#
+
 # ### Training the models
 #
 # [`lazypredict`](https://github.com/shankarpandala/lazypredict) is a Python library that is able to quickly check through many models, without any specific fine-tuning, but is able to give an initial look at which could be the best performing models on the task.
