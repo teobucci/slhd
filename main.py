@@ -457,6 +457,18 @@ df_numerical = df.select_dtypes(include=['float64', 'int64'])
 
 # ### Data visualization
 
+# Plot first 16 numerical features histograms
+
+df_numerical[df_numerical.columns[:16]].hist(layout=(4,4), figsize=(15,12))
+plt.show()
+
+# +
+sns.lmplot(x='weight',y='height',data=df, hue='re.admission.within.6.months',palette='Set1')
+plt.show()
+
+# TODO togliere outlier altezza e peso
+# -
+
 # Deep dive into the some features
 
 # +
