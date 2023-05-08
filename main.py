@@ -225,6 +225,12 @@ from pathlib import Path
 from statsmodels.graphics.mosaicplot import mosaic
 # -
 
+# For reproducibility purposes we load the (previously installed) `watermark` extension and print the current versions of the software.
+
+# %load_ext watermark
+
+# %watermark -m -v -iv
+
 # As first step we load the data, setting the index to the first column since it's already numbered
 
 DATA_FOLDER = Path() / "hospitalized-patients-with-heart-failure-integrating-electronic-healthcare-records-and-external-outcome-data-1.2"
