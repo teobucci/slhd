@@ -440,6 +440,11 @@ drop_cols = list(set(nan_cols + same_cols))
 df = df.drop(drop_cols, axis=1)
 print('Columns dropped:', drop_cols)
 
+# Update the categorical and numerical versions of the dataframe
+
+df_categorical = df.select_dtypes(include=['category', 'bool'])
+df_numerical = df.select_dtypes(include=['float64', 'int64'])
+
 # ## 3. Exploratory Data Analysis (EDA)
 
 # ### Descriptive statistics
