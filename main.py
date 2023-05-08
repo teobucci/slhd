@@ -234,7 +234,9 @@ from statsmodels.graphics.mosaicplot import mosaic
 # As first step we load the data, setting the index to the first column since it's already numbered
 
 DATA_FOLDER = Path() / "hospitalized-patients-with-heart-failure-integrating-electronic-healthcare-records-and-external-outcome-data-1.2"
-df = pd.read_csv((DATA_FOLDER / "dat.csv"), index_col=0)
+df = pd.read_csv((DATA_FOLDER / "dat.csv"), index_col=1)
+df = df.drop(columns=df.columns[0], axis=1)
+df.head()
 
 # ### Information about the memory usage
 #
@@ -242,7 +244,7 @@ df = pd.read_csv((DATA_FOLDER / "dat.csv"), index_col=0)
 
 df.info(memory_usage='deep')
 
-# Currently we're using 4.2 MB.
+# Currently we're using 4.0 MB.
 
 # ### Setting the correct column type
 #
@@ -557,8 +559,9 @@ sns.kdeplot(df[df[target_var] == 1]['map'], shade=True, label="Target 1",ax=axs[
 # -
 
 
-df['all'] = ''
-sns.violinplot(x='all', y='weight', hue=target_var, data = df, split=True)
+df_temp = df.copy()
+df_temp['all'] = ''
+sns.violinplot(x='all', y='weight', hue=target_var, data = df_temp, split=True)
 plt.xlabel("")
 plt.show()
 
