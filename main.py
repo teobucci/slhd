@@ -658,6 +658,10 @@ df_encoded = pd.concat([df.drop(cat_cols, axis=1).reset_index(drop=True),
 
 df_encoded.shape
 
+# +
+#[print(c) for c in df_encoded.columns]
+# -
+
 # #### Label encoder
 
 # LabelEncoder assigns a unique integer value to each category in the categorical feature, such that each category is mapped to a different integer
