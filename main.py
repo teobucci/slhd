@@ -951,6 +951,68 @@ bag_clf.oob_score_
 #
 # ### Cross-validation
 #
+# ### Final model pipeline
+
+# +
+# separate categorical and numerical features
+categorical_features = ['categorical_feature_1', 'categorical_feature_2']
+numerical_features = ['numerical_feature_1', 'numerical_feature_2']
+
+
+# create preprocessor for categorical data
+cat_preprocessor = Pipeline(steps=[
+    ('onehot', OneHotEncoder(handle_unknown='ignore'))
+])
+
+# create preprocessor for numerical data
+num_preprocessor = Pipeline(steps=[
+    ('imputer', SimpleImputer(strategy='median')),
+    ('scaler', StandardScaler()),
+    ('pca', PCA(n_components=2))
+])
+
+# combine the preprocessors into a column transformer
+preprocessor = ColumnTransformer(
+    transformers=[
+        ('cat', cat_preprocessor, categorical_features),
+        ('num', num_preprocessor, numerical_features)
+    ])
+
+# define the models and their parameter grids for grid search
+models = {
+    'logistic_regression': {
+        'model': LogisticRegression(max_iter=10000),
+        'param_grid': {'C': np.logspace(-3, 3, 7)}
+    },
+    'svm': {
+        'model': SVC(),
+        'param_grid': {'C': np.logspace(-3, 3, 7), 'gamma': ['scale', 'auto']}
+    },
+    'random_forest': {
+        'model': RandomForestClassifier(),
+        'param_grid': {'n_estimators': [100, 200, 300], 'max_depth': [5, 10, None]}
+    }
+}
+
+
+# create the pipelines for each model
+pipelines = {}
+for name, model in models.items():
+    pipelines[name] = Pipeline(steps=[
+        ('preprocessor', preprocessor),
+        ('classifier', model['model'])
+    ])
+
+# split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(data.drop('target', axis=1), data['target'], test_size=0.2, random_state=42)
+
+# perform grid search cross-validation for each model and output the test accuracy of the best model
+for name, pipeline in pipelines.items():
+    grid_search = GridSearchCV(pipeline, param_grid=models[name]['param_grid'], cv=5)
+    grid_search.fit(X_train, y_train)
+    print(f'{name}: test accuracy = {grid_search.score(X_test, y_test):.3f}')
+# -
+
 # ## 7. Conclusion
 #
 # ### Summary of findings
