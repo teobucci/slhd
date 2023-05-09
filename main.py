@@ -530,11 +530,6 @@ plt.show()
 # Sono 119 variabili è perciò difficile visualizzarle tutte in un unico blocco. Potremmo forse fare blocchi con una decina di variabili max che siano "simili" tra loro. 
 # Come parametro per dire quanto sono simili potremmo sia usare la correlazione che vedere effettivamente cosa descrivono (i.e. weight, hight, BMI nello stesso blocco) TODO
 
-fig, axs = plt.subplots(nrows = 1, ncols = 1, figsize=(20,5))
-continuous_vars = [col for col in df.columns if df[col].dtype == 'float64']
-data = pd.melt(df, id_vars=[target_var], value_vars=continuous_vars[0:8])
-sns.violinplot(x="variable", y="value", hue=target_var, data=data, split=True)
-
 # Discrete variable visualization
 
 discrete_vars = [col for col in df.columns if df[col].dtype == 'int64']
