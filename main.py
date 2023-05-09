@@ -458,6 +458,8 @@ df_numerical = df.select_dtypes(include=['float64', 'int64'])
 
 # ## 3. Exploratory Data Analysis (EDA)
 
+target_var = 're.admission.within.6.months'
+
 # ### Descriptive statistics
 
 # ### Data visualization
@@ -468,7 +470,7 @@ df_numerical[df_numerical.columns[:16]].hist(layout=(4,4), figsize=(15,12))
 plt.show()
 
 # +
-sns.lmplot(x='weight',y='height',data=df, hue='re.admission.within.6.months',palette='Set1')
+sns.lmplot(x='weight',y='height',data=df, hue=target_var,palette='Set1')
 plt.show()
 
 # TODO togliere outlier altezza e peso
@@ -497,7 +499,6 @@ fig.tight_layout()
 plt.show()
 # -
 
-target_var = 're.admission.within.6.months'
 pd.crosstab(df[target_var], df["gender"], margins=True)
 
 # +
@@ -653,8 +654,8 @@ df_encoded.shape
 #
 # Separate the target variable from the features
 
-X = df_encoded.drop(['re.admission.within.6.months'], axis=1)
-y = df_encoded['re.admission.within.6.months']
+X = df_encoded.drop([target_var], axis=1)
+y = df_encoded[target_var]
 
 # Split the dataset into training and testing sets
 
