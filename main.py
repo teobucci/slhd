@@ -963,22 +963,22 @@ models = {
     },
     'knn': {
         'model': KNeighborsClassifier(),
-        'param_grid' = {'n_neighbors':np.arange(10,500,20)}
+        'param_grid': {'n_neighbors':np.arange(10,500,20)}
     },
     'decision_tree_classifier': {
         'model': DecisionTreeClassifier(),
-        'param_grid' = {'criterion': ['entropy','gini'], 
+        'param_grid': {'criterion': ['entropy','gini'], 
                       'max_depth': [4,5,6,8,10],
                       'min_samples_split': [5,10,20],
                       'min_samples_leaf': [5,10,20]}
     },
     'mlp': {
         'model': MLPClassifier(),
-        'param_grid' = {"hidden_layer_sizes":[(10, 5),(100,20,5)],  "max_iter": [2000], "alpha": [0.001,0.1]}
+        'param_grid': {"hidden_layer_sizes":[(10, 5),(100,20,5)],  "max_iter": [2000], "alpha": [0.001,0.1]}
     },
     'naive_bayes': {
         'model': GaussianNB(),
-        'param_grid' = {}
+        'param_grid': {}
     }
 }
 
