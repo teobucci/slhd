@@ -707,8 +707,8 @@ def get_outliers(df, feature, threshold=3):
     # calculate the Z-score for each value in the 'value' column
     zscore = (df[feature] - df[feature].mean()) / df[feature].std(ddof=0)
 
-    # identify outliers as any value with a Z-score greater than 3 or less than -3
-    outliers = df[(zscore > 3) | (zscore < -3)]
+    # identify outliers as any value with a Z-score greater than threshold or less than -threshold
+    outliers = df[(zscore > threshold) | (zscore < -threshold)]
 
     return outliers[feature]
 
