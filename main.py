@@ -238,6 +238,9 @@ from statsmodels.graphics.mosaicplot import mosaic
 SEED = 42
 # -
 
+OUTPUT_FOLDER = Path() / 'output'
+OUTPUT_FOLDER.mkdir(parents=True, exist_ok=True)
+
 # For reproducibility purposes we load the (previously installed) `watermark` extension and print the current versions of the software.
 
 # %load_ext watermark
@@ -749,12 +752,12 @@ X_test = scaler.transform(X_test)
 # Save the scaler
 
 import pickle
-with open('scaler.pkl', 'wb') as handle:
+with open(str(OUTPUT_FOLDER / 'scaler.pkl'), 'wb') as handle:
     pickle.dump(scaler, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 # Load it back
 
-with open('scaler.pkl', 'rb') as handle:
+with open(str(OUTPUT_FOLDER / 'scaler.pkl'), 'rb') as handle:
     scaler = pickle.load(handle)
 
 # ### Feature selection
@@ -1034,12 +1037,12 @@ _ = tree.plot_tree(classifier,
 # We can export as a figure but we must use `graphviz`
 
 from sklearn.tree import export_graphviz
-export_graphviz(classifier, out_file='decision_tree.dot', feature_names = X_test.columns.tolist(),class_names=['0','1'],
+export_graphviz(classifier, out_file=str(OUTPUT_FOLDER / 'decision_tree.dot'), feature_names = X_test.columns.tolist(),class_names=['0','1'],
                    filled=True)
 
-# !dot -Tpng decision_tree.dot -o decision_tree.png -Gdpi=600
+# !dot -Tpng decision_tree.dot -o output/decision_tree.png -Gdpi=600
 from IPython.display import Image
-Image(filename = 'decision_tree.png')
+Image(filename = str(OUTPUT_FOLDER / 'decision_tree.png'))
 
 GiniScore,j=np.sort(classifier.feature_importances_),np.argsort(classifier.feature_importances_)
 GiniScore,j = GiniScore[-10:],j[-10:]
