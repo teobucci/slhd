@@ -249,6 +249,54 @@ df = pd.read_csv((DATA_FOLDER / "dat.csv"), index_col=1)
 df = df.drop(columns=df.columns[0], axis=1)
 df.head()
 
+df_drugs = pd.read_csv((DATA_FOLDER / "dat_md.csv"), index_col=1)
+df_drugs = df_drugs.drop(columns=df_drugs.columns[0], axis=1)
+
+# Check which patients are missing from the drugs dataframe
+missing_patients = ~df.index.isin(df_drugs.index)
+print('Missing patients from the drugs dataframe:')
+print(df[missing_patients].index)
+
+# Check the contrary (i.e. if there are entries in the drug dataframe that don't corresponde to any patient in the main df)
+missing_drugs = ~df_drugs.index.isin(df.index)
+print('Missing patients from the patients dataframe:')
+print(df_drugs[missing_drugs].index)
+
+# +
+#df_drugs.shape
+# -
+
+# More drugs were given to the same patient.
+
+# +
+#df_drugs.head()
+
+# +
+#df_drugs['Administration'] = df_drugs['Drug_name'].apply(lambda x: 'injection' if 'injection' in x.lower() else 'tablet')
+#df_drugs['Drug_name'] = df_drugs['Drug_name'].apply(lambda x: x.replace('injection', '').replace('tablet', ''))
+
+# +
+#pd.DataFrame(df_drugs['Drug_name'].unique(), columns=['name'])
+# -
+
+# Create a pivot table of drugs, with patients as rows and drugs as columns
+drug_pivot = df_drugs.pivot_table(index='inpatient.number', columns='Drug_name', fill_value='No', aggfunc=lambda x: 'Yes')
+drug_pivot.head()
+
+# Merge the patient dataframe with the drug pivot table
+merged_df = pd.merge(df, drug_pivot, on='inpatient.number', how='left')
+merged_df.head()
+
+# Fill patients without any drug with No
+for drug_name in drug_pivot.columns:
+    merged_df[drug_name] = merged_df[drug_name].fillna(value='No')
+
+# +
+#merged_df.loc[863648]
+# -
+
+# TODO: ora bisogna fare qualcosa con sto merged
+
 # ### Information about the memory usage
 #
 # We check the memory usage of the dataframe.
