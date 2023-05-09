@@ -623,36 +623,29 @@ for var in discrete_vars:
 # prepare confronto tra distribuzioni di variabili discrete, continue, categoriche con kde
 
 # Compute the correlation matrix
-corr_matrix = df.corr(numeric_only=True)
+corr_matrix = df.corr(numeric_only=True, method='spearman')
 
 
-# +
+# Choose only a subset of the correlation matrix
+
+corr_matrix = corr_matrix.iloc[0:10,0:10]
+
+# Data will not be shown in cells where `mask` is `True`
+
+threshold = 0.4
+mask = np.triu(np.ones_like(corr_matrix, dtype=bool), k=0) | (np.abs(corr_matrix) <= threshold)
+
 # Plot the correlation matrix using seaborn
 fig, ax = plt.subplots(figsize=(10, 10))
 sns.heatmap(corr_matrix,
-            annot=False, fmt='.2f',
+            annot=True, fmt='.2f',
+            mask=mask,
             cmap='coolwarm', center=0, cbar=True,
             linewidths=.5,
-            ax=ax,
-            mask=np.tril(corr_matrix, k=-1))
-
-
-# Add x-axis and y-axis labels
-#plt.xticks(range(len(corr_matrix.columns)), corr_matrix.columns, rotation=90)
-#plt.yticks(range(len(corr_matrix.columns)), corr_matrix.columns)
-
-ax.tick_params(
-    axis='both',          # changes apply to both x-y-axis
-    which='both',      # both major and minor ticks are affected
-    bottom=False,      # ticks along the bottom edge are off
-    top=False,         # ticks along the top edge are off
-    labelbottom=False) # labels along the bottom edge are off
-
+            ax=ax)
 ax.set_aspect("equal")
-
-# Show the plot
+plt.title("Correlation matrix")
 plt.show()
-# -
 
 # ### Feature engineering
 
