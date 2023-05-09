@@ -1013,3 +1013,23 @@ for name, pipeline in pipelines.items():
 # ### Recommendations for further research
 #
 # ### Limitations of the analysis
+
+# # Extras
+
+# ## Imbalance
+
+# +
+# #!pip install imbalanced-learn
+
+# +
+from imblearn.over_sampling import SMOTE
+
+oversample = SMOTE(random_state=45)
+X_ov, y_ov = oversample.fit_resample(X_train, y_train)
+oversample.get_params()
+# -
+
+from collections import Counter
+Counter(y_train)
+
+Counter(y_ov)
