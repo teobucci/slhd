@@ -650,6 +650,26 @@ df_encoded.shape
 #df = encoder.transform(df)
 # -
 
+# ### Outlier detection
+
+def get_outliers(df, feature, threshold=3):
+    # calculate the Z-score for each value in the 'value' column
+    zscore = (df[feature] - df[feature].mean()) / df[feature].std(ddof=0)
+
+    # identify outliers as any value with a Z-score greater than 3 or less than -3
+    outliers = df[(zscore > 3) | (zscore < -3)]
+
+    return outliers[feature]
+
+
+print(get_outliers(df, 'height'))
+
+print(get_outliers(df, 'weight'))
+
+print(get_outliers(df, 'body.temperature'))
+
+# Instead of removing the entire row, we prefer to set such values to `NaN` and let the imputer in the next steps fill it.
+
 # ### Splitting data into training and testing sets
 #
 # Separate the target variable from the features
