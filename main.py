@@ -930,6 +930,21 @@ export_graphviz(classifier, out_file='decision_tree.dot', feature_names = X_test
 from IPython.display import Image
 Image(filename = 'decision_tree.png')
 
+GiniScore,j=np.sort(classifier.feature_importances_),np.argsort(classifier.feature_importances_)
+GiniScore,j = GiniScore[-10:],j[-10:]
+sns.barplot(y=classifier.feature_names_in_[j], x=GiniScore, color='g')
+plt.show()
+
+# Out of bag score.
+#
+# It permits to have an overview without the cv validation test, of course the results should be then tested on the test set.
+
+bag_clf = BaggingClassifier(DecisionTreeClassifier(), n_estimators=500, bootstrap=True, 
+                            oob_score=True, n_jobs=-1,random_state=42)
+bag_clf.fit(X_train, y_train)
+
+bag_clf.oob_score_
+
 # ## 6. Model Improvement
 #
 # ### Hyperparameter tuning
