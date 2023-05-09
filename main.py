@@ -982,7 +982,6 @@ models = {
     }
 }
 
-
 # create the pipelines for each model
 pipelines = {}
 for name, model in models.items():
@@ -994,9 +993,18 @@ for name, model in models.items():
 # split the data into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(data.drop('target', axis=1), data['target'], test_size=0.2, random_state=42)
 
+scoring = {"AUC": "roc_auc", "Accuracy": make_scorer(accuracy_score)}
+
 # perform grid search cross-validation for each model and output the test accuracy of the best model
 for name, pipeline in pipelines.items():
-    grid_search = GridSearchCV(pipeline, param_grid=models[name]['param_grid'], cv=5)
+    grid_search = GridSearchCV(
+        pipeline,
+        param_grid=models[name]['param_grid'],
+        cv=5,
+        scoring=scoring,
+        refit="AUC",
+        return_train_score=True
+    )
     grid_search.fit(X_train, y_train)
     print(f'{name}: test accuracy = {grid_search.score(X_test, y_test):.3f}')
 # -
