@@ -518,13 +518,14 @@ for idx, col_name in enumerate(col_inspect):
 
 fig.tight_layout()
 plt.show()
-# -
 
-df_temp = df.copy()
-df_temp['all'] = ''
-sns.violinplot(x='all', y='weight', hue=target_var, data = df_temp, split=True)
-plt.xlabel("")
-plt.show()
+# +
+#df_temp = df.copy()
+#df_temp['all'] = ''
+#sns.violinplot(x='all', y='weight', hue=target_var, data = df_temp, split=True)
+#plt.xlabel("")
+#plt.show()
+# -
 
 # Sono 119 variabili è perciò difficile visualizzarle tutte in un unico blocco. Potremmo forse fare blocchi con una decina di variabili max che siano "simili" tra loro. 
 # Come parametro per dire quanto sono simili potremmo sia usare la correlazione che vedere effettivamente cosa descrivono (i.e. weight, hight, BMI nello stesso blocco) TODO
