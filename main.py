@@ -867,6 +867,8 @@ plt.tight_layout()
 plt.show()
 # -
 
+# #### Logistic Regression
+
 # coeff logistic
 classifier = LogisticRegression()
 classifier.fit(X_train,y_train)
@@ -900,6 +902,8 @@ plt.title("Precision Recall curve")
 plt.legend()
 plt.show()
 # -
+
+# #### DecisionTreeClassifier
 
 classifier = DecisionTreeClassifier()
 classifier.fit(X_train, y_train)
