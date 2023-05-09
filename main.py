@@ -728,6 +728,55 @@ models
 
 model_dictionary = clf.provide_models(X_train,X_test,y_train,y_test)
 
+# +
+# The scorers can be either one of the predefined metric strings or a scorer
+# callable, like the one returned by make_scorer
+
+scoring = {"AUC": "roc_auc", "Accuracy": make_scorer(accuracy_score)}
+
+# Setting refit='AUC', refits an estimator on the whole dataset with the
+# parameter setting that has the best cross-validated AUC score.
+# That estimator is made available at ``gs.best_estimator_`` along with
+# parameters like ``gs.best_score_``, ``gs.best_params_`` and
+# ``gs.best_index_``
+gs = GridSearchCV(
+    DecisionTreeClassifier(random_state=42),
+    param_grid={"min_samples_split": range(2, 403, 10)},
+    scoring=scoring,
+    refit="AUC",
+    return_train_score=True
+)
+gs.fit(X_train, y_train)
+R = gs.cv_results_
+# -
+
+gs.best_estimator_
+
+gs.best_params_
+
+gs.best_score_
+
+pd.DataFrame(R.keys())
+
+# +
+m1=R['mean_test_AUC']
+s1=R['std_test_AUC']
+s2=R['std_train_AUC']
+m2=R['mean_train_AUC']
+
+axisX = list(range(len(m1)))
+plt.errorbar(axisX, m1, s1, label='test')
+plt.errorbar(axisX, m2, s2, label='train')
+
+j1=np.argmax(m1) # maximum value of AUC in terms of mean over the CV folds
+
+plt.plot(axisX[j1],m1[j1], 'ro', markersize=12)
+plt.legend()
+plt.show()
+
+print(R['params'][j1])
+# -
+
 # ### Evaluating model performance
 
 # Train and evaluate multiple models
