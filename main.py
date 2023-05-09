@@ -811,7 +811,10 @@ model_dictionary = clf.provide_models(X_train,X_test,y_train,y_test)
 # ### Evaluating model performance
 
 # Train and evaluate multiple models
-models = [LogisticRegression(max_iter=100000), DecisionTreeClassifier(), RandomForestClassifier(), SVC(probability=True)]
+models = [LogisticRegression(max_iter=100000),
+          DecisionTreeClassifier(),
+          RandomForestClassifier(),
+          SVC(probability=True)]
 
 from mlxtend.plotting import plot_confusion_matrix
 
