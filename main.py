@@ -1027,7 +1027,7 @@ with open("decistion_tree.log", "w") as f:
 
 fig = plt.figure(figsize=(25,20))
 _ = tree.plot_tree(classifier,
-                   feature_names=X_train.columns,  
+                   feature_names=X_train.columns,
                    class_names=['No','Yes'])
 
 # We can export as a figure but we must use `graphviz`
@@ -1049,7 +1049,7 @@ plt.show()
 #
 # It permits to have an overview without the cv validation test, of course the results should be then tested on the test set.
 
-bag_clf = BaggingClassifier(DecisionTreeClassifier(), n_estimators=500, bootstrap=True, 
+bag_clf = BaggingClassifier(DecisionTreeClassifier(), n_estimators=500, bootstrap=True,
                             oob_score=True, n_jobs=-1,random_state=42)
 bag_clf.fit(X_train, y_train)
 
