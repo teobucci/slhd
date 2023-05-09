@@ -726,6 +726,74 @@ X_test = pd.DataFrame(imputer.transform(X_test)) # TODO a volte dà un warning
 
 # TODO qualcosa su https://www.kaggle.com/code/residentmario/simple-techniques-for-missing-data-imputation
 
+# ### Principal Component Analysis
+
+# +
+# Instantiate PCA
+pca = PCA()
+
+# Fit and transform the data to the new coordinate system
+pca.fit(X_train)
+
+X_train_transformed = pca.transform(X_train) # scores
+X_test_transformed = pca.transform(X_test)
+
+vars_names = X_train.columns
+p = X_train.columns.size
+comp_names = ["PC " + str(i) for i in range(1, p+1)]
+
+# +
+plt.subplot(221)
+plt.bar(vars_names, np.var(X, axis=0))
+plt.xticks(rotation=90)
+plt.title('Original variables')
+plt.ylabel('Variances')
+plt.ylim([0, 5])
+
+plt.subplot(223)
+plt.bar(comp_names, np.var(X_train_transformed, axis=0))
+plt.title('Principal components')
+plt.ylabel('Variances')
+plt.ylim([0, 10])
+
+plt.subplot(122)
+plt.plot(np.cumsum(pca.explained_variance_ratio_), '-o')
+plt.xlabel('Number of components')
+plt.ylabel('Contribution to total variability')
+plt.ylim([0, 1.1])
+plt.axhline(y=1, lw=0.5)
+plt.axhline(y=0.8, linestyle='--', lw=0.5)
+plt.yticks(np.arange(0, 1.1, 0.1))
+plt.xticks(np.arange(0,p), np.arange(1,p+1))
+plt.title('Cumulative explained variance')
+
+plt.tight_layout()
+plt.show()
+
+# +
+loadings = pca.components_
+
+fig, ax = plt.subplots(1, 2, figsize=(8, 3))
+
+ax[0].bar(range(p), loadings[:, 0], align='center')
+ax[1].bar(range(p), loadings[:, 1], align='center')
+
+ax[0].set_title('Factor loading onto PC1')
+ax[1].set_title('Factor loading onto PC2')
+
+ax[0].set_xticks(range(p))
+ax[1].set_xticks(range(p))
+ax[0].set_xticklabels(vars_names, rotation=45)
+ax[1].set_xticklabels(vars_names, rotation=45)
+plt.tight_layout()
+# -
+
+# Visualize the data in the new coordinate system
+plt.scatter(X_train_transformed[:, 0], X_train_transformed[:, 1], c=y_train)
+plt.xlabel('PC1')
+plt.ylabel('PC2')
+plt.show()
+
 # ## 5. Modeling
 
 # ### Training the models
