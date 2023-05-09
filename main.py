@@ -846,6 +846,8 @@ for i, model in enumerate(models):
                                 show_normed=True,
                                 colorbar=True, figure=fig, axis=axes[0,i])
 
+    axes[0,i].set_xlabel('Predicted label')
+    axes[0,i].set_ylabel('True label')
 
     # Calculate the ROC curve
     y_score = model.predict_proba(X_test)[:,1]
