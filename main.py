@@ -228,6 +228,8 @@ from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.neural_network import MLPClassifier
 from sklearn.naive_bayes import GaussianNB
+from collections import Counter
+from imblearn.over_sampling import SMOTE
 
 from pathlib import Path
 
@@ -969,7 +971,6 @@ for i, model in enumerate(models):
     axes[1,i].set_ylabel('True Positive Rate')
     axes[1,i].set_title(model.__class__.__name__ + ' ROC Curve')
     axes[1,i].legend(loc="lower right")
-    
     axes[1,i].set_aspect('equal')
     axes[0,i].set_aspect('equal')
 
@@ -1171,14 +1172,12 @@ for name, pipeline in pipelines.items():
 # #!pip install imbalanced-learn
 
 # +
-from imblearn.over_sampling import SMOTE
 
 oversample = SMOTE(random_state=45)
 X_ov, y_ov = oversample.fit_resample(X_train, y_train)
 oversample.get_params()
 # -
 
-from collections import Counter
 Counter(y_train)
 
 Counter(y_ov)
