@@ -593,8 +593,30 @@ sns.violinplot(x=target_var, y='map', data = df, ax= axs[1])
 
 sns.kdeplot(df[df[target_var] == 0]['map'], shade=True, label="Target 0",ax=axs[2])
 sns.kdeplot(df[df[target_var] == 1]['map'], shade=True, label="Target 1",ax=axs[2])
-# -
 
+
+# +
+col_inspect = df_numerical.columns[:8]
+#col_inspect = ['Killip.grade', 'ageCat']
+
+# Adjust subplots and figsize
+fig, axes = plt.subplots(2, 4,figsize=[14,10])
+axes = axes.flatten()
+
+for idx, col_name in enumerate(col_inspect):
+    plt.sca(axes[idx]) # set the current Axes
+    #plt.hist(df_numerical[x],density=True)
+    sns.kdeplot(df[df[target_var] == 0][col_name], shade=True, label="Target 0")
+    sns.kdeplot(df[df[target_var] == 1][col_name], shade=True, label="Target 1")
+    plt.legend()
+    plt.xticks(fontsize=8, rotation = 45) # Rotates X-Axis Ticks by 45-degrees
+    plt.ylabel('')
+    #plt.grid()
+    #plt.title(col_name)
+
+fig.tight_layout()
+plt.show()
+# -
 
 df_temp = df.copy()
 df_temp['all'] = ''
