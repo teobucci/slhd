@@ -656,6 +656,11 @@ plt.show()
 
 # ### Feature engineering
 
+# +
+# feature engineering
+#df_numerical['logduration']=df_numerical['duration'].apply(lambda x: math.log(x+1))
+# -
+
 # importante da vedere
 df['NYHA.cardiac.function.classification'].unique()
 
