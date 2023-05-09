@@ -881,6 +881,30 @@ coeff = coeff.sort_values(by=['w'])
 sns.barplot(data=coeff, y="feature", x="w", palette="Blues_d", orient="h")
 plt.show()
 
+# +
+y_pred = classifier.predict(X_test)
+precisions, recalls, thresholds = precision_recall_curve(y_test, y_pred)
+
+# Compute the zero skill model line
+# It will depend on the fraction of observations belonging to the positive class
+zero_skill = len(y_test[y_test==1]) / len(y_test)
+
+# Compute the perfect model line
+perfect_precision = np.ones_like(recalls)
+perfect_recall = np.linspace(0, 1, num=len(perfect_precision))
+
+plt.plot(recalls, precisions, 'r-', label='Logistic')
+plt.plot([0, 1], [zero_skill, zero_skill], 'b--', label='Zero skill')
+plt.plot(perfect_recall, perfect_precision, 'g--', linewidth=2, label='Perfect model')
+plt.xlabel("Recall")
+plt.ylabel("Precision")
+plt.axis([0, 1, 0, 1])
+#plt.grid()
+plt.title("Precision Recall curve")
+plt.legend()
+plt.show()
+# -
+
 classifier = DecisionTreeClassifier()
 classifier.fit(X_train, y_train)
 
