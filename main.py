@@ -618,6 +618,7 @@ df_encoded = pd.concat([df.drop(cat_cols, axis=1).reset_index(drop=True),
 
 df_encoded.shape
 
+
 # +
 #[print(c) for c in df_encoded.columns]
 # -
@@ -1029,7 +1030,7 @@ cat_preprocessor = Pipeline(steps=[
 num_preprocessor = Pipeline(steps=[
     ('imputer', SimpleImputer(strategy='median')),
     ('scaler', StandardScaler()),
-    ('pca', PCA(n_components=2))
+    #('pca', PCA(n_components=2))
 ])
 
 # combine the preprocessors into a column transformer
@@ -1083,12 +1084,12 @@ models = {
 pipelines = {}
 for name, model in models.items():
     pipelines[name] = Pipeline(steps=[
-        ('preprocessor', preprocessor),
+        #('preprocessor', preprocessor),
         ('classifier', model['model'])
     ])
 
 # split the data into training and testing sets
-X_train, X_test, y_train, y_test = train_test_split(data.drop('target', axis=1), data['target'], test_size=0.2, random_state=42)
+#X_train, X_test, y_train, y_test = train_test_split(data.drop('target', axis=1), data['target'], test_size=0.2, random_state=42)
 
 scoring = {"AUC": "roc_auc", "Accuracy": make_scorer(accuracy_score)}
 
