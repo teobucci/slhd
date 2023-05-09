@@ -955,13 +955,13 @@ preprocessor = ColumnTransformer(
 models = {
     'logistic_regression': {
         'model': LogisticRegression(max_iter=10000),
-        'param_grid': {'C': np.logspace(-3, 3, 7)}
+        'param_grid': {'classifier__C': np.logspace(-3, 3, 7)}
     },
     'svm': {
         'model': SVC(),
-        'param_grid': {'C': np.logspace(-3, 3, 7),
-                       'gamma': ['scale', 'auto'],
-                       'kernel': ['linear','rbf']}
+        'param_grid': {'classifier__C': np.logspace(-3, 3, 7),
+                       'classifier__gamma': ['scale', 'auto'],
+                       'classifier__kernel': ['linear','rbf']}
     },
     'random_forest': {
         'model': RandomForestClassifier(),
@@ -970,20 +970,20 @@ models = {
     },
     'knn': {
         'model': KNeighborsClassifier(),
-        'param_grid': {'n_neighbors': np.arange(10,500,20)}
+        'param_grid': {'classifier__n_neighbors': np.arange(10,500,20)}
     },
     'decision_tree_classifier': {
         'model': DecisionTreeClassifier(),
-        'param_grid': {'criterion': ['entropy','gini'], 
-                       'max_depth': [4,5,6,8,10],
-                       'min_samples_split': [5,10,20],
-                       'min_samples_leaf': [5,10,20]}
+        'param_grid': {'classifier__criterion': ['entropy','gini'], 
+                       'classifier__max_depth': [4,5,6,8,10],
+                       'classifier__min_samples_split': [5,10,20],
+                       'classifier__min_samples_leaf': [5,10,20]}
     },
     'mlp': {
         'model': MLPClassifier(),
-        'param_grid': {'hidden_layer_sizes': [(10, 5),(100,20,5)],
-                       'max_iter': [2000],
-                       'alpha': [0.001,0.1]}
+        'param_grid': {'classifier__hidden_layer_sizes': [(10, 5),(100,20,5)],
+                       'classifier__max_iter': [2000],
+                       'classifier__alpha': [0.001,0.1]}
     },
     'naive_bayes': {
         'model': GaussianNB(),
