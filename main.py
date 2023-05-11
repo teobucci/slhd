@@ -1085,9 +1085,11 @@ export_graphviz(classifier, out_file=str(OUTPUT_FOLDER / 'decision_tree.dot'), f
 from IPython.display import Image
 Image(filename = str(OUTPUT_FOLDER / 'decision_tree.png'))
 
-GiniScore,j=np.sort(classifier.feature_importances_),np.argsort(classifier.feature_importances_)
-GiniScore,j = GiniScore[-10:],j[-10:]
-sns.barplot(y=classifier.feature_names_in_[j], x=GiniScore, color='g')
+GiniScore, j = np.sort(classifier.feature_importances_), np.argsort(classifier.feature_importances_)
+GiniScore, j = GiniScore[-10:],j[-10:]
+sns.barplot(y=X.columns[j], x=GiniScore, color='g')
+plt.title('Feature importances using MDI')
+plt.xlabel('Mean decrease in impurity')
 plt.show()
 
 # Out of bag score.
