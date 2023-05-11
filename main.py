@@ -747,12 +747,12 @@ df_encoded.shape
 
 def get_outliers(df, feature, threshold=3):
     # calculate the Z-score for each value in the 'value' column
-    zscore = (df[feature] - df[feature].mean()) / df[feature].std(ddof=0)
+    df['zscore'] = (df[feature] - df[feature].mean()) / df[feature].std(ddof=0)
 
     # identify outliers as any value with a Z-score greater than threshold or less than -threshold
-    outliers = df[(zscore > threshold) | (zscore < -threshold)]
+    outliers = (df['zscore'] > threshold) | (df['zscore'] < -threshold)
 
-    return outliers[feature]
+    return df[[feature, 'zscore']].loc[outliers]
 
 
 print(get_outliers(df, 'height'))
