@@ -759,7 +759,9 @@ print(get_outliers(df, 'height'))
 
 print(get_outliers(df, 'weight'))
 
-print(get_outliers(df, 'body.temperature'))
+print(get_outliers(df, 'body.temperature', threshold=6))
+
+print(get_outliers(df, 'BMI'))
 
 # Instead of removing the entire row, we prefer to set such values to `NaN` and let the imputer in the next steps fill it.
 
