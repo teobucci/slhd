@@ -220,7 +220,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, BaggingClassifier
 from sklearn.svm import SVC
-from sklearn.metrics import accuracy_score, confusion_matrix, roc_curve, auc, precision_recall_curve, make_scorer
+from sklearn.metrics import accuracy_score, confusion_matrix, roc_curve, auc, precision_recall_curve, make_scorer, cohen_kappa_score
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
@@ -555,7 +555,46 @@ plt.show()
 pd.crosstab(df[target_var], df["gender"], margins=True)
 
 # +
-col_inspect = df_numerical.columns[:8]
+# Read in the dataset as a Pandas DataFrame
+#data = df[df.columns[51:62]]
+data = df[df.columns[52:58]] # take only binary variables
+
+data = data.dropna()
+
+# Create an empty table to hold the Cohen scores
+score_table = pd.DataFrame(columns=data.columns, index=data.columns)
+
+# +
+# Loop over every pair of variables in the dataset
+for i in range(len(data.columns)):
+    for j in range(i+1, len(data.columns)):
+        # Calculate the Cohen score between the ith and jth variables
+        score = cohen_kappa_score(data.iloc[:,i], data.iloc[:,j])
+        
+        # Add the score to the score table
+        score_table.iloc[i,j] = score
+        score_table.iloc[j,i] = score
+
+score_table = score_table.fillna(1)
+
+# +
+threshold = 0.4
+mask = np.triu(np.ones_like(score_table, dtype=bool), k=0) | (np.abs(score_table) <= threshold)
+
+# Print the score table
+fig, ax = plt.subplots(figsize=(10, 10))
+sns.heatmap(score_table,
+            annot=True, fmt='.2f',
+            mask=mask,
+            cmap='coolwarm', center=0, cbar=True,
+            linewidths=.5,
+            ax=ax)
+ax.set_aspect("equal")
+plt.title("Correlation matrix")
+plt.show()
+
+# +
+col_inspect = df_numerical.columns[:32]
 #col_inspect = ['Killip.grade', 'ageCat']
 
 # Adjust subplots and figsize
