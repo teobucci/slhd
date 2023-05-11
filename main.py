@@ -604,8 +604,8 @@ axes = axes.flatten()
 for idx, col_name in enumerate(col_inspect):
     plt.sca(axes[idx]) # set the current Axes
     #plt.hist(df_numerical[x],density=True)
-    sns.kdeplot(df[df[target_var] == 0][col_name], shade=True, label="Target 0")
-    sns.kdeplot(df[df[target_var] == 1][col_name], shade=True, label="Target 1")
+    sns.kdeplot(df[df[target_var] == 0][col_name], fill=True, label="Target 0")
+    sns.kdeplot(df[df[target_var] == 1][col_name], fill=True, label="Target 1")
     plt.legend()
     plt.xticks(fontsize=8, rotation = 45) # Rotates X-Axis Ticks by 45-degrees
     plt.ylabel('')
