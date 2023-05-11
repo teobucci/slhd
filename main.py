@@ -642,9 +642,10 @@ for var in discrete_vars:
 corr_matrix = df.corr(numeric_only=True, method='spearman')
 
 
-# Choose only a subset of the correlation matrix
+inspect_col = ['urea', 'uric.acid']
+# -
 
-corr_matrix = corr_matrix.iloc[0:10,0:10]
+corr_matrix = corr_matrix[inspect_col].loc[inspect_col]
 
 # Data will not be shown in cells where `mask` is `True`
 
