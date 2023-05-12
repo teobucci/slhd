@@ -513,13 +513,19 @@ df_numerical = df.select_dtypes(include=['float64', 'int64'])
 
 target_var = 're.admission.within.6.months'
 
-# ### Descriptive statistics
+# Percentage of positive observations
+
+np.round((df[target_var] == True).sum() / len(df.index), 2)
 
 # ### Data visualization
 
-# Plot first 16 numerical features histograms
+# We have
 
-df_numerical[df_numerical.columns[:16]].hist(layout=(4,4), figsize=(15,12))
+len(df_numerical.columns)
+
+# numerical features, let us plot them in a big grid to have an understanding of the distribution.
+
+df_numerical[df_numerical.columns[:129]].hist(layout=(33,4), figsize=(15,90))
 plt.show()
 
 # +
@@ -598,7 +604,7 @@ col_inspect = df_numerical.columns[:32]
 #col_inspect = ['Killip.grade', 'ageCat']
 
 # Adjust subplots and figsize
-fig, axes = plt.subplots(2, 4,figsize=[14,10])
+fig, axes = plt.subplots(8, 4,figsize=[14,20])
 axes = axes.flatten()
 
 for idx, col_name in enumerate(col_inspect):
@@ -1221,13 +1227,11 @@ for name, pipeline in pipelines.items():
 
 # +
 # #!pip install imbalanced-learn
-
-# +
+# -
 
 oversample = SMOTE(random_state=45)
 X_ov, y_ov = oversample.fit_resample(X_train, y_train)
 oversample.get_params()
-# -
 
 Counter(y_train)
 
