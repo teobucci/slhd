@@ -902,7 +902,7 @@ from lazypredict.Supervised import LazyClassifier
 
 # We now instantiate it with basic settings
 
-clf = LazyClassifier(verbose=0,ignore_warnings=True, custom_metric=None)
+clf = LazyClassifier(verbose=0, ignore_warnings=True, custom_metric=None)
 
 # And then we fit it using our data
 
