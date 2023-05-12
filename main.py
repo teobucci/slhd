@@ -640,9 +640,13 @@ for var in discrete_vars:
 
 # prepare confronto tra distribuzioni di variabili discrete, continue, categoriche con kde
 
+# Choose only a subset of the correlation matrix
+
+# +
 # Compute the correlation matrix
 corr_matrix = df.corr(numeric_only=True, method='spearman')
 
+#corr_matrix = corr_matrix.iloc[0:10,0:10]
 
 inspect_col = ['urea', 'uric.acid']
 # -
