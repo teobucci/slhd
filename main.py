@@ -634,6 +634,8 @@ for var in discrete_vars:
 
 # Create a range for each one of this value, based on medical knowledge (i.e. instead of having values for systolic.blood.pressure between 0 and 252 we can create three categories that are 'low','normal','high') TODO
 
+# ## 4. Data Preprocessing
+
 # ### Correlation analysis
 
 # prepare confronto tra distribuzioni di variabili discrete, continue, categoriche con kde
@@ -673,8 +675,6 @@ plt.show()
 
 # importante da vedere
 df['NYHA.cardiac.function.classification'].unique()
-
-# ## 4. Data Preprocessing
 
 # ### Encoding categorical variables
 
