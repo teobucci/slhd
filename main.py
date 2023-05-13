@@ -528,7 +528,7 @@ df = df.drop(drop_cols, axis=1)
 
 assert df.duplicated().sum() == 0
 
-# ### Analizing presence of missing values
+# ### Checking for missing values
 
 # Identify categorical and numerical variables
 
@@ -597,23 +597,25 @@ ax.axvline(x=50, color='k', linestyle='--')
 plt.show()
 # -
 
-# ### Handling meaningless columns
-#
-# Check for the columns with all NaNs.
+# We now set a threshold for missing values and drop features that present a percentage of missing values higher than the threshold.
 
-nan_cols = df.columns[df.isnull().all()].tolist()
-print('Columns with all NaNs:', nan_cols)
+# +
+threshold = 0.50
+
+missing_cols = numerical_missing[numerical_missing>50].index.tolist()
+print('Columns with a high percentage of NaNs:', missing_cols)
+
+limitPer = len(df.index) * threshold
+df = df.dropna(thresh=limitPer, axis=1)
+# -
+
+# ### Checking for mono-value columns
 
 # And check for columns with all the same value, which are then not significant.
 
 same_cols = df.columns[df.apply(lambda x: len(x.unique()) == 1)].tolist()
 print('Columns with all the same value:', same_cols)
-
-# Drop the columns with all NaNs or all the same value
-
-drop_cols = list(set(nan_cols + same_cols))
-df = df.drop(drop_cols, axis=1)
-print('Columns dropped:', drop_cols)
+df = df.drop(same_cols, axis=1)
 
 # Update the categorical and numerical versions of the dataframe
 
