@@ -815,45 +815,6 @@ plt.show()
 pd.crosstab(df[target_var], df["gender"], margins=True)
 
 # +
-# Read in the dataset as a Pandas DataFrame
-#data = df[df.columns[51:62]]
-data = df[df.columns[52:58]] # take only binary variables
-
-data = data.dropna()
-
-# Create an empty table to hold the Cohen scores
-score_table = pd.DataFrame(columns=data.columns, index=data.columns)
-
-# +
-# Loop over every pair of variables in the dataset
-for i in range(len(data.columns)):
-    for j in range(i+1, len(data.columns)):
-        # Calculate the Cohen score between the ith and jth variables
-        score = cohen_kappa_score(data.iloc[:,i], data.iloc[:,j])
-        
-        # Add the score to the score table
-        score_table.iloc[i,j] = score
-        score_table.iloc[j,i] = score
-
-score_table = score_table.fillna(1)
-
-# +
-threshold = 0.4
-mask = np.triu(np.ones_like(score_table, dtype=bool), k=0) | (np.abs(score_table) <= threshold)
-
-# Print the score table
-fig, ax = plt.subplots(figsize=(10, 10))
-sns.heatmap(score_table,
-            annot=True, fmt='.2f',
-            mask=mask,
-            cmap='coolwarm', center=0, cbar=True,
-            linewidths=.5,
-            ax=ax)
-ax.set_aspect("equal")
-plt.title("Correlation matrix")
-plt.show()
-
-# +
 col_inspect = df_numerical.columns[:32]
 #col_inspect = ['Killip.grade', 'ageCat']
 
@@ -892,9 +853,11 @@ discrete_vars = [col for col in df.columns if df[col].dtype == 'int64']
 for var in discrete_vars:
     print('Unique values of the discrete variable',var, 'are: ',sorted(df[var].unique()))
 
-# Create a range for each one of this value, based on medical knowledge (i.e. instead of having values for systolic.blood.pressure between 0 and 252 we can create three categories that are 'low','normal','high') TODO
-
 # ## 4. Data Preprocessing
+
+# Percentage of positive observations
+
+np.round((df[target_var] == True).sum() / len(df.index), 2)
 
 # ### Correlation analysis
 
@@ -957,29 +920,6 @@ df_encoded = pd.concat([df.drop(cat_cols, axis=1).reset_index(drop=True),
 # -
 
 df_encoded.shape
-
-
-# ### Outlier detection
-
-def get_outliers(df, feature, threshold=3):
-    # calculate the Z-score for each value in the 'value' column
-    df['zscore'] = (df[feature] - df[feature].mean()) / df[feature].std(ddof=0)
-
-    # identify outliers as any value with a Z-score greater than threshold or less than -threshold
-    outliers = (df['zscore'] > threshold) | (df['zscore'] < -threshold)
-
-    return df[[feature, 'zscore']].loc[outliers]
-
-
-print(get_outliers(df, 'height'))
-
-print(get_outliers(df, 'weight'))
-
-print(get_outliers(df, 'body.temperature', threshold=6))
-
-print(get_outliers(df, 'BMI'))
-
-# Instead of removing the entire row, we prefer to set such values to `NaN` and let the imputer in the next steps fill it.
 
 # ### Splitting data into training and testing sets
 #
