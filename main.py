@@ -814,6 +814,8 @@ plt.show()
 
 pd.crosstab(df[target_var], df["gender"], margins=True)
 
+# As final step, plot all the numerical features distribution separately in the two classes to see if we have some hints in features that separate well.
+
 # +
 col_inspect = df_numerical.columns[:32]
 #col_inspect = ['Killip.grade', 'ageCat']
@@ -860,8 +862,6 @@ for var in discrete_vars:
 np.round((df[target_var] == True).sum() / len(df.index), 2)
 
 # ### Correlation analysis
-
-# prepare confronto tra distribuzioni di variabili discrete, continue, categoriche con kde
 
 # Choose only a subset of the correlation matrix
 
