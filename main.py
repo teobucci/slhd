@@ -400,7 +400,10 @@ df = df.astype({
     'death.within.3.months': 'bool',
     're.admission.within.3.months': 'bool',
     'death.within.6.months': 'bool',
-    're.admission.within.6.months': 'bool'
+    're.admission.within.6.months': 'bool',
+    'moderate.to.severe.chronic.kidney.disease': 'bool',
+    'peptic.ulcer.disease': 'bool',
+    'liver.disease': 'bool'
 })
 
 # and see if there has been a memory reduce
