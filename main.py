@@ -766,7 +766,7 @@ print(get_outliers(df, 'total.bile.acid', threshold=3))
 print(get_outliers(df, 'triglyceride', threshold=3))
 print(get_outliers(df, 'dischargeDay', threshold=3))
 
-
+# TODO finire questa parte con aiuto di Alice
 
 
 
