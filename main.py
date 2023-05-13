@@ -192,17 +192,11 @@
 # | 166 | ageCat                                                        | ageCat:the age is categorized in decades                                                                                                                                                                                                                                                                            |
 #
 
-# ## 2. Data Cleaning
+# ## 2. Data Exploration and Cleaning
 #
 # ### Importing necessary libraries and dataset
 #
-# Here we import all the libraries we will use.
-#
-# TODO qualcosa sull'environment
-
-# +
-# #!pipreqsnb . --force
-# #!pipreqs . --force
+# Here we import all the libraries we will use. For reproducibility make sure to install them with `pip install -r requirements.txt`.
 
 # +
 import numpy as np
@@ -234,9 +228,20 @@ from imblearn.over_sampling import SMOTE
 from pathlib import Path
 
 from statsmodels.graphics.mosaicplot import mosaic
+# -
+
+# Fix the seed for later
 
 SEED = 42
+
+# Use the `pipreqs` library to produce a better `requirements.txt`
+
+# +
+# #!pipreqsnb . --force
+# #!pipreqs . --force
 # -
+
+# Create an output folder for pickle files and figures
 
 OUTPUT_FOLDER = Path() / 'output'
 OUTPUT_FOLDER.mkdir(parents=True, exist_ok=True)
@@ -252,7 +257,8 @@ OUTPUT_FOLDER.mkdir(parents=True, exist_ok=True)
 DATA_FOLDER = Path() / "hospitalized-patients-with-heart-failure-integrating-electronic-healthcare-records-and-external-outcome-data-1.2"
 df = pd.read_csv((DATA_FOLDER / "dat.csv"), index_col=1)
 df = df.drop(columns=df.columns[0], axis=1)
-df.head()
+
+# #### Drugs integration
 
 df_drugs = pd.read_csv((DATA_FOLDER / "dat_md.csv"), index_col=1)
 df_drugs = df_drugs.drop(columns=df_drugs.columns[0], axis=1)
