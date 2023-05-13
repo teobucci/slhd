@@ -592,7 +592,7 @@ sns.barplot(orient='h', y=numerical_missing.index, x=numerical_missing, ax=ax, p
 ax.set_title('Percentage of Missing Values in Numerical Variables')
 ax.set_ylabel('Column')
 ax.set_xlabel('Percentage Missing (%)')
-#ax.tick_params(axis='x', labelrotation=90)
+ax.axvline(x=50, color='k', linestyle='--')
 
 plt.show()
 # -
