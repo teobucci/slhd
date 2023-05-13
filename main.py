@@ -905,6 +905,9 @@ df['NYHA.cardiac.function.classification'].unique()
 
 # ### Encoding categorical variables
 
+# No need to encode the binary variables
+cat_cols = df.select_dtypes(include=['category']).columns.tolist()
+
 # One hot encode the categorical and boolean variables
 # drop='if_binary' drops one of male/female for example
 encoder = OneHotEncoder(sparse=False, handle_unknown='ignore', drop='if_binary')
