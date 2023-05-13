@@ -622,24 +622,165 @@ df = df.drop(same_cols, axis=1)
 df_categorical = df.select_dtypes(include=['category', 'bool'])
 df_numerical = df.select_dtypes(include=['float64', 'int64'])
 
-# ## 3. Exploratory Data Analysis (EDA)
-
-target_var = 're.admission.within.6.months'
-
-# Percentage of positive observations
-
-np.round((df[target_var] == True).sum() / len(df.index), 2)
-
 # ### Data visualization
 
-# We have
+# We have 84 numerical features, let us plot them in a big grid to have an understanding of the distribution.
 
 len(df_numerical.columns)
 
-# numerical features, let us plot them in a big grid to have an understanding of the distribution.
-
-df_numerical[df_numerical.columns[:129]].hist(layout=(33,4), figsize=(15,90))
+df_numerical[df_numerical.columns[:84]].hist(layout=(21,4), figsize=(15,80))
 plt.show()
+
+# #### Outlier detection
+
+# We can immediately see that some histograms present a very wide range of values, we can leverage this knowledge to find some outliers. Let us also look at a box plot of all these features.
+
+# +
+col_inspect = [
+    'respiration',
+    'systolic.blood.pressure',
+    'diastolic.blood.pressure',
+    'map',
+    'weight',
+    'height',
+    'BMI',
+    'fio2',
+    'left.ventricular.end.diastolic.diameter.LV',
+    'creatinine.enzymatic.method',
+    'urea',
+    'cystatin',
+    'white.blood.cell',
+    'eosinophil.ratio',
+    'basophil.count',
+    'D.dimer',
+    'international.normalized.ratio',
+    'activated.partial.thromboplastin.time',
+    'thrombin.time',
+    'high.sensitivity.troponin',
+    'prothrombin.time.ratio',
+    'sodium',
+    'potassium',
+    'calcium',
+    'hydroxybutyrate.dehydrogenase.to.lactate.dehydrogenase',
+    'hydroxybutyrate.dehydrogenase',
+    'glutamic.oxaloacetic.transaminase',
+    'creatine.kinase',
+    'creatine.kinase.isoenzyme',
+    'lactate.dehydrogenase',
+    'alkaline.phosphatase',
+    'indirect.bilirubin',
+    'glutamic.pyruvic.transaminase',
+    'globulin',
+    'direct.bilirubin',
+    'total.bilirubin',
+    'total.bile.acid',
+    'triglyceride',
+    'dischargeDay'
+]
+
+df_numerical[col_inspect].boxplot()
+plt.title('Boxplot of a subset of Numerical Features')
+plt.tick_params(axis='x', labelrotation=90)
+plt.show()
+
+
+# -
+
+# To spot outliers, we compute their z-score and print the values. If we believe that some values are outliers, instead of discarding completely the entry, we set the value to `NaN`, to be recovered during the imputation later in the analysis.
+
+def get_outliers(df, feature, threshold=3):
+    # calculate the Z-score for each value in the 'value' column
+    df['zscore'] = (df[feature] - df[feature].mean()) / df[feature].std(ddof=0)
+
+    # identify outliers as any value with a Z-score greater than threshold or less than -threshold
+    outliers = (df['zscore'] > threshold) | (df['zscore'] < -threshold)
+
+    return df[[feature, 'zscore']].loc[outliers]
+
+
+# Let us go through all the values which may present outliers
+
+print(get_outliers(df, 'respiration', threshold=9))
+
+# The only non-physical value is 0.
+
+df.loc[df['respiration'] == 0, 'respiration'] = np.nan
+
+print(get_outliers(df, 'height', threshold=3))
+
+# They all come from elderly people and not from infants, so we can assume the height is wrong.
+
+df.loc[df['height'] <= 1.25, ['ageCat','height']]
+
+df.loc[df['height'] <= 1.25, 'height'] = np.nan
+
+print(get_outliers(df, 'weight', threshold=4))
+
+df.loc[df['weight'] <= 8, 'weight'] = np.nan
+
+print(get_outliers(df, 'body.temperature', threshold=6))
+
+print(get_outliers(df, 'BMI', threshold=1))
+
+df.loc[(df['BMI'] >= 100) | (df['BMI'] == 0), 'BMI'] = np.nan
+
+print(get_outliers(df, 'fio2', threshold=3))
+
+print(get_outliers(df, 'respiration', threshold=3))
+print(get_outliers(df, 'systolic.blood.pressure', threshold=3))
+print(get_outliers(df, 'diastolic.blood.pressure', threshold=3))
+print(get_outliers(df, 'map', threshold=3))
+print(get_outliers(df, 'weight', threshold=3))
+print(get_outliers(df, 'height', threshold=3))
+print(get_outliers(df, 'BMI', threshold=3))
+print(get_outliers(df, 'fio2', threshold=3))
+print(get_outliers(df, 'left.ventricular.end.diastolic.diameter.LV', threshold=3))
+print(get_outliers(df, 'creatinine.enzymatic.method', threshold=3))
+print(get_outliers(df, 'urea', threshold=3))
+print(get_outliers(df, 'cystatin', threshold=3))
+print(get_outliers(df, 'white.blood.cell', threshold=3))
+print(get_outliers(df, 'eosinophil.ratio', threshold=3))
+print(get_outliers(df, 'basophil.count', threshold=3))
+print(get_outliers(df, 'D.dimer', threshold=3))
+print(get_outliers(df, 'international.normalized.ratio', threshold=3))
+print(get_outliers(df, 'activated.partial.thromboplastin.time', threshold=3))
+print(get_outliers(df, 'thrombin.time', threshold=3))
+print(get_outliers(df, 'high.sensitivity.troponin', threshold=3))
+print(get_outliers(df, 'prothrombin.time.ratio', threshold=3))
+print(get_outliers(df, 'sodium', threshold=3))
+print(get_outliers(df, 'potassium', threshold=3))
+print(get_outliers(df, 'calcium', threshold=3))
+print(get_outliers(df, 'hydroxybutyrate.dehydrogenase.to.lactate.dehydrogenase', threshold=3))
+print(get_outliers(df, 'hydroxybutyrate.dehydrogenase', threshold=3))
+print(get_outliers(df, 'glutamic.oxaloacetic.transaminase', threshold=3))
+print(get_outliers(df, 'creatine.kinase', threshold=3))
+print(get_outliers(df, 'creatine.kinase.isoenzyme', threshold=3))
+print(get_outliers(df, 'lactate.dehydrogenase', threshold=3))
+print(get_outliers(df, 'alkaline.phosphatase', threshold=3))
+print(get_outliers(df, 'indirect.bilirubin', threshold=3))
+print(get_outliers(df, 'glutamic.pyruvic.transaminase', threshold=3))
+print(get_outliers(df, 'globulin', threshold=3))
+print(get_outliers(df, 'direct.bilirubin', threshold=3))
+print(get_outliers(df, 'total.bilirubin', threshold=3))
+print(get_outliers(df, 'total.bile.acid', threshold=3))
+print(get_outliers(df, 'triglyceride', threshold=3))
+print(get_outliers(df, 'dischargeDay', threshold=3))
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Create a range for each one of this value, based on medical knowledge (i.e. instead of having values for systolic.blood.pressure between 0 and 252 we can create three categories that are 'low','normal','high') TODO
+
+target_var = 're.admission.within.6.months'
 
 # +
 sns.lmplot(x='weight',y='height',data=df, hue=target_var,palette='Set1')
