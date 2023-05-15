@@ -1202,6 +1202,8 @@ bag_clf.oob_score_
 # ### Final model pipeline
 
 # +
+# %%time
+
 # separate categorical and numerical features
 categorical_features = ['categorical_feature_1', 'categorical_feature_2']
 numerical_features = ['numerical_feature_1', 'numerical_feature_2']
