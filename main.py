@@ -1235,7 +1235,7 @@ models = {
         'param_grid': {'classifier__C': np.logspace(-3, 3, 7)}
     },
     'svm': {
-        'model': SVC(),
+        'model': SVC(probability=True),
         'param_grid': {'classifier__C': np.logspace(-3, 3, 7),
                        'classifier__gamma': ['scale', 'auto'],
                        'classifier__kernel': ['linear','rbf']}
