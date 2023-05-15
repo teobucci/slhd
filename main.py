@@ -1281,6 +1281,8 @@ for name, model in models.items():
 
 scoring = {"AUC": "roc_auc", "Accuracy": make_scorer(accuracy_score)}
 
+gss = []
+
 # perform grid search cross-validation for each model and output the test accuracy of the best model
 for name, pipeline in pipelines.items():
     grid_search = GridSearchCV(
@@ -1292,7 +1294,18 @@ for name, pipeline in pipelines.items():
         return_train_score=True
     )
     grid_search.fit(X_train, y_train)
-    print(f'{name}: test accuracy = {grid_search.score(X_test, y_test):.3f}')
+    gss.append(grid_search)
+    print(f'{name:30}| train AUC = {grid_search.score(X_train, y_train):.3f} | test AUC = {grid_search.score(X_test, y_test):.3f}')
+
+# +
+imp = gss[3].best_estimator_.named_steps['classifier'].feature_importances_
+
+GiniScore, j = np.sort(imp), np.argsort(imp)
+GiniScore, j = GiniScore[-10:],j[-10:]
+sns.barplot(y=X.columns[j], x=GiniScore, color='g')
+plt.title('Feature importances using MDI')
+plt.xlabel('Mean decrease in impurity')
+plt.show()
 # -
 
 # ## 7. Conclusion
