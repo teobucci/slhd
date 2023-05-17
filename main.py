@@ -1310,7 +1310,7 @@ plt.show()
 from mlxtend.plotting import plot_confusion_matrix
 
 # +
-fig, axes = plt.subplots(nrows=2, ncols=4, figsize=(20,7))#, height_ratios = [1,3])
+fig, axes = plt.subplots(nrows=2, ncols=4, figsize=(16,7))#, height_ratios = [1,3])
 axes = axes.flatten()
 
 rows = []
@@ -1330,7 +1330,7 @@ for name, pipeline in pipeline_cv.items():
     # Calculate the confusion matrix
     cm = confusion_matrix(y_test, y_pred)
     #sns.heatmap(cm, annot=True, cmap='coolwarm', fmt='d', ax=axes[0,i])
-    axes[i].set_title(model.__class__.__name__ + ' Confusion Matrix')
+    axes[i].set_title(model.__class__.__name__)
     plot_confusion_matrix(conf_mat=cm,
                           show_absolute=True,
                           show_normed=True,
