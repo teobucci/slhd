@@ -718,94 +718,153 @@ def get_outliers(df, feature, threshold=3):
 
 # Let us go through all the values which may present outliers
 
-print(get_outliers(df, 'respiration', threshold=9))
-
-# The only non-physical value is 0.
+get_outliers(df, 'respiration', threshold=9)
 
 df.loc[df['respiration'] == 0, 'respiration'] = np.nan
 
-print(get_outliers(df, 'height', threshold=3))
+get_outliers(df, 'height', threshold=3)
 
-# They all come from elderly people and not from infants, so we can assume the height is wrong.
-
-df.loc[df['height'] <= 1.25, ['ageCat','height']]
-
+#df.loc[df['height'] <= 1.25, ['ageCat','height']]
 df.loc[df['height'] <= 1.25, 'height'] = np.nan
 
-print(get_outliers(df, 'weight', threshold=4))
+get_outliers(df, 'weight', threshold=3)
 
 df.loc[df['weight'] <= 8, 'weight'] = np.nan
 
-print(get_outliers(df, 'body.temperature', threshold=6))
+get_outliers(df, 'body.temperature', threshold=6)
 
-print(get_outliers(df, 'BMI', threshold=1))
+get_outliers(df, 'BMI', threshold=1)
 
 df.loc[(df['BMI'] >= 100) | (df['BMI'] == 0), 'BMI'] = np.nan
 
-print(get_outliers(df, 'fio2', threshold=3))
+get_outliers(df, 'fio2', threshold=3)
 
-print(get_outliers(df, 'respiration', threshold=3))
-print(get_outliers(df, 'systolic.blood.pressure', threshold=3))
-print(get_outliers(df, 'diastolic.blood.pressure', threshold=3))
-print(get_outliers(df, 'map', threshold=3))
-print(get_outliers(df, 'weight', threshold=3))
-print(get_outliers(df, 'height', threshold=3))
-print(get_outliers(df, 'BMI', threshold=3))
-print(get_outliers(df, 'fio2', threshold=3))
-print(get_outliers(df, 'left.ventricular.end.diastolic.diameter.LV', threshold=3))
-print(get_outliers(df, 'creatinine.enzymatic.method', threshold=3))
-print(get_outliers(df, 'urea', threshold=3))
-print(get_outliers(df, 'cystatin', threshold=3))
-print(get_outliers(df, 'white.blood.cell', threshold=3))
-print(get_outliers(df, 'eosinophil.ratio', threshold=3))
-print(get_outliers(df, 'basophil.count', threshold=3))
-print(get_outliers(df, 'D.dimer', threshold=3))
-print(get_outliers(df, 'international.normalized.ratio', threshold=3))
-print(get_outliers(df, 'activated.partial.thromboplastin.time', threshold=3))
-print(get_outliers(df, 'thrombin.time', threshold=3))
-print(get_outliers(df, 'high.sensitivity.troponin', threshold=3))
-print(get_outliers(df, 'prothrombin.time.ratio', threshold=3))
-print(get_outliers(df, 'sodium', threshold=3))
-print(get_outliers(df, 'potassium', threshold=3))
-print(get_outliers(df, 'calcium', threshold=3))
-print(get_outliers(df, 'hydroxybutyrate.dehydrogenase.to.lactate.dehydrogenase', threshold=3))
-print(get_outliers(df, 'hydroxybutyrate.dehydrogenase', threshold=3))
-print(get_outliers(df, 'glutamic.oxaloacetic.transaminase', threshold=3))
-print(get_outliers(df, 'creatine.kinase', threshold=3))
-print(get_outliers(df, 'creatine.kinase.isoenzyme', threshold=3))
-print(get_outliers(df, 'lactate.dehydrogenase', threshold=3))
-print(get_outliers(df, 'alkaline.phosphatase', threshold=3))
-print(get_outliers(df, 'indirect.bilirubin', threshold=3))
-print(get_outliers(df, 'glutamic.pyruvic.transaminase', threshold=3))
-print(get_outliers(df, 'globulin', threshold=3))
-print(get_outliers(df, 'direct.bilirubin', threshold=3))
-print(get_outliers(df, 'total.bilirubin', threshold=3))
-print(get_outliers(df, 'total.bile.acid', threshold=3))
-print(get_outliers(df, 'triglyceride', threshold=3))
-print(get_outliers(df, 'dischargeDay', threshold=3))
+get_outliers(df, 'respiration', threshold=8)
 
-# TODO finire questa parte con aiuto di Alice
+get_outliers(df, 'systolic.blood.pressure', threshold=3)
 
+df.loc[df['systolic.blood.pressure'] == 0, 'systolic.blood.pressure'] = np.nan
 
+get_outliers(df, 'diastolic.blood.pressure', threshold=4)
 
+df.loc[df['diastolic.blood.pressure'] == 0, 'diastolic.blood.pressure'] = np.nan
 
+get_outliers(df, 'map', threshold=3)
 
+df.loc[df['map'] == 0, 'map'] = np.nan
 
+get_outliers(df, 'left.ventricular.end.diastolic.diameter.LV', threshold=3)
 
+df.loc[df['left.ventricular.end.diastolic.diameter.LV'] < 1, 'left.ventricular.end.diastolic.diameter.LV'] = np.nan
 
+get_outliers(df, 'creatinine.enzymatic.method', threshold=8)
 
+get_outliers(df, 'urea', threshold=4)
 
+get_outliers(df, 'cystatin', threshold=6)
+
+get_outliers(df, 'white.blood.cell', threshold=6)
+
+get_outliers(df, 'eosinophil.ratio', threshold=8)
+
+df.loc[df['eosinophil.ratio'] > 0.270, 'eosinophil.ratio'] = np.nan
+
+get_outliers(df, 'basophil.count', threshold=8)
+
+df.loc[df['basophil.count'] > 0.280, 'basophil.count'] = np.nan
+
+get_outliers(df, 'D.dimer', threshold=8)
+
+df.loc[df['D.dimer'] > 48, 'D.dimer'] = np.nan
+
+get_outliers(df, 'international.normalized.ratio', threshold=8)
+
+df.loc[df['international.normalized.ratio'] > 7, 'international.normalized.ratio'] = np.nan
+
+get_outliers(df, 'activated.partial.thromboplastin.time', threshold=8)
+
+df.loc[df['activated.partial.thromboplastin.time'] > 105, 'activated.partial.thromboplastin.time'] = np.nan
+
+get_outliers(df, 'thrombin.time', threshold=3)
+
+df.loc[df['thrombin.time'] > 78, 'thrombin.time'] = np.nan
+
+get_outliers(df, 'high.sensitivity.troponin', threshold=8)
+
+df.loc[df['high.sensitivity.troponin'] > 26, 'high.sensitivity.troponin'] = np.nan
+
+get_outliers(df, 'prothrombin.time.ratio', threshold=8)
+
+get_outliers(df, 'sodium', threshold=8)
+
+get_outliers(df, 'potassium', threshold=8)
+
+df.loc[df['potassium'] > 11, 'potassium'] = np.nan
+
+get_outliers(df, 'calcium', threshold=8)
+
+get_outliers(df, 'hydroxybutyrate.dehydrogenase.to.lactate.dehydrogenase', threshold=8)
+
+get_outliers(df, 'hydroxybutyrate.dehydrogenase', threshold=8)
+
+df.loc[df['hydroxybutyrate.dehydrogenase'] > 1498, 'hydroxybutyrate.dehydrogenase'] = np.nan
+
+get_outliers(df, 'glutamic.oxaloacetic.transaminase', threshold=8)
+
+df.loc[df['glutamic.oxaloacetic.transaminase'] > 1400, 'glutamic.oxaloacetic.transaminase'] = np.nan
+
+get_outliers(df, 'creatine.kinase', threshold=8)
+
+df.loc[df['creatine.kinase'] > 3000, 'creatine.kinase'] = np.nan
+
+get_outliers(df, 'creatine.kinase.isoenzyme', threshold=8)
+
+df.loc[df['creatine.kinase.isoenzyme'] > 150, 'creatine.kinase.isoenzyme'] = np.nan
+
+get_outliers(df, 'lactate.dehydrogenase', threshold=8)
+
+df.loc[df['lactate.dehydrogenase'] > 1900, 'lactate.dehydrogenase'] = np.nan
+
+get_outliers(df, 'alkaline.phosphatase', threshold=8)
+
+df.loc[df['alkaline.phosphatase'] > 1000, 'alkaline.phosphatase'] = np.nan
+
+get_outliers(df, 'indirect.bilirubin', threshold=8)
+
+df.loc[df['indirect.bilirubin'] > 90, 'indirect.bilirubin'] = np.nan
+
+get_outliers(df, 'glutamic.pyruvic.transaminase', threshold=8)
+
+df.loc[df['glutamic.pyruvic.transaminase'] > 1800, 'glutamic.pyruvic.transaminase'] = np.nan
+
+get_outliers(df, 'globulin', threshold=8)
+
+df.loc[df['globulin'] > 88, 'globulin'] = np.nan
+
+get_outliers(df, 'direct.bilirubin', threshold=8)
+
+df.loc[df['direct.bilirubin'] > 10, 'direct.bilirubin'] = np.nan
+
+get_outliers(df, 'total.bilirubin', threshold=8)
+
+df.loc[df['total.bilirubin'] > 160, 'total.bilirubin'] = np.nan
+
+get_outliers(df, 'total.bile.acid', threshold=8)
+
+df.loc[df['total.bile.acid'] > 120, 'total.bile.acid'] = np.nan
+
+get_outliers(df, 'triglyceride', threshold=8)
+
+df.loc[df['triglyceride'] > 10, 'triglyceride'] = np.nan
+
+get_outliers(df, 'dischargeDay', threshold=8)
 
 # Create a range for each one of this value, based on medical knowledge (i.e. instead of having values for systolic.blood.pressure between 0 and 252 we can create three categories that are 'low','normal','high') TODO
 
 target_var = 're.admission.within.6.months'
 
-# +
 sns.lmplot(x='weight',y='height',data=df, hue=target_var,palette='Set1')
 plt.show()
-
-# TODO togliere outlier altezza e peso
-# -
 
 # Deep dive into the some features
 
@@ -824,7 +883,6 @@ for idx, col_name in enumerate(col_inspect):
     plt.xticks(fontsize=8, rotation = 45) # Rotates X-Axis Ticks by 45-degrees
     plt.ylabel('')
     plt.title(col_name)
-
 
 fig.tight_layout()
 plt.show()
