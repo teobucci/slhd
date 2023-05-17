@@ -1037,6 +1037,8 @@ X_train, X_test, y_train, y_test = train_test_split(X, y,
 # Given the reduced size of the dataset, we can simultaneously explore different models and tune them, to have the best result for each class of models.
 
 # ### Preprocessing numerical data
+#
+# #### Imputation
 
 # We use the [`IterativeImputer`](https://scikit-learn.org/stable/modules/generated/sklearn.impute.IterativeImputer.html) which is very well suited for [multivariate imputation](https://scikit-learn.org/stable/modules/impute.html#iterative-imputer).
 
@@ -1055,6 +1057,18 @@ with open(str(OUTPUT_FOLDER / 'imputer.pkl'), 'rb') as handle:
 X_train[numerical_features] = imputer.transform(X_train[numerical_features])
 X_test[numerical_features] = imputer.transform(X_test[numerical_features])
 # -
+
+# #### Imbalance
+
+oversample = SMOTE(random_state=SEED)
+X_ov, y_ov = oversample.fit_resample(X_train, y_train)
+oversample.get_params()
+
+# overwrite
+X_train = X_ov
+y_train = y_ov
+
+# #### Scaling
 
 # create preprocessor for numerical data
 # num_preprocessor = Pipeline(steps=[
@@ -1407,15 +1421,7 @@ bag_clf.oob_score_
 
 #
 
-# +
-# Imbalance
-oversample = SMOTE(random_state=45)
-X_ov, y_ov = oversample.fit_resample(X_train, y_train)
-oversample.get_params()
 
-Counter(y_train)
-Counter(y_ov)
-# -
 
 
 
