@@ -1388,11 +1388,13 @@ df_performance = pd.DataFrame(rows)
 df_performance = df_performance.sort_values('ROC AUC', ascending=False)
 df_performance
 
-print(df_performance.to_latex(index=False,
-                  formatters={"name": str.upper},
-                  float_format="{:.4f}".format,
-                  caption="Comparison of performance of the different models"
-))
+df_performance.to_latex(
+    str(OUTPUT_FOLDER / 'performance_table.tex'),
+    index=False,
+    formatters={"name": str.upper},
+    float_format="{:.4f}".format,
+    caption="Comparison of performance of the different models"
+)
 
 # ## 4. Conclusion
 #
