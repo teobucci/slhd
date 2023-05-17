@@ -941,7 +941,6 @@ np.round((df[target_var] == True).sum() / len(df.index), 3)
 
 # Choose only a subset of the correlation matrix
 
-# +
 # Compute the correlation matrix
 corr_matrix = df.corr(numeric_only=True, method='spearman')
 
