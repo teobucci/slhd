@@ -1054,13 +1054,6 @@ with open(str(OUTPUT_FOLDER / 'imputer.pkl'), 'rb') as handle:
 
 X_train[numerical_features] = imputer.transform(X_train[numerical_features])
 X_test[numerical_features] = imputer.transform(X_test[numerical_features])
-
-# +
-#parameter_grid = {
-#    'imputer': [SimpleImputer(), KNNImputer(), IterativeImputer()],
-#    'imputer__strategy': ['mean', 'median', 'most_frequent']  # Add more strategies if desired
-#    # Add more hyperparameters for the imputers or classifier if desired
-#}
 # -
 
 # create preprocessor for numerical data
@@ -1412,19 +1405,21 @@ bag_clf.fit(X_train, y_train)
 
 bag_clf.oob_score_
 
-# ## Imbalance
+#
 
 # +
-# #!pip install imbalanced-learn
-# -
-
+# Imbalance
 oversample = SMOTE(random_state=45)
 X_ov, y_ov = oversample.fit_resample(X_train, y_train)
 oversample.get_params()
 
 Counter(y_train)
-
 Counter(y_ov)
+# -
+
+
+
+
 
 # ## `lazypredict`
 #
