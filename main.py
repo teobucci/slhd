@@ -945,10 +945,10 @@ np.round((df[target_var] == True).sum() / len(df.index), 3)
 # Compute the correlation matrix
 corr_matrix = df.corr(numeric_only=True, method='spearman')
 
-#corr_matrix = corr_matrix.iloc[0:10,0:10]
+# Select a subset of the variables to inspect
 
+# TODO Alice: inserisci qui i nomi delle variabili di cui vedere la correlazione
 inspect_col = ['urea', 'uric.acid']
-# -
 
 corr_matrix = corr_matrix[inspect_col].loc[inspect_col]
 
