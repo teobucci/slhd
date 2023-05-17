@@ -1278,7 +1278,7 @@ export_graphviz(classifier,
                 class_names=['0','1'],
                 filled=True)
 
-# !dot -Tpng decision_tree.dot -o output/decision_tree.png -Gdpi=600
+# !dot -Tpng output/decision_tree.dot -o output/decision_tree.png -Gdpi=600
 from IPython.display import Image
 Image(filename = str(OUTPUT_FOLDER / 'decision_tree.png'))
 
