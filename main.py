@@ -1287,6 +1287,7 @@ GiniScore, j = GiniScore[-10:],j[-10:]
 sns.barplot(y=X.columns[j], x=GiniScore, color='g')
 plt.title('Feature importances using MDI')
 plt.xlabel('Mean decrease in impurity')
+plt.savefig(str(OUTPUT_FOLDER / 'feature_importance_DecisionTreeClassifier.pdf'), bbox_inches='tight')
 plt.show()
 
 # #### Random Forest
@@ -1301,6 +1302,7 @@ sns.barplot(y=X.columns[sorted_indices], x=importance, color='g')
 plt.ylabel('Features')
 plt.xlabel('Importance')
 plt.title('Feature Importance in Random Forest Classifier')
+plt.savefig(str(OUTPUT_FOLDER / 'feature_importance_RandomForestClassifier.pdf'), bbox_inches='tight')
 plt.show()
 
 # ### AUC and confusion matrices
@@ -1362,6 +1364,7 @@ for name, pipeline in pipeline_cv.items():
     i += 1
 
 plt.tight_layout()
+plt.savefig(str(OUTPUT_FOLDER / 'confusion_matrices.pdf'), bbox_inches='tight')
 plt.show()
 
 # +
@@ -1381,6 +1384,7 @@ ax.set_title('ROC Curve comparison')
 ax.legend(loc="lower right")
 ax.set_aspect('equal')
 ax.set_aspect('equal')
+plt.savefig(str(OUTPUT_FOLDER / 'roc_comparison.pdf'), bbox_inches='tight')
 plt.show()
 # -
 
