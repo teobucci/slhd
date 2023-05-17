@@ -1381,6 +1381,7 @@ ax.set_title('ROC Curve comparison')
 ax.legend(loc="lower right")
 ax.set_aspect('equal')
 ax.set_aspect('equal')
+plt.show()
 # -
 
 df_performance = pd.DataFrame(rows)
