@@ -1211,6 +1211,7 @@ j1 = np.argmax(m1) # maximum value of AUC in terms of mean over the CV folds
 
 plt.plot(axisX[j1], m1[j1], 'ro', markersize=12)
 plt.legend()
+plt.savefig(str(OUTPUT_FOLDER / 'crossvalidation_curve.pdf'), bbox_inches='tight')
 plt.show()
 
 print(res['params'][j1])
@@ -1221,11 +1222,13 @@ print(res['params'][j1])
 # Extract the classifier
 classifier = pipeline_cv['logistic_regression'].best_estimator_.named_steps['classifier']
 
+fig, ax = plt.subplots(figsize=(8,6))
 coeff = pd.DataFrame()
 coeff["feature"] = X_train.columns
 coeff["w"] = classifier.coef_[0]
 coeff = coeff.sort_values(by=['w'])
-sns.barplot(data=coeff, y="feature", x="w", palette="Blues_d", orient="h")
+sns.barplot(data=coeff[abs(coeff.w) > 1], y="feature", x="w", palette="Blues_d", orient="h")
+plt.savefig(str(OUTPUT_FOLDER / 'feature_importance_weightsLogisticRegression.pdf'), bbox_inches='tight')
 plt.show()
 
 # +
