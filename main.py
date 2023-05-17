@@ -1195,7 +1195,7 @@ with open(str(OUTPUT_FOLDER / 'pipeline_cv.pkl'), 'rb') as handle:
 #
 # For example let us analyze the evolution of one of the models
 
-res = pipeline_cv['logistic_regression'].cv_results_
+res = pipeline_cv['ada_boost'].cv_results_
 
 # +
 m1 = res['mean_test_AUC']
