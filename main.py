@@ -1146,8 +1146,6 @@ for name, model in models.items():
         ('classifier', model['model'])
     ])
 
-pipelines['logistic_regression']
-
 # ### Cross-validation training and Hyperparameter tuning
 
 # According to [the documentation](https://scikit-learn.org/stable/modules/cross_validation.html#stratified-k-fold) we choose to use the `StratifiedKFold` for doing cross-validation, choosing `n_splits=8` to have a validation set of `1/n_splits=0.125`, and `shuffle=True`.
@@ -1202,8 +1200,8 @@ res = pipeline_cv['logistic_regression'].cv_results_
 # +
 m1 = res['mean_test_AUC']
 s1 = res['std_test_AUC']
-s2 = res['std_train_AUC']
 m2 = res['mean_train_AUC']
+s2 = res['std_train_AUC']
 
 axisX = list(range(len(m1)))
 plt.errorbar(axisX, m1, s1, label='validation')
@@ -1274,8 +1272,11 @@ _ = tree.plot_tree(classifier,
 # We can export as a figure but we must use `graphviz`
 
 from sklearn.tree import export_graphviz
-export_graphviz(classifier, out_file=str(OUTPUT_FOLDER / 'decision_tree.dot'), feature_names = X_test.columns.tolist(),class_names=['0','1'],
-                   filled=True)
+export_graphviz(classifier,
+                out_file=str(OUTPUT_FOLDER / 'decision_tree.dot'),
+                feature_names = X_test.columns.tolist(),
+                class_names=['0','1'],
+                filled=True)
 
 # !dot -Tpng decision_tree.dot -o output/decision_tree.png -Gdpi=600
 from IPython.display import Image
@@ -1350,22 +1351,24 @@ for name, pipeline in pipeline_cv.items():
     fpr, tpr, _ = roc_curve(y_test, y_score)
     roc_auc = auc(fpr, tpr)
     
+    # Save for later
     roc_details[model.__class__.__name__] = {
         'fpr': fpr,
         'tpr': tpr,
         'roc_auc': roc_auc
     }
 
-    
-    i += 1
-    
-    row = {'Model': model.__class__.__name__,
-           'ROC AUC': roc_auc,
-           'Accuracy': accuracy,
-          }
+    # Save for later
+    row = {
+        'Model': model.__class__.__name__,
+        'ROC AUC': roc_auc,
+        'Accuracy': accuracy,
+    }
     
     # Append the row to the list
     rows.append(row)
+    
+    i += 1
 
 plt.tight_layout()
 plt.show()
