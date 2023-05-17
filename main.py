@@ -207,13 +207,14 @@ import matplotlib.pyplot as plt
 # Graphics in retina format are more sharp and legible
 # %config InlineBackend.figure_format='retina'
 
-from sklearn.model_selection import train_test_split, cross_val_score, cross_val_predict, GridSearchCV
-from sklearn.impute import SimpleImputer, KNNImputer
+from sklearn.model_selection import train_test_split, cross_val_score, cross_val_predict, GridSearchCV, StratifiedKFold
+from sklearn.experimental import enable_iterative_imputer
+from sklearn.impute import SimpleImputer, KNNImputer, IterativeImputer
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier, BaggingClassifier
-from sklearn.svm import SVC
+from sklearn.ensemble import RandomForestClassifier, BaggingClassifier, AdaBoostClassifier
+from sklearn.svm import SVC, LinearSVC
 from sklearn.metrics import accuracy_score, confusion_matrix, roc_curve, auc, precision_recall_curve, make_scorer, cohen_kappa_score
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.decomposition import PCA
@@ -224,6 +225,9 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.naive_bayes import GaussianNB
 from collections import Counter
 from imblearn.over_sampling import SMOTE
+import xgboost as xgb
+import pickle
+import re
 
 from pathlib import Path
 
@@ -569,6 +573,17 @@ for name, features in zip(names, [numerical_missing, categorical_missing]):
 
 categorical_missing
 
+# Given the non-clinical nature of the variable and the low percentage of missing values, we simply decide to impute it.
+
+imputer = SimpleImputer(strategy='most_frequent')
+df.occupation = imputer.fit_transform(df.occupation.values.reshape(-1,1))[:,0]
+
+df = df.astype({'occupation': 'category'})
+
+# Update categorical and numerical dataframes
+df_categorical = df.select_dtypes(include=['category', 'bool'])
+df_numerical = df.select_dtypes(include=['float64', 'int64'])
+
 
 # There are many more numerical features with missing values, to understand the amplitude of it, let us plot the percentage of missing values per feature.
 
@@ -689,13 +704,16 @@ plt.show()
 # To spot outliers, we compute their z-score and print the values. If we believe that some values are outliers, instead of discarding completely the entry, we set the value to `NaN`, to be recovered during the imputation later in the analysis.
 
 def get_outliers(df, feature, threshold=3):
+    
+    df2 = df.copy()
+    
     # calculate the Z-score for each value in the 'value' column
-    df['zscore'] = (df[feature] - df[feature].mean()) / df[feature].std(ddof=0)
+    df2['zscore'] = (df2[feature] - df2[feature].mean()) / df2[feature].std(ddof=0)
 
     # identify outliers as any value with a Z-score greater than threshold or less than -threshold
-    outliers = (df['zscore'] > threshold) | (df['zscore'] < -threshold)
+    outliers = (df2['zscore'] > threshold) | (df2['zscore'] < -threshold)
 
-    return df[[feature, 'zscore']].loc[outliers]
+    return df2[[feature, 'zscore']].loc[outliers]
 
 
 # Let us go through all the values which may present outliers
@@ -855,11 +873,11 @@ discrete_vars = [col for col in df.columns if df[col].dtype == 'int64']
 for var in discrete_vars:
     print('Unique values of the discrete variable',var, 'are: ',sorted(df[var].unique()))
 
-# ## 4. Data Preprocessing
+# ### Imbalance analysis
 
 # Percentage of positive observations
 
-np.round((df[target_var] == True).sum() / len(df.index), 2)
+np.round((df[target_var] == True).sum() / len(df.index), 3)
 
 # ### Correlation analysis
 
@@ -893,6 +911,8 @@ ax.set_aspect("equal")
 plt.title("Correlation matrix")
 plt.show()
 
+# ## 3. Modeling
+
 # ### Feature engineering
 
 # +
@@ -903,33 +923,51 @@ plt.show()
 # importante da vedere
 df['NYHA.cardiac.function.classification'].unique()
 
-# ### Encoding categorical variables
+# ### Preprocessing categorical data
 
-# No need to encode the binary variables
-cat_cols = df.select_dtypes(include=['category']).columns.tolist()
+# separate categorical and numerical features
+categorical_features = df.select_dtypes(include=['category']).columns.tolist()
+numerical_features = df.select_dtypes(include=[np.number]).columns.tolist()
 
-# One hot encode the categorical and boolean variables
-# drop='if_binary' drops one of male/female for example
-encoder = OneHotEncoder(sparse=False, handle_unknown='ignore', drop='if_binary')
-encoded_cols = pd.DataFrame(encoder.fit_transform(df[cat_cols]))
+# Make sure the values of categorical don't contain strange characters, because after encoding this might break XGBoost, specifically the `ageCat` variable.
+
+df[categorical_features] = df[categorical_features].applymap(lambda x: re.sub(r'[\[\]<\(\)]', '', x))
+df[categorical_features] = df[categorical_features].applymap(lambda x: re.sub(r',', '_', x))
 
 # +
-encoded_cols.columns = encoder.get_feature_names_out(cat_cols)
+# create preprocessor for categorical data
+# cat_preprocessor = Pipeline(steps=[
+#     ('onehot', OneHotEncoder(sparse_output=False, handle_unknown='ignore', drop='if_binary'))
+# ])
 
-# Replace the original categorical and boolean columns with the encoded ones
-df_encoded = pd.concat([df.drop(cat_cols, axis=1).reset_index(drop=True),
-                        encoded_cols.reset_index(drop=True)],
-                       axis=1)
+# +
+# Initialize the OneHotEncoder
+encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore', drop='if_binary')
+
+# Fit the encoder
+encoder.fit(df[categorical_features])
+df_encoded_cat = pd.DataFrame(encoder.transform(df[categorical_features]), columns=encoder.get_feature_names_out(categorical_features))
+df = pd.concat([df.drop(categorical_features, axis=1).reset_index(drop=True), df_encoded_cat.reset_index(drop=True)], axis=1)
+
+
+# Fit the encoder on the training data
+# encoder.fit(X_train[categorical_features])
+
+# Transform the categorical columns in both train and test data
+#train_encoded = pd.DataFrame(encoder.transform(X_train[categorical_features]), columns=encoder.get_feature_names_out(categorical_features))
+#test_encoded = pd.DataFrame(encoder.transform(X_test[categorical_features]), columns=encoder.get_feature_names_out(categorical_features))
+
+# Concatenate the encoded features with the original numerical columns
+#X_train = pd.concat([X_train.drop(categorical_features, axis=1).reset_index(drop=True), train_encoded.reset_index(drop=True)], axis=1)
+#X_test = pd.concat([X_test.drop(categorical_features, axis=1).reset_index(drop=True), test_encoded.reset_index(drop=True)], axis=1)
 # -
-
-df_encoded.shape
 
 # ### Splitting data into training and testing sets
 #
 # Separate the target variable from the features
 
-X = df_encoded.drop([target_var], axis=1)
-y = df_encoded[target_var]
+X = df.drop([target_var], axis=1)
+y = df[target_var]
 
 # Split the dataset into training and testing sets
 
@@ -938,189 +976,191 @@ X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                     stratify=y, # preserve target propotions
                                                     random_state=SEED)
 
-X_train.columns = X.columns
-X_test.columns = X.columns
+# Given the reduced size of the dataset, we can simultaneously explore different models and tune them, to have the best result for each class of models.
 
-# ### Feature scaling
-#
-# Standardize the features
+# ### Preprocessing numerical data
 
-scaler = StandardScaler()
-X_train = scaler.fit_transform(X_train)
-X_test = scaler.transform(X_test)
-
-# Save the scaler
-
-import pickle
-with open(str(OUTPUT_FOLDER / 'scaler.pkl'), 'wb') as handle:
-    pickle.dump(scaler, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
-# Load it back
-
-with open(str(OUTPUT_FOLDER / 'scaler.pkl'), 'rb') as handle:
-    scaler = pickle.load(handle)
-
-# ### Feature selection
+# We use the [`IterativeImputer`](https://scikit-learn.org/stable/modules/generated/sklearn.impute.IterativeImputer.html) which is very well suited for [multivariate imputation](https://scikit-learn.org/stable/modules/impute.html#iterative-imputer).
 
 # +
-## Select the top k features using the ANOVA F-value
-#k_best = SelectKBest(f_classif, k=10)
-#X_train = k_best.fit_transform(X_train, y_train)
-#X_test = k_best.transform(X_test)
+# # %%time
+# imputer = IterativeImputer(max_iter=10, random_state=0, verbose=2)
+# X_train[numerical_features] = imputer.fit_transform(X_train[numerical_features])
+# X_test[numerical_features] = imputer.transform(X_test[numerical_features])
+# with open(str(OUTPUT_FOLDER / 'imputer.pkl'), 'wb') as handle:
+#     pickle.dump(imputer, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+# +
+with open(str(OUTPUT_FOLDER / 'imputer.pkl'), 'rb') as handle:
+    imputer = pickle.load(handle)
+
+X_train[numerical_features] = imputer.transform(X_train[numerical_features])
+X_test[numerical_features] = imputer.transform(X_test[numerical_features])
+
+# +
+#parameter_grid = {
+#    'imputer': [SimpleImputer(), KNNImputer(), IterativeImputer()],
+#    'imputer__strategy': ['mean', 'median', 'most_frequent']  # Add more strategies if desired
+#    # Add more hyperparameters for the imputers or classifier if desired
+#}
 # -
 
-# ### Imputing missing values
-#
-# Since we only need to impute numerical features, let us use the mean with a KNNImputer
+# create preprocessor for numerical data
+# num_preprocessor = Pipeline(steps=[
+#     ('scaler', StandardScaler())
+# ])
+scaler = StandardScaler()
+X_train[numerical_features] = scaler.fit_transform(X_train[numerical_features])
+X_test[numerical_features] = scaler.transform(X_test[numerical_features])
 
-# Impute missing values using the mean strategy
-imputer = KNNImputer(n_neighbors=5)
-X_train = pd.DataFrame(imputer.fit_transform(X_train))
-X_test = pd.DataFrame(imputer.transform(X_test)) # TODO a volte dà un warning
+# ### Model selection
 
-# TODO qualcosa su https://www.kaggle.com/code/residentmario/simple-techniques-for-missing-data-imputation
+# define the models and their parameter grids for grid search
+models = {
+    'logistic_regression': {
+        'model': LogisticRegression(max_iter=10000),
+        'param_grid': {'classifier__C': np.logspace(-3, 3, 7)}
+    },
+    'ada_boost': {
+        'model': AdaBoostClassifier(),
+        'param_grid': {'classifier__n_estimators': [10, 50, 100, 500],
+                      'classifier__learning_rate': [0.0001, 0.001, 0.01, 0.1, 1.0]}
+    },    
+    'random_forest': {
+        'model': RandomForestClassifier(),
+        'param_grid': {'classifier__n_estimators': [100, 200, 300],
+                       'classifier__max_depth': [5, 10]}
+    },
+    'knn': {
+        'model': KNeighborsClassifier(),
+        'param_grid': {'classifier__n_neighbors': np.arange(10,500,20)}
+    },
+    'decision_tree_classifier': {
+        'model': DecisionTreeClassifier(),
+        'param_grid': {'classifier__criterion': ['entropy','gini'], 
+                       'classifier__max_depth': [4,5,6,8,10],
+                       'classifier__min_samples_split': [5,10,20],
+                       'classifier__min_samples_leaf': [5,10,20]}
+    },
+    'mlp': {
+        'model': MLPClassifier(),
+        'param_grid': {'classifier__hidden_layer_sizes': [(10, 5),(100,20,5)],
+                       'classifier__max_iter': [2000],
+                       'classifier__alpha': [0.001,0.1]}
+    },
+    'naive_bayes': {
+        'model': GaussianNB(),
+        'param_grid': {}
+    },
+    'xgboost': {
+        'model': xgb.XGBClassifier(),
+        'param_grid': {
+            'classifier__max_depth': [3, 6, 9],
+            'classifier__learning_rate': [0.1, 0.01, 0.001],
+            'classifier__n_estimators': [100, 500, 1000]
+        }
+    }
+}
 
-# ## 5. Modeling
-
-# ### Training the models
-#
-# [`lazypredict`](https://github.com/shankarpandala/lazypredict) is a Python library that is able to quickly check through many models, without any specific fine-tuning, but is able to give an initial look at which could be the best performing models on the task.
-#
-# Let's begin by importing the `LazyClassifier` class.
-
-from lazypredict.Supervised import LazyClassifier
-
-# We now instantiate it with basic settings
-
-clf = LazyClassifier(verbose=0, ignore_warnings=True, custom_metric=None)
-
-# And then we fit it using our data
-
-models, predictions = clf.fit(X_train, X_test, y_train, y_test)
-
-# We can retrieve a dictionary of all the models trained
-
-models
-
-# And TODO
-
-model_dictionary = clf.provide_models(X_train,X_test,y_train,y_test)
+# ### Creating model pipeline
 
 # +
-# The scorers can be either one of the predefined metric strings or a scorer
-# callable, like the one returned by make_scorer
+# combine the preprocessors into a column transformer
+# preprocessor = ColumnTransformer(
+#     transformers=[
+#         ('cat', cat_preprocessor, categorical_features),
+#         ('num', num_preprocessor, numerical_features)
+#     ])
+# -
+
+# create the pipelines for each model
+pipelines = {}
+for name, model in models.items():
+    pipelines[name] = Pipeline(steps=[
+        #('preprocessor', preprocessor),
+        ('classifier', model['model'])
+    ])
+
+pipelines['logistic_regression']
+
+# ### Cross-validation training and Hyperparameter tuning
+
+# According to [the documentation](https://scikit-learn.org/stable/modules/cross_validation.html#stratified-k-fold) we choose to use the `StratifiedKFold` for doing cross-validation, choosing `n_splits=8` to have a validation set of `1/n_splits=0.125`, and `shuffle=True`.
+
+# +
+# %%time
 
 scoring = {"AUC": "roc_auc", "Accuracy": make_scorer(accuracy_score)}
 
-# Setting refit='AUC', refits an estimator on the whole dataset with the
-# parameter setting that has the best cross-validated AUC score.
-# That estimator is made available at ``gs.best_estimator_`` along with
-# parameters like ``gs.best_score_``, ``gs.best_params_`` and
-# ``gs.best_index_``
-gs = GridSearchCV(
-    DecisionTreeClassifier(random_state=42),
-    param_grid={"min_samples_split": range(2, 403, 10)},
-    scoring=scoring,
-    refit="AUC",
-    return_train_score=True
-)
-gs.fit(X_train, y_train)
-R = gs.cv_results_
+pipeline_cv = {}
+
+# perform grid search cross-validation for each model and output the test accuracy of the best model
+for name, pipeline in pipelines.items():
+    grid_search = GridSearchCV(
+        pipeline,
+        param_grid=models[name]['param_grid'],
+        cv=StratifiedKFold(n_splits=8, shuffle=True, random_state=SEED),
+        scoring=scoring,
+        refit="AUC",
+        return_train_score=True,
+        verbose=2
+    )
+    grid_search.fit(X_train, y_train)
+    pipeline_cv[name] = grid_search
+    print(f'{name:30}| train AUC = {grid_search.score(X_train, y_train):.3f} | test AUC = {grid_search.score(X_test, y_test):.3f}')
+    print('-'*80)
 # -
 
-gs.best_estimator_
-
-gs.best_params_
-
-gs.best_score_
-
-pd.DataFrame(R.keys())
+# Save for later
 
 # +
-m1=R['mean_test_AUC']
-s1=R['std_test_AUC']
-s2=R['std_train_AUC']
-m2=R['mean_train_AUC']
-
-axisX = list(range(len(m1)))
-plt.errorbar(axisX, m1, s1, label='test')
-plt.errorbar(axisX, m2, s2, label='train')
-
-j1=np.argmax(m1) # maximum value of AUC in terms of mean over the CV folds
-
-plt.plot(axisX[j1],m1[j1], 'ro', markersize=12)
-plt.legend()
-plt.show()
-
-print(R['params'][j1])
+# with open(str(OUTPUT_FOLDER / 'pipeline_cv.pkl'), 'wb') as handle:
+#     pickle.dump(pipeline_cv, handle, protocol=pickle.HIGHEST_PROTOCOL)
 # -
+
+with open(str(OUTPUT_FOLDER / 'pipeline_cv.pkl'), 'rb') as handle:
+    pipeline_cv = pickle.load(handle)
 
 # ### Evaluating model performance
 
-# Train and evaluate multiple models
-models = [LogisticRegression(max_iter=100000),
-          DecisionTreeClassifier(),
-          RandomForestClassifier(),
-          SVC(probability=True)]
+# The `GridSearchCV` objects has the following useful attributes
+#
+# - `.cv_results_` which contains things such as `mean_test_AUC`, `std_test_AUC`, `std_train_AUC`, `mean_train_AUC`. List all of them with `pd.DataFrame(GridSearchCV.cv_results_.keys())`
+# - `.best_estimator_`
+# - `.best_params_`
+# - `.best_score_`
+#
+# For example let us analyze the evolution of one of the models
 
-from mlxtend.plotting import plot_confusion_matrix
+res = pipeline_cv['logistic_regression'].cv_results_
 
 # +
-fig, axes = plt.subplots(nrows=2, ncols=len(models), figsize=(20,8))#, height_ratios = [1,3])
+m1 = res['mean_test_AUC']
+s1 = res['std_test_AUC']
+s2 = res['std_train_AUC']
+m2 = res['mean_train_AUC']
 
+axisX = list(range(len(m1)))
+plt.errorbar(axisX, m1, s1, label='validation')
+plt.errorbar(axisX, m2, s2, label='train')
 
-for i, model in enumerate(models):
-    # Train the model on the training set
-    model.fit(X_train, y_train)
+j1 = np.argmax(m1) # maximum value of AUC in terms of mean over the CV folds
 
-    # Make predictions on the testing set
-    y_pred = model.predict(X_test)
-
-    # Calculate the accuracy score
-    accuracy = accuracy_score(y_test, y_pred)
-    print(model.__class__.__name__, 'Accuracy:', accuracy)
-
-    # Calculate the confusion matrix
-    cm = confusion_matrix(y_test, y_pred)
-    #sns.heatmap(cm, annot=True, cmap='coolwarm', fmt='d', ax=axes[0,i])
-    axes[0,i].set_title(model.__class__.__name__ + ' Confusion Matrix')
-    plot_confusion_matrix(conf_mat=cm,
-                                show_absolute=True,
-                                show_normed=True,
-                                colorbar=True, figure=fig, axis=axes[0,i])
-
-    axes[0,i].set_xlabel('Predicted label')
-    axes[0,i].set_ylabel('True label')
-
-    # Calculate the ROC curve
-    y_score = model.predict_proba(X_test)[:,1]
-    fpr, tpr, _ = roc_curve(y_test, y_score)
-    roc_auc = auc(fpr, tpr)
-
-    # Plot the ROC curve
-    axes[1,i].plot(fpr, tpr, label=model.__class__.__name__ + ' (AUC = %0.2f)' % roc_auc)
-    axes[1,i].plot([0, 1], [0, 1], linestyle='--', color='gray')
-    axes[1,i].set_xlim([0.0, 1.0])
-    axes[1,i].set_ylim([0.0, 1.05])
-    axes[1,i].set_xlabel('False Positive Rate')
-    axes[1,i].set_ylabel('True Positive Rate')
-    axes[1,i].set_title(model.__class__.__name__ + ' ROC Curve')
-    axes[1,i].legend(loc="lower right")
-    axes[1,i].set_aspect('equal')
-    axes[0,i].set_aspect('equal')
-
-plt.tight_layout()
+plt.plot(axisX[j1], m1[j1], 'ro', markersize=12)
+plt.legend()
 plt.show()
+
+print(res['params'][j1])
 # -
 
 # #### Logistic Regression
 
-# coeff logistic
-classifier = LogisticRegression()
-classifier.fit(X_train,y_train)
-coeff=pd.DataFrame()
-coeff["feature"]=X_train.columns
-coeff["w"]=classifier.coef_[0]
+# Extract the classifier
+classifier = pipeline_cv['logistic_regression'].best_estimator_.named_steps['classifier']
+
+coeff = pd.DataFrame()
+coeff["feature"] = X_train.columns
+coeff["w"] = classifier.coef_[0]
 coeff = coeff.sort_values(by=['w'])
 sns.barplot(data=coeff, y="feature", x="w", palette="Blues_d", orient="h")
 plt.show()
@@ -1151,8 +1191,8 @@ plt.show()
 
 # #### DecisionTreeClassifier
 
-classifier = DecisionTreeClassifier()
-classifier.fit(X_train, y_train)
+# Extract the classifier
+classifier = pipeline_cv['decision_tree_classifier'].best_estimator_.named_steps['classifier']
 
 from sklearn import tree
 text_representation = tree.export_text(classifier)
@@ -1183,6 +1223,127 @@ plt.title('Feature importances using MDI')
 plt.xlabel('Mean decrease in impurity')
 plt.show()
 
+# #### Random Forest
+
+classifier = pipeline_cv['random_forest'].best_estimator_.named_steps['classifier']
+
+# Feature Importance
+importance, sorted_indices = np.sort(classifier.feature_importances_), np.argsort(classifier.feature_importances_)
+importance, sorted_indices = importance[-30:], sorted_indices[-30:]
+importance, sorted_indices = importance[::-1], sorted_indices[::-1]
+sns.barplot(y=X.columns[sorted_indices], x=importance, color='g')
+plt.ylabel('Features')
+plt.xlabel('Importance')
+plt.title('Feature Importance in Random Forest Classifier')
+plt.show()
+
+# ### AUC and confusion matrices
+
+from mlxtend.plotting import plot_confusion_matrix
+
+# +
+fig, axes = plt.subplots(nrows=2, ncols=4, figsize=(20,7))#, height_ratios = [1,3])
+
+axes = axes.flatten()
+
+rows = []
+i = 0
+
+
+roc_details = {}
+
+
+for name, pipeline in pipeline_cv.items():
+    
+    #plt.sca(axes[i]) # set the current Axes
+    
+    if name == 'svc':
+        continue
+    
+    model = pipeline.best_estimator_.named_steps['classifier']
+
+    # Make predictions on the testing set
+    y_pred = pipeline.predict(X_test)
+
+    # Calculate the accuracy score
+    accuracy = accuracy_score(y_test, y_pred)
+
+    # Calculate the confusion matrix
+    cm = confusion_matrix(y_test, y_pred)
+    #sns.heatmap(cm, annot=True, cmap='coolwarm', fmt='d', ax=axes[0,i])
+    axes[i].set_title(model.__class__.__name__ + ' Confusion Matrix')
+    plot_confusion_matrix(conf_mat=cm,
+                          show_absolute=True,
+                          show_normed=True,
+                          colorbar=True, figure=fig, axis=axes[i])
+
+    axes[i].set_xlabel('Predicted label')
+    axes[i].set_ylabel('True label')
+
+    # Calculate the ROC curve
+    y_score = pipeline.predict_proba(X_test)[:,1]
+    fpr, tpr, _ = roc_curve(y_test, y_score)
+    roc_auc = auc(fpr, tpr)
+    
+    roc_details[model.__class__.__name__] = {
+        'fpr': fpr,
+        'tpr': tpr,
+        'roc_auc': roc_auc
+    }
+
+    
+    i += 1
+    
+    row = {'Model': model.__class__.__name__,
+           'ROC AUC': roc_auc,
+           'Accuracy': accuracy,
+          }
+    
+    # Append the row to the list
+    rows.append(row)
+
+plt.tight_layout()
+plt.show()
+
+# +
+# Plot the ROC curve
+fig, ax = plt.subplots(figsize=(8,8))
+
+ax.plot([0, 1], [0, 1], linestyle='--', color='gray')
+ax.set_xlim([0.0, 1.0])
+ax.set_ylim([0.0, 1.05])
+ax.set_xlabel('False Positive Rate')
+ax.set_ylabel('True Positive Rate')
+
+for key, values in roc_details.items():
+    ax.plot(values['fpr'], values['tpr'], label=key + ' (AUC = %0.2f)' % values['roc_auc'])
+
+ax.set_title('ROC Curve comparison')
+ax.legend(loc="lower right")
+ax.set_aspect('equal')
+ax.set_aspect('equal')
+# -
+
+df_performance = pd.DataFrame(rows)
+df_performance = df_performance.sort_values('ROC AUC', ascending=False)
+df_performance
+
+print(df_performance.to_latex(index=False,
+                  formatters={"name": str.upper},
+                  float_format="{:.2%}".format,
+                  caption="Comparison of performance of the different models"
+))
+
+# ## 4. Conclusion
+#
+# ### Summary of findings
+#
+# ### Recommendations for further research
+#
+# ### Limitations of the analysis
+
+# # Extras
+
 # Out of bag score.
 #
 # It permits to have an overview without the cv validation test, of course the results should be then tested on the test set.
@@ -1192,131 +1353,6 @@ bag_clf = BaggingClassifier(DecisionTreeClassifier(), n_estimators=500, bootstra
 bag_clf.fit(X_train, y_train)
 
 bag_clf.oob_score_
-
-# ## 6. Model Improvement
-#
-# ### Hyperparameter tuning
-#
-# ### Cross-validation
-#
-# ### Final model pipeline
-
-# +
-# %%time
-
-# separate categorical and numerical features
-categorical_features = ['categorical_feature_1', 'categorical_feature_2']
-numerical_features = ['numerical_feature_1', 'numerical_feature_2']
-
-
-# create preprocessor for categorical data
-cat_preprocessor = Pipeline(steps=[
-    ('onehot', OneHotEncoder(handle_unknown='ignore'))
-])
-
-# create preprocessor for numerical data
-num_preprocessor = Pipeline(steps=[
-    ('imputer', SimpleImputer(strategy='median')),
-    ('scaler', StandardScaler()),
-    #('pca', PCA(n_components=2))
-])
-
-# combine the preprocessors into a column transformer
-preprocessor = ColumnTransformer(
-    transformers=[
-        ('cat', cat_preprocessor, categorical_features),
-        ('num', num_preprocessor, numerical_features)
-    ])
-
-# define the models and their parameter grids for grid search
-models = {
-    'logistic_regression': {
-        'model': LogisticRegression(max_iter=10000),
-        'param_grid': {'classifier__C': np.logspace(-3, 3, 7)}
-    },
-    'svm': {
-        'model': SVC(probability=True),
-        'param_grid': {'classifier__C': np.logspace(-3, 3, 7),
-                       'classifier__gamma': ['scale', 'auto'],
-                       'classifier__kernel': ['linear','rbf']}
-    },
-    'random_forest': {
-        'model': RandomForestClassifier(),
-        'param_grid': {'classifier__n_estimators': [100, 200, 300],
-                       'classifier__max_depth': [5, 10]}
-    },
-    'knn': {
-        'model': KNeighborsClassifier(),
-        'param_grid': {'classifier__n_neighbors': np.arange(10,500,20)}
-    },
-    'decision_tree_classifier': {
-        'model': DecisionTreeClassifier(),
-        'param_grid': {'classifier__criterion': ['entropy','gini'], 
-                       'classifier__max_depth': [4,5,6,8,10],
-                       'classifier__min_samples_split': [5,10,20],
-                       'classifier__min_samples_leaf': [5,10,20]}
-    },
-    'mlp': {
-        'model': MLPClassifier(),
-        'param_grid': {'classifier__hidden_layer_sizes': [(10, 5),(100,20,5)],
-                       'classifier__max_iter': [2000],
-                       'classifier__alpha': [0.001,0.1]}
-    },
-    'naive_bayes': {
-        'model': GaussianNB(),
-        'param_grid': {}
-    }
-}
-
-# create the pipelines for each model
-pipelines = {}
-for name, model in models.items():
-    pipelines[name] = Pipeline(steps=[
-        #('preprocessor', preprocessor),
-        ('classifier', model['model'])
-    ])
-
-# split the data into training and testing sets
-#X_train, X_test, y_train, y_test = train_test_split(data.drop('target', axis=1), data['target'], test_size=0.2, random_state=42)
-
-scoring = {"AUC": "roc_auc", "Accuracy": make_scorer(accuracy_score)}
-
-gss = []
-
-# perform grid search cross-validation for each model and output the test accuracy of the best model
-for name, pipeline in pipelines.items():
-    grid_search = GridSearchCV(
-        pipeline,
-        param_grid=models[name]['param_grid'],
-        cv=5,
-        scoring=scoring,
-        refit="AUC",
-        return_train_score=True
-    )
-    grid_search.fit(X_train, y_train)
-    gss.append(grid_search)
-    print(f'{name:30}| train AUC = {grid_search.score(X_train, y_train):.3f} | test AUC = {grid_search.score(X_test, y_test):.3f}')
-
-# +
-imp = gss[3].best_estimator_.named_steps['classifier'].feature_importances_
-
-GiniScore, j = np.sort(imp), np.argsort(imp)
-GiniScore, j = GiniScore[-10:],j[-10:]
-sns.barplot(y=X.columns[j], x=GiniScore, color='g')
-plt.title('Feature importances using MDI')
-plt.xlabel('Mean decrease in impurity')
-plt.show()
-# -
-
-# ## 7. Conclusion
-#
-# ### Summary of findings
-#
-# ### Recommendations for further research
-#
-# ### Limitations of the analysis
-
-# # Extras
 
 # ## Imbalance
 
@@ -1331,3 +1367,27 @@ oversample.get_params()
 Counter(y_train)
 
 Counter(y_ov)
+
+# ## `lazypredict`
+#
+# [`lazypredict`](https://github.com/shankarpandala/lazypredict) is a Python library that is able to quickly check through many models, without any specific fine-tuning, but is able to give an initial look at which could be the best performing models on the task.
+#
+# Let's begin by importing the `LazyClassifier` class.
+
+from lazypredict.Supervised import LazyClassifier
+
+# We now instantiate it with basic settings
+
+clf = LazyClassifier(verbose=0, ignore_warnings=True, custom_metric=None)
+
+# And then we fit it using our data
+
+models, predictions = clf.fit(X_train, X_test, y_train, y_test)
+
+# We can retrieve a dictionary of all the models trained
+
+models
+
+# And TODO
+
+model_dictionary = clf.provide_models(X_train,X_test,y_train,y_test)
