@@ -1375,7 +1375,7 @@ ax.set_xlabel('False Positive Rate')
 ax.set_ylabel('True Positive Rate')
 
 for key, values in roc_details.items():
-    ax.plot(values['fpr'], values['tpr'], label=key + ' (AUC = %0.2f)' % values['roc_auc'])
+    ax.plot(values['fpr'], values['tpr'], label=key + ' (AUC = %0.4f)' % values['roc_auc'])
 
 ax.set_title('ROC Curve comparison')
 ax.legend(loc="lower right")
