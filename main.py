@@ -1400,6 +1400,53 @@ df_performance.to_latex(
     caption="Comparison of performance of the different models"
 )
 
+# +
+# ensemble
+
+predictions = []
+
+# Make predictions with each model
+for name, pipeline in pipeline_cv.items():
+    
+    if name in ['xgboost', 'random_forest', 'logistic_regression', 'ada_boost']:
+        # Make predictions on the testing set
+        y_score = pipeline.predict_proba(X_test)#[:,1]
+        predictions.append(y_score)
+    
+    
+# Take the average of predictions
+ensemble_predictions = np.mean(predictions, axis=0)
+
+# Determine the final class by taking the argmax
+final_predictions = np.argmax(ensemble_predictions, axis=1)
+# -
+
+accuracy_score(y_test, final_predictions)
+
+# +
+# Plot the ROC curve
+fig, ax = plt.subplots(figsize=(8,8))
+
+fpr, tpr, _ = roc_curve(y_test, ensemble_predictions[:,1])
+roc_auc = auc(fpr, tpr)
+    
+ax.plot([0, 1], [0, 1], linestyle='--', color='gray')
+ax.set_xlim([0.0, 1.0])
+ax.set_ylim([0.0, 1.05])
+ax.set_xlabel('False Positive Rate')
+ax.set_ylabel('True Positive Rate')
+
+
+ax.plot(fpr, tpr, label='Ensemble' + ' (AUC = %0.4f)' % roc_auc)
+
+ax.set_title('ROC Curve comparison')
+ax.legend(loc="lower right")
+ax.set_aspect('equal')
+ax.set_aspect('equal')
+plt.savefig(str(OUTPUT_FOLDER / 'roc_ensemble.pdf'), bbox_inches='tight')
+plt.show()
+# -
+
 # ## 4. Conclusion
 #
 # ### Summary of findings
