@@ -1309,22 +1309,13 @@ from mlxtend.plotting import plot_confusion_matrix
 
 # +
 fig, axes = plt.subplots(nrows=2, ncols=4, figsize=(20,7))#, height_ratios = [1,3])
-
 axes = axes.flatten()
 
 rows = []
 i = 0
-
-
 roc_details = {}
 
-
 for name, pipeline in pipeline_cv.items():
-    
-    #plt.sca(axes[i]) # set the current Axes
-    
-    if name == 'svc':
-        continue
     
     model = pipeline.best_estimator_.named_steps['classifier']
 
