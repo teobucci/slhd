@@ -1389,7 +1389,7 @@ df_performance
 
 print(df_performance.to_latex(index=False,
                   formatters={"name": str.upper},
-                  float_format="{:.2%}".format,
+                  float_format="{:.4f}".format,
                   caption="Comparison of performance of the different models"
 ))
 
