@@ -224,8 +224,8 @@ from sklearn.compose import ColumnTransformer
 from sklearn.neural_network import MLPClassifier
 from sklearn.naive_bayes import GaussianNB
 from collections import Counter
-from imblearn.over_sampling import SMOTE
-import xgboost as xgb
+#from imblearn.over_sampling import SMOTE
+#import xgboost as xgb
 import pickle
 import re
 
@@ -609,6 +609,23 @@ ax.set_ylabel('Column')
 ax.set_xlabel('Percentage Missing (%)')
 ax.axvline(x=50, color='k', linestyle='--')
 
+plt.show()
+# -
+
+# Guardo meglio le variabili con percentuale vicina a 50%
+
+print("Missing percentage of variable body.temperature.blood.gas is ", numerical_missing['body.temperature.blood.gas'], "\nUnique values are ", 
+df_numerical['body.temperature.blood.gas'].unique())
+
+# O sono nan oppure 37. Non mi sembra molto informativa
+
+# +
+corr_matrix = df_numerical[numerical_missing[numerical_missing>50][numerical_missing<60].axes[0].tolist()].drop(columns=['body.temperature.blood.gas']).corr()
+
+# Create a correlation heatmap
+plt.figure(figsize=(20, 15))
+sns.heatmap(corr_matrix, annot=True, cmap='coolwarm')
+plt.title('Correlation Heatmap')
 plt.show()
 # -
 
