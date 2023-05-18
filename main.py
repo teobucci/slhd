@@ -1035,12 +1035,6 @@ discrete_vars = [col for col in df.columns if df[col].dtype == 'int64']
 for var in discrete_vars:
     print('Unique values of the discrete variable',var, 'are: ',sorted(df[var].unique()))
 
-# ### Imbalance analysis
-
-# Percentage of positive observations
-
-np.round((df[target_var] == True).sum() / len(df.index), 3)
-
 # ### Correlation analysis
 
 # Choose only a subset of the correlation matrix
@@ -1162,6 +1156,12 @@ X_test[numerical_features] = imputer.transform(X_test[numerical_features])
 # -
 
 # #### Imbalance
+
+# Percentage of positive observations in the training set
+
+np.round((y_train == True).sum() / len(y_train), 3)
+
+# N. V. Chawla, K. W. Bowyer, L. O.Hall, W. P. Kegelmeyer, “SMOTE: synthetic minority over-sampling technique,” Journal of artificial intelligence research, 321-357, 2002.
 
 oversample = SMOTE(random_state=SEED)
 X_ov, y_ov = oversample.fit_resample(X_train, y_train)
