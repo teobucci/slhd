@@ -224,7 +224,7 @@ from sklearn.compose import ColumnTransformer
 from sklearn.neural_network import MLPClassifier
 from sklearn.naive_bayes import GaussianNB
 from collections import Counter
-from imblearn.over_sampling import SMOTE
+#from imblearn.over_sampling import SMOTE
 import xgboost as xgb
 import pickle
 import re
@@ -613,6 +613,9 @@ plt.show()
 # -
 
 # Guardo meglio le variabili con percentuale vicina a 50%
+#
+# Sembrano tante informazioni che vengono scartate ma inr ealtà guardando la matrice di correlazione sono molto correllata per cui molte di queste variabili che stiamo scartando contengono le stesse informazioni della altre, non stiamo perciò perdendo troppe informazioni.
+#
 
 print("Missing percentage of variable body.temperature.blood.gas is ", numerical_missing['body.temperature.blood.gas'], "\nUnique values are ", 
 df_numerical['body.temperature.blood.gas'].unique())
@@ -625,6 +628,25 @@ corr_matrix = df_numerical[numerical_missing[numerical_missing>50][numerical_mis
 # Create a correlation heatmap
 plt.figure(figsize=(20, 15))
 sns.heatmap(corr_matrix, annot=True, cmap='coolwarm')
+plt.title('Correlation Heatmap')
+plt.show()
+# -
+
+# Hemoglobin correlation
+
+# +
+hemoglobin = []
+for var in numerical_missing.axes[0].tolist():
+    if var.endswith('hemoglobin'):
+        hemoglobin.append(var)
+        
+df_numerical[hemoglobin].dropna()
+corr_hemoglobin = df_numerical[hemoglobin].dropna().corr()
+
+
+# Create a correlation heatmap
+plt.figure(figsize=(20, 15))
+sns.heatmap(corr_hemoglobin, annot=True, cmap='coolwarm')
 plt.title('Correlation Heatmap')
 plt.show()
 # -
