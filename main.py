@@ -224,8 +224,8 @@ from sklearn.compose import ColumnTransformer
 from sklearn.neural_network import MLPClassifier
 from sklearn.naive_bayes import GaussianNB
 from collections import Counter
-#from imblearn.over_sampling import SMOTE
-#import xgboost as xgb
+from imblearn.over_sampling import SMOTE
+import xgboost as xgb
 import pickle
 import re
 
