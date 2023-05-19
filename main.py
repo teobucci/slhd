@@ -554,21 +554,8 @@ names = ['numerical', 'categorical']
 numerical_missing = get_percentage_missing(df_numerical)
 categorical_missing = get_percentage_missing(df_categorical)
 
-
 for name, features in zip(names, [numerical_missing, categorical_missing]):
     print(f"Among the {name} features, {len(features)} contain missing values")
-
-
-#discrete_missing_percentages = get_features_with_nans(df, discrete_vars)
-#continuous_missing_percentages = get_features_with_nans(df, continuous_vars)
-#categorical_missing_percentages = get_features_with_nans(df, categorical_vars)
-#binary_missing_percentages = get_features_with_nans(df, binary_vars)
-
-#print(f"List discrete_missing_percentages contains {len(discrete_missing_percentages)} elements")
-#print(f"List continuous_missing_percentages contains {len(continuous_missing_percentages)} elements")
-#print(f"List categorical_missing_percentages contains {len(categorical_missing_percentages)} element")
-#print(f"List binary_missing_percentages contains {len(binary_missing_percentages)} element")
-
 # -
 
 # The single categorical feature that contains missing values is `occupation` with 1.34% of missing values.
