@@ -1436,6 +1436,8 @@ print(res['params'][j1])
 # Extract the classifier
 classifier = pipeline_cv['logistic_regression'].best_estimator_.named_steps['classifier']
 
+# [This website](https://stats.oarc.ucla.edu/other/mult-pkg/faq/general/faq-how-do-i-interpret-odds-ratios-in-logistic-regression/) provides an insightful interpretation of the coefficients in a logistic regression model.
+
 fig, ax = plt.subplots(figsize=(8,6))
 coeff = pd.DataFrame()
 coeff["feature"] = X_train.columns
