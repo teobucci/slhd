@@ -1475,7 +1475,7 @@ for name, pipeline in pipelines.items():
     grid_search = GridSearchCV(
         pipeline,
         param_grid=models[name]['param_grid'],
-        cv=StratifiedKFold(n_splits=8, shuffle=True, random_state=SEED),
+        cv=StratifiedKFold(n_splits=5, shuffle=True, random_state=SEED),
         scoring=scoring,
         refit="AUC",
         return_train_score=True,
