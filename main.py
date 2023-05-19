@@ -663,12 +663,31 @@ plt.title('Correlation Heatmap')
 plt.show()
 # -
 
+# Hemoglobin correlation
+
+# +
+hemoglobin = []
+for var in numerical_missing.axes[0].tolist():
+    if var.endswith('hemoglobin'):
+        hemoglobin.append(var)
+        
+df_numerical[hemoglobin].dropna()
+corr_hemoglobin = df_numerical[hemoglobin].dropna().corr()
+
+
+# Create a correlation heatmap
+plt.figure(figsize=(20, 15))
+sns.heatmap(corr_hemoglobin, annot=True, cmap='coolwarm')
+plt.title('Correlation Heatmap')
+plt.show()
+# -
+
 # We see a few blocks, from which we deduce that many of these variables contain the same information, and given that all of them have a % of NaN greater than 50%, we can safely remove them, knowing that the amount of information we're discarding is not as much as one might expect.
 
 # TODO: potremmo valutare di tenerne giusto un paio...
 
 threshold = 0.50
-limitPer = len(df.index) * threshold
+limitPer = len(df.index) * (1-threshold)
 # Drop columns
 df = df.dropna(thresh=limitPer, axis=1)
 # Update numerical df
@@ -689,25 +708,6 @@ df = df.drop(same_cols, axis=1)
 df_categorical = df.select_dtypes(include=['category', 'bool'])
 df_numerical = df.select_dtypes(include=['float64', 'int64'])
 
-
-# Hemoglobin correlation
-
-# +
-hemoglobin = []
-for var in numerical_missing.axes[0].tolist():
-    if var.endswith('hemoglobin'):
-        hemoglobin.append(var)
-        
-df_numerical[hemoglobin].dropna()
-corr_hemoglobin = df_numerical[hemoglobin].dropna().corr()
-
-
-# Create a correlation heatmap
-plt.figure(figsize=(20, 15))
-sns.heatmap(corr_hemoglobin, annot=True, cmap='coolwarm')
-plt.title('Correlation Heatmap')
-plt.show()
-# -
 
 # ### Data visualization
 
