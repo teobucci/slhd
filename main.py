@@ -707,11 +707,13 @@ plt.show()
 
 # ### Data visualization
 
-# We have 84 numerical features, let us plot them in a big grid to have an understanding of the distribution.
+# #### Histograms of numerical variables
+
+# Let us plot them in a big grid to have an understanding of the distribution of numerical variables.
 
 len(df_numerical.columns)
 
-df_numerical[df_numerical.columns[:84]].hist(layout=(21,4), figsize=(15,80))
+df_numerical[df_numerical.columns[:83]].hist(layout=(21,4), figsize=(15,80))
 plt.show()
 
 # #### Outlier detection
