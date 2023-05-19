@@ -1221,9 +1221,6 @@ df_shape[1] - df.shape[1]
 #df_numerical['logduration']=df_numerical['duration'].apply(lambda x: math.log(x+1))
 # -
 
-# importante da vedere
-df['NYHA.cardiac.function.classification'].unique()
-
 # ### Preprocessing categorical data
 
 # separate categorical and numerical features
