@@ -1454,19 +1454,21 @@ pipelines = {}
 for name, model in models.items():
     pipelines[name] = Pipeline(steps=[
         #('preprocessor', preprocessor),
+        #('sampling', SMOTE()),
         ('classifier', model['model'])
     ])
 
+pipelines['logistic_regression']
+
 # ### Cross-validation training and Hyperparameter tuning
 
-# According to [the documentation](https://scikit-learn.org/stable/modules/cross_validation.html#stratified-k-fold) we choose to use the `StratifiedKFold` for doing cross-validation, choosing `n_splits=8` to have a validation set of `1/n_splits=0.125`, and `shuffle=True`.
+# According to [the documentation](https://scikit-learn.org/stable/modules/cross_validation.html#stratified-k-fold) we choose to use the `StratifiedKFold` for doing cross-validation, choosing `n_splits=5` to have a validation set of `1/n_splits=0.20`, and `shuffle=True`.
+
+scoring = {"AUC": "roc_auc", "Accuracy": make_scorer(accuracy_score)}
+pipeline_cv = {}
 
 # +
 # %%time
-
-scoring = {"AUC": "roc_auc", "Accuracy": make_scorer(accuracy_score)}
-
-pipeline_cv = {}
 
 # perform grid search cross-validation for each model and output the test accuracy of the best model
 for name, pipeline in pipelines.items():
