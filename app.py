@@ -3,54 +3,56 @@
 
 import streamlit as st
 import pandas as pd
-from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import StandardScaler
-from sklearn.ensemble import RandomForestClassifier
 import shap
+import pickle
 
-# Set up imputer and scaler
-imputer = SimpleImputer(strategy='median')
-scaler = StandardScaler()
-
-# Load the pre-trained model
-model = RandomForestClassifier()  # Replace with your own model
+# Read the model using pickle
+with open('./output/pipeline_cv.pkl', 'rb') as f:
+    model = pickle.load(f)
 
 # Load the SHAP explainer
 explainer = shap.Explainer(model)
 
-# Helper function to preprocess user inputs
-def preprocess_inputs(inputs):
-    # Convert inputs to DataFrame
-    df = pd.DataFrame(inputs, index=[0])
-    df.columns = ['feature_1', 'feature_2', 'feature_3']  # Replace with your own feature names
-
-    # Impute missing values
-    df = pd.DataFrame(imputer.transform(df), columns=df.columns)
-
-    # Scale the features
-    df = pd.DataFrame(scaler.transform(df), columns=df.columns)
-
-    return df
-
 # Helper function to get SHAP explanations
 def get_shap_explanations(inputs):
-    processed_inputs = preprocess_inputs(inputs)
-    shap_values = explainer.shap_values(processed_inputs)
+
+    #set the tree explainer as the model of the pipeline
+    explainer = shap.TreeExplainer(pipeline['classifier'])
+
+    #apply the preprocessing to x_test
+    observations = pipeline['imputer'].transform(x_test)
+
+    #get Shap values from preprocessed data
+    shap_values = explainer.shap_values(observations)
+
+    #plot the feature importance
+    shap.summary_plot(shap_values, x_test, plot_type="bar")
+
+
+    shap_values = explainer.shap_values(inputs)
     return shap_values
+
+def generate_sidebar(column_info):
+    for column, info in column_info.items():
+        st.sidebar.subheader(column)
+        column_type = info['type']
+        if column_type == 'binary':
+            value = st.sidebar.checkbox("Select", value=False, key=column)
+        elif column_type == 'category':
+            options = info['value']
+            value = st.sidebar.radio("Select", options, key=column)
+        elif column_type == 'continuous' or column_type == 'integer':
+            min_value, max_value = info['value']
+            range_min = min_value# - abs(max_value - min_value) * 0.3
+            range_max = max_value# + abs(max_value - min_value) * 0.3
+            value = st.sidebar.number_input("Enter", min_value=range_min, max_value=range_max, key=column)
+        st.sidebar.write("Selected value:", value)
+
+    # Button to compute prediction on click
+    #st.sidebar.button("Compute prediction", on_click=pred())
 
 # Main app
 def main():
-    st.title("Binary Classification App")
-
-    # Collect user inputs
-    feature_1 = st.number_input("Feature 1", value=0.0)
-    feature_2 = st.number_input("Feature 2", value=0.0)
-    feature_3 = st.number_input("Feature 3", value=0.0)
-    user_inputs = [feature_1, feature_2, feature_3]
-
-    # Set the page title and favicon
-    st.set_page_config(page_title='Predicting Credit Card Fraud',
-                        page_icon='💳')
 
     # Set the title
     st.title('Heart Failure: predicting readmission after 6 months')
@@ -59,48 +61,44 @@ def main():
     st.subheader('A Streamlit app to predict readmission after 6 months')
 
     # Set the text
-    st.text('This app will predict whether a patient will be readmitted to the hospital within 6 months of their initial visit.')
+    st.markdown('This app will predict whether a patient will be readmitted to the hospital within 6 months of their initial visit.')
 
     # Set the text
-    st.text('The data used to train the model was given during the course of Statistical Learning for Healthcare Data.')
+    st.markdown('The data used to train the model was given during the course of Statistical Learning for Healthcare Data.')
 
-    # Create UI
-    st.sidebar.header('User Input Parameters')
-
-    # Create function to get user input
-    def get_user_input():
-        # Create dictionary to store user input
-        user_input = {}
-
-        # Create slider for time
-        user_input['time'] = st.sidebar.slider('Time', 0, 300, 150)
-
-        # Create slider for anaemia
-        user_input['anaemia'] = st.sidebar.selectbox('Anaemia', ('No', 'Yes'))
+    # Collect user inputs
+    feature_1 = st.number_input("Feature 1", value=0.0)
+    feature_2 = st.number_input("Feature 2", value=0.0)
+    feature_3 = st.number_input("Feature 3", value=0.0)
+    user_inputs = [feature_1, feature_2, feature_3]
 
 
-    
+    # Read file ccolumn_info with pkl
+    with open('./output/column_info.pkl', 'rb') as f:
+        column_info = pickle.load(f)
+
+    generate_sidebar(column_info)
 
     # Perform prediction
-    if st.button("Predict"):
-        # Preprocess user inputs
-        processed_inputs = preprocess_inputs(user_inputs)
+    if st.sidebar.button("Predict"):
+        # Create a single-row DataFrame based on the column information
+        input_data = {}
+        for column in column_info.keys():
+            if column_info[column]['type'] == 'binary':
+                input_data[column] = [st.sidebar.checkbox(column)]
+            elif column_info[column]['type'] == 'category':
+                input_data[column] = [st.sidebar.radio(column, column_info[column]['value'])]
+            elif column_info[column]['type'] in ['continuous', 'integer']:
+                min_value, max_value = column_info[column]['value']
+                range_min = min_value - abs(max_value - min_value) * 0.3
+                range_max = max_value + abs(max_value - min_value) * 0.3
+                input_data[column] = [st.sidebar.number_input(column, min_value=range_min, max_value=range_max)]
+        
+        input_df = pd.DataFrame(input_data)
 
         # Predict class and probabilities
         prediction = model.predict(processed_inputs)[0]
         probabilities = model.predict_proba(processed_inputs)[0]
-
-        # Compute score segments
-        segment_1 = round(probabilities[0], 2)  # 0 to 0.3
-        segment_2 = round(probabilities[1], 2)  # 0.3 to 0.6
-        segment_3 = round(probabilities[2], 2)  # 0.6 to 1
-
-        st.write("### Prediction")
-        st.write(f"Class: {prediction}")
-        st.write("### Probability Segments")
-        st.write(f"0 to 0.3: {segment_1}")
-        st.write(f"0.3 to 0.6: {segment_2}")
-        st.write(f"0.6 to 1: {segment_3}")
 
         # Generate SHAP explanations
         shap_values = get_shap_explanations(user_inputs)
