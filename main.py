@@ -621,13 +621,14 @@ print("Unique values are ", df_numerical['body.temperature.blood.gas'].unique())
 
 threshold = 0.60
 
-missing_cols = numerical_missing[numerical_missing>(threshold*10)].index.tolist()
+missing_cols = numerical_missing[numerical_missing>(threshold*100)].index.tolist()
 print(f'Columns with % of NaNs greater than {threshold:.0%}:')
 print(missing_cols)
 
-limitPer = len(df.index) * threshold
-# Drop columns
+limitPer = len(df.index) * (1-threshold)
+# Drop rows (keep only rows with at least `thresh` non-NA
 df = df.dropna(thresh=limitPer, axis=1)
+# Drop column body.temperature.blood.gas
 df = df.drop('body.temperature.blood.gas', axis=1)
 # Update numerical df
 df_numerical = df.select_dtypes(include=['float64', 'int64'])
@@ -638,7 +639,7 @@ numerical_missing = get_percentage_missing(df_numerical)
 # +
 import scipy.cluster.hierarchy as spc
 
-df_temp = df_numerical[numerical_missing[numerical_missing>50][numerical_missing<60].axes[0].tolist()]
+df_temp = df_numerical[numerical_missing[numerical_missing>50][numerical_missing<60].index.tolist()]
 corr_matrix = df_temp.corr()
 pdist = spc.distance.pdist(abs(corr_matrix.values))
 
@@ -662,7 +663,7 @@ plt.show()
 # TODO: potremmo valutare di tenerne giusto un paio...
 
 threshold = 0.50
-limitPer = len(df.index) * threshold
+limitPer = len(df.index) * (1 - threshold)
 # Drop columns
 df = df.dropna(thresh=limitPer, axis=1)
 # Update numerical df
