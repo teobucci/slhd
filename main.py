@@ -860,13 +860,18 @@ df.loc[df['map'] == 0, 'map'] = np.nan
 get_outliers(df, 'left.ventricular.end.diastolic.diameter.LV', threshold=3)
 
 # Left ventricular end diastolic diameter LV (cm) normal range: 3.5 - 5.6 cm  
-# In a non-phisiological condition the maximum value for this parameter is 6.2 cm
+# From the histogram we can see that the values are not in cm
 
-df.loc[(df['left.ventricular.end.diastolic.diameter.LV'] >= 6.5) | (df['left.ventricular.end.diastolic.diameter.LV']<1), 'left.ventricular.end.diastolic.diameter.LV'] = np.nan
+df['left.ventricular.end.diastolic.diameter.LV'].hist()
+plt.show()
 
-# +
-#df.loc[df['left.ventricular.end.diastolic.diameter.LV'] < 1, 'left.ventricular.end.diastolic.diameter.LV'] = np.nan
-# -
+# Repeat the outlier analysis
+
+df['left.ventricular.end.diastolic.diameter.LV'] = df['left.ventricular.end.diastolic.diameter.LV'] / 10
+
+get_outliers(df, 'left.ventricular.end.diastolic.diameter.LV', threshold=3)
+
+df.loc[df['left.ventricular.end.diastolic.diameter.LV'] < 0.1, 'left.ventricular.end.diastolic.diameter.LV'] = np.nan
 
 get_outliers(df, 'creatinine.enzymatic.method', threshold=8)
 
