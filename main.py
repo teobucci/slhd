@@ -1372,11 +1372,20 @@ np.round((y_train == True).sum() / len(y_train), 3)
 
 # create preprocessor for numerical data
 # num_preprocessor = Pipeline(steps=[
+#     ('imputer', KNNImputer(n_neighbors=6)),
 #     ('scaler', StandardScaler())
 # ])
 scaler = StandardScaler()
 X_train[numerical_features] = scaler.fit_transform(X_train[numerical_features])
 X_test[numerical_features] = scaler.transform(X_test[numerical_features])
+
+with open(str(OUTPUT_FOLDER / 'scaler.pkl'), 'wb') as handle:
+    pickle.dump(scaler, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+# +
+# with open(str(OUTPUT_FOLDER / 'imputer.pkl'), 'rb') as handle:
+#     scaler = pickle.load(handle)
+# -
 
 # ### Model selection
 
