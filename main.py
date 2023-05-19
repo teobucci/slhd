@@ -224,7 +224,7 @@ from sklearn.compose import ColumnTransformer
 from sklearn.neural_network import MLPClassifier
 from sklearn.naive_bayes import GaussianNB
 from collections import Counter
-from imblearn.over_sampling import SMOTE
+#from imblearn.over_sampling import SMOTE
 import xgboost as xgb
 import pickle
 import re
@@ -682,6 +682,26 @@ df = df.drop(same_cols, axis=1)
 # Update numerical and categorical df
 df_categorical = df.select_dtypes(include=['category', 'bool'])
 df_numerical = df.select_dtypes(include=['float64', 'int64'])
+
+
+# Hemoglobin correlation
+
+# +
+hemoglobin = []
+for var in numerical_missing.axes[0].tolist():
+    if var.endswith('hemoglobin'):
+        hemoglobin.append(var)
+        
+df_numerical[hemoglobin].dropna()
+corr_hemoglobin = df_numerical[hemoglobin].dropna().corr()
+
+
+# Create a correlation heatmap
+plt.figure(figsize=(20, 15))
+sns.heatmap(corr_hemoglobin, annot=True, cmap='coolwarm')
+plt.title('Correlation Heatmap')
+plt.show()
+# -
 
 # ### Data visualization
 
