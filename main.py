@@ -1121,21 +1121,31 @@ plt.show()
 
 def plot_subcorrelation_matrix(corr_matrix, inspect_col, threshold=0.4):
     
-    sub_corr_matrix = corr_matrix[inspect_col].loc[inspect_col]
-    # Data will not be shown in cells where `mask` is `True`
-    mask = np.triu(np.ones_like(sub_corr_matrix, dtype=bool), k=0) | (np.abs(sub_corr_matrix) <= threshold)
+    if not inspect_col or len(inspect_col) == 1:
+        return
     
-    # Plot the correlation matrix using seaborn
-    fig, ax = plt.subplots(figsize=(5, 5))
-    sns.heatmap(sub_corr_matrix,
-                annot=True, fmt='.2f',
-                mask=mask,
-                cmap='coolwarm', center=0, cbar=True,
-                linewidths=.5,
-                ax=ax)
-    ax.set_aspect("equal")
-    plt.title("Correlation matrix")
-    plt.show()
+    if len(inspect_col) == 2:
+        correlation_value = corr_matrix.values[0,1]
+        if correlation_value >= threshold:
+            print(f'Correlation: {correlation_value:.2f}')
+        else:
+            print('Correlation is below threshold')
+    else:
+        sub_corr_matrix = corr_matrix[inspect_col].loc[inspect_col]
+        # Data will not be shown in cells where `mask` is `True`
+        mask = np.triu(np.ones_like(sub_corr_matrix, dtype=bool), k=0) | (np.abs(sub_corr_matrix) <= threshold)
+
+        # Plot the correlation matrix using seaborn
+        fig, ax = plt.subplots(figsize=(5, 5))
+        sns.heatmap(sub_corr_matrix,
+                    annot=True, fmt='.2f',
+                    mask=mask,
+                    cmap='coolwarm', center=0, cbar=True,
+                    linewidths=.5,
+                    ax=ax)
+        ax.set_aspect("equal")
+        plt.title("Correlation matrix")
+        plt.show()
 
 
 inspect_col = ['map', 'diastolic.blood.pressure', 'systolic.blood.pressure']
