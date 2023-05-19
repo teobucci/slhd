@@ -1402,25 +1402,27 @@ models = {
     },    
     'random_forest': {
         'model': RandomForestClassifier(),
-        'param_grid': {'classifier__n_estimators': [100, 200, 300],
-                       'classifier__max_depth': [5, 10]}
+        'param_grid': {'classifier__n_estimators': [100, 250, 450, 600],
+                       'classifier__max_depth': [5, 10, 15, 20],
+                       'classifier__max_features': ['sqrt', 'log2'],
+                       'classifier__criterion' :['entropy']}
     },
     'knn': {
         'model': KNeighborsClassifier(),
-        'param_grid': {'classifier__n_neighbors': np.arange(10,500,20)}
+        'param_grid': {'classifier__n_neighbors': np.arange(5,80,10)}
     },
     'decision_tree_classifier': {
         'model': DecisionTreeClassifier(),
         'param_grid': {'classifier__criterion': ['entropy','gini'], 
-                       'classifier__max_depth': [4,5,6,8,10],
+                       'classifier__max_depth': [5,10],
                        'classifier__min_samples_split': [5,10,20],
-                       'classifier__min_samples_leaf': [5,10,20]}
+                       'classifier__min_samples_leaf': [5,10]}
     },
     'mlp': {
         'model': MLPClassifier(),
         'param_grid': {'classifier__hidden_layer_sizes': [(10, 5),(100,20,5)],
                        'classifier__max_iter': [2000],
-                       'classifier__alpha': [0.001,0.1]}
+                       'classifier__alpha': [0.01]}
     },
     'naive_bayes': {
         'model': GaussianNB(),
