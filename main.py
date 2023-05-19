@@ -603,12 +603,13 @@ ax.axvline(x=50, color='k', linestyle='--')
 plt.show()
 # -
 
-# Variables with a missing percentage higher than 60% will be deleted without hesitation, while variables with missingness between 50%-60% deserve a closer look, because they are many and we don't want to discard too much information.
-#
-# Specifically, the variable `body.temperature.blood.gas` has 51% missing values, but the non-missing ones are all `37`, we can remove it.
+# The variable `body.temperature.blood.gas` has 51% missing values, but the non-missing ones are all `37`, we can remove it.
 
-print("Missing percentage of body.temperature.blood.gas:", numerical_missing['body.temperature.blood.gas'])
-print("Unique values are ", df_numerical['body.temperature.blood.gas'].unique())
+print("Variable body.temperature.blood.gas")
+print("Missing percentage:", np.round(numerical_missing['body.temperature.blood.gas'], 2))
+print("Unique values:", df_numerical['body.temperature.blood.gas'].unique())
+
+# We delete variables with a missing percentage higher than 60% without hesitation.
 
 threshold = 0.60
 
@@ -616,16 +617,20 @@ missing_cols = numerical_missing[numerical_missing>(threshold*100)].index.tolist
 print(f'Columns with % of NaNs greater than {threshold:.0%}:')
 print(missing_cols)
 
-limitPer = len(df.index) * (1-threshold)
-# Drop rows (keep only rows with at least `thresh` non-NA
-df = df.dropna(thresh=limitPer, axis=1)
+# +
 # Drop column body.temperature.blood.gas
 df = df.drop('body.temperature.blood.gas', axis=1)
+
+limitPer = len(df.index) * (1-threshold)
+
+# Drop rows (keep only rows with at least `thresh` non-NA
+df = df.dropna(thresh=limitPer, axis=1)
+
 # Update numerical df
 df_numerical = df.select_dtypes(include=['float64', 'int64'])
-numerical_missing = get_percentage_missing(df_numerical)
+# -
 
-# Have a closer look at variables with 50%-60% of missing, let us plot the correlation matrix, clustered using hierarchical clustering to see a better block structure.
+# Variables with missingness between 50%-60% deserve a closer look, because they are many and we don't want to discard too much information. Let us plot their correlation matrix, clustered using hierarchical clustering to see a better block structure.
 
 # +
 import scipy.cluster.hierarchy as spc
