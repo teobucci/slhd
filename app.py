@@ -1,10 +1,10 @@
 # this is the commad to run the app
 # streamlit run app.py
 
+import pickle
 import streamlit as st
 import pandas as pd
 import shap
-import pickle
 import matplotlib.pyplot as plt
 import numpy as np
 
