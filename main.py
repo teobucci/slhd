@@ -628,6 +628,7 @@ df = df.dropna(thresh=limitPer, axis=1)
 
 # Update numerical df
 df_numerical = df.select_dtypes(include=['float64', 'int64'])
+numerical_missing = get_percentage_missing(df_numerical)
 # -
 
 # Variables with missingness between 50%-60% deserve a closer look, because they are many and we don't want to discard too much information. Let us plot their correlation matrix, clustered using hierarchical clustering to see a better block structure.
