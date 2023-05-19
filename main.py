@@ -612,15 +612,43 @@ ax.axvline(x=50, color='k', linestyle='--')
 plt.show()
 # -
 
-# Guardo meglio le variabili con percentuale vicina a 50%
+# Variables with a missing percentage higher than 60% will be deleted without hesitation, while variables with missingness between 50%-60% deserve a closer look, because they are many and we don't want to discard too much information.
+#
+# Specifically, the variable `body.temperature.blood.gas` has 51% missing values, but the non-missing ones are all `37`, we can remove it.
 
-print("Missing percentage of variable body.temperature.blood.gas is ", numerical_missing['body.temperature.blood.gas'], "\nUnique values are ", 
-df_numerical['body.temperature.blood.gas'].unique())
+print("Missing percentage of body.temperature.blood.gas:", numerical_missing['body.temperature.blood.gas'])
+print("Unique values are ", df_numerical['body.temperature.blood.gas'].unique())
 
-# O sono nan oppure 37. Non mi sembra molto informativa
+threshold = 0.60
+
+missing_cols = numerical_missing[numerical_missing>(threshold*10)].index.tolist()
+print(f'Columns with % of NaNs greater than {threshold:.0%}:')
+print(missing_cols)
+
+limitPer = len(df.index) * threshold
+# Drop columns
+df = df.dropna(thresh=limitPer, axis=1)
+df = df.drop('body.temperature.blood.gas', axis=1)
+# Update numerical df
+df_numerical = df.select_dtypes(include=['float64', 'int64'])
+numerical_missing = get_percentage_missing(df_numerical)
+
+# Have a closer look at variables with 50%-60% of missing, let us plot the correlation matrix, clustered using hierarchical clustering to see a better block structure.
 
 # +
-corr_matrix = df_numerical[numerical_missing[numerical_missing>50][numerical_missing<60].axes[0].tolist()].drop(columns=['body.temperature.blood.gas']).corr()
+import scipy.cluster.hierarchy as spc
+
+df_temp = df_numerical[numerical_missing[numerical_missing>50][numerical_missing<60].axes[0].tolist()]
+corr_matrix = df_temp.corr()
+pdist = spc.distance.pdist(abs(corr_matrix.values))
+
+linkage = spc.linkage(pdist, method='complete')
+idx = spc.fcluster(linkage, 0.5 * pdist.max(), 'distance')
+
+columns = [df_temp.columns.tolist()[i] for i in list((np.argsort(idx)))]
+df_temp = df_temp.reindex(columns, axis=1)
+
+corr_matrix = df_temp.corr()
 
 # Create a correlation heatmap
 plt.figure(figsize=(20, 15))
@@ -629,17 +657,17 @@ plt.title('Correlation Heatmap')
 plt.show()
 # -
 
-# We now set a threshold for missing values and drop features that present a percentage of missing values higher than the threshold.
+# We see a few blocks, from which we deduce that many of these variables contain the same information, and given that all of them have a % of NaN greater than 50%, we can safely remove them, knowing that the amount of information we're discarding is not as much as one might expect.
 
-# +
+# TODO: potremmo valutare di tenerne giusto un paio...
+
 threshold = 0.50
-
-missing_cols = numerical_missing[numerical_missing>50].index.tolist()
-print('Columns with a high percentage of NaNs:', missing_cols)
-
 limitPer = len(df.index) * threshold
+# Drop columns
 df = df.dropna(thresh=limitPer, axis=1)
-# -
+# Update numerical df
+df_numerical = df.select_dtypes(include=['float64', 'int64'])
+numerical_missing = get_percentage_missing(df_numerical)
 
 # ### Checking for mono-value columns
 
@@ -651,6 +679,7 @@ df = df.drop(same_cols, axis=1)
 
 # Update the categorical and numerical versions of the dataframe
 
+# Update numerical and categorical df
 df_categorical = df.select_dtypes(include=['category', 'bool'])
 df_numerical = df.select_dtypes(include=['float64', 'int64'])
 
