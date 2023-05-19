@@ -1014,7 +1014,6 @@ df.loc[df['triglyceride'] > 10, 'triglyceride'] = np.nan
 
 get_outliers(df, 'dischargeDay', threshold=8)
 
-# Create a range for each one of this value, based on medical knowledge (i.e. instead of having values for systolic.blood.pressure between 0 and 252 we can create three categories that are 'low','normal','high') TODO
 
 target_var = 're.admission.within.6.months'
 
@@ -1181,6 +1180,8 @@ def remove_highly_correlated(df, threshold=0.5):
 # ## 3. Modeling
 
 # ### Feature engineering
+
+# Create a range for each one of this value, based on medical knowledge (i.e. instead of having values for systolic.blood.pressure between 0 and 252 we can create three categories that are 'low','normal','high') TODO
 
 # +
 # feature engineering
