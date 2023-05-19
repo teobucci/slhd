@@ -1016,13 +1016,7 @@ df.loc[df['triglyceride'] > 10, 'triglyceride'] = np.nan
 
 get_outliers(df, 'dischargeDay', threshold=8)
 
-
-target_var = 're.admission.within.6.months'
-
-sns.lmplot(x='weight',y='height',data=df, hue=target_var,palette='Set1')
-plt.show()
-
-# Deep dive into the some features
+# #### Barplot of categorical variables
 
 # +
 col_inspect = df_categorical.columns
@@ -1044,7 +1038,6 @@ fig.tight_layout()
 plt.show()
 # -
 
-pd.crosstab(df[target_var], df["gender"], margins=True)
 
 # As final step, plot all the numerical features distribution separately in the two classes to see if we have some hints in features that separate well.
 
