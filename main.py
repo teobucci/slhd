@@ -1674,7 +1674,7 @@ plt.show()
 # Per usare h20 serve java, download:
 # https://www.oracle.com/java/technologies/downloads/
 #
-#
+# h20 documentation : https://docs.h2o.ai/h2o/latest-stable/h2o-docs/automl.html
 
 import h2o
 from h2o.automl import H2OAutoML
@@ -1682,6 +1682,7 @@ from h2o.automl import H2OAutoML
 h2o.init()
 
 X_train['target'] = y_train
+X_test['target'] = y_test
 
 train_h2o = h2o.H2OFrame(X_train)
 test_h2o = h2o.H2OFrame(X_test)
@@ -1692,37 +1693,46 @@ x.remove(y)
 aml = H2OAutoML(max_models=10, seed=1)
 aml.train(x=x, y=y, training_frame=train_h2o)
 
-aml.leaderboard
-
-se = aml.leader
-metalearner = h2o.get_model(se.metalearner()['name'])
-
-metalearner.varimp_plot()
-
-model = h2o.get_model('XRT_1_AutoML_1_20230519_174038')
-
-model.varimp_plot()
-
-y_pred = aml.predict(test_h2o)
-y_pred = h2o.as_list(y_pred).values
-
-# Calculate the accuracy score
-accuracy = accuracy_score(y_test, y_pred[:,0].astype('bool'))
-print(accuracy)
+aml.explain(test_h2o)
 
 # +
-fig, axes = plt.subplots(nrows=1, ncols=1, figsize=(16,7))#, height_ratios = [1,3])
-# Calculate the confusion matrix
-cm = confusion_matrix(y_test, y_pred[:,0].astype('bool'))
-#sns.heatmap(cm, annot=True, cmap='coolwarm', fmt='d', ax=axes[0,i])
-axes.set_title(model.__class__.__name__)
-plot_confusion_matrix(conf_mat=cm,
-                      show_absolute=True,
-                      show_normed=True,
-                      colorbar=True, figure=fig, axis=axes)
+#aml.leaderboard
 
-axes.set_xlabel('Predicted label')
-axes.set_ylabel('True label')
+# +
+#se = aml.leader
+#metalearner = h2o.get_model(se.metalearner()['name'])
+
+# +
+#metalearner.varimp_plot()
+
+# +
+#model = h2o.get_model('XRT_1_AutoML_1_20230519_174038')
+
+# +
+#model.varimp_plot()
+
+# +
+#y_pred = aml.predict(test_h2o)
+#y_pred = h2o.as_list(y_pred).values
+
+# +
+# Calculate the accuracy score
+#accuracy = accuracy_score(y_test, y_pred[:,0].astype('bool'))
+#print(accuracy)
+
+# +
+#fig, axes = plt.subplots(nrows=1, ncols=1, figsize=(16,7))#, height_ratios = [1,3])
+# Calculate the confusion matrix
+#cm = confusion_matrix(y_test, y_pred[:,0].astype('bool'))
+#sns.heatmap(cm, annot=True, cmap='coolwarm', fmt='d', ax=axes[0,i])
+#axes.set_title(model.__class__.__name__)
+#plot_confusion_matrix(conf_mat=cm,
+#                      show_absolute=True,
+#                      show_normed=True,
+#                      colorbar=True, figure=fig, axis=axes)
+
+#axes.set_xlabel('Predicted label')
+#axes.set_ylabel('True label')
 # -
 
 # ## 4. Conclusion
