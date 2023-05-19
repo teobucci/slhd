@@ -567,6 +567,8 @@ categorical_missing
 imputer = SimpleImputer(strategy='most_frequent')
 df.occupation = imputer.fit_transform(df.occupation.values.reshape(-1,1))[:,0]
 
+# Set its type to `category` since after imputation it's `object`.
+
 df = df.astype({'occupation': 'category'})
 
 # Update categorical and numerical dataframes
