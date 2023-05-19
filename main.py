@@ -421,7 +421,8 @@ df.info(verbose=True, show_counts=False)
 
 # Check the shape of the dataset
 
-df.shape
+df_shape = df.shape
+df_shape
 
 # Since we're interested in predicting the re-admission at 6 months, it's important to have a look at the following features:
 # - `death.within.28.days`
@@ -496,9 +497,12 @@ cols_to_check = ['death.within.28.days', 'death.within.3.months', 'death.within.
 df = df.loc[~(df[cols_to_check] == True).any(axis=1)]
 # -
 
-df.shape
+# We have removed this number patients:
 
-# We have removed 57 patients.
+df_shape[0] - df.shape[0]
+
+# Update df_shape
+df_shape = df.shape
 
 # Now those columns are meaninglesse as they all have the same value, and we can remove them.
 
@@ -521,9 +525,8 @@ drop_cols = [
 ]
 df = df.drop(drop_cols, axis=1)
 
-# +
-#TODO: ma una survival analysis? Non so se i dati sono suitable
-# -
+# Update df_shape
+df_shape = df.shape
 
 # ### Checking for duplicates
 
