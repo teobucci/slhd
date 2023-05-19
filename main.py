@@ -1038,6 +1038,24 @@ fig.tight_layout()
 plt.show()
 # -
 
+# It's important to reduce dimensionality as much as possible, both for interpretability and model training. We can clearly see that some variables are meaningless because they belong essentially all to the same type, we can't use these variables for any kind of separation so we discard some of them.
+
+# +
+drop_cols = [
+    'connective.tissue.disease',
+    'hemiplegia',
+    'malignant.lymphoma',
+    'AIDS',
+    'consciousness',
+    'respiratory.support.',
+    'acute.renal.failure',
+    'outcome.during.hospitalization'
+]
+
+df = df.drop(drop_cols, axis=1)
+
+df_categorical = df.select_dtypes(include=['category', 'bool'])
+# -
 
 # As final step, plot all the numerical features distribution separately in the two classes to see if we have some hints in features that separate well.
 
