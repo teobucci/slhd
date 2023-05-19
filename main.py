@@ -637,6 +637,8 @@ import scipy.cluster.hierarchy as spc
 
 df_temp = df_numerical[numerical_missing[numerical_missing>50][numerical_missing<60].index.tolist()]
 corr_matrix = df_temp.corr()
+
+# Use correlation matrix as distance
 pdist = spc.distance.pdist(abs(corr_matrix.values))
 
 linkage = spc.linkage(pdist, method='complete')
@@ -658,13 +660,16 @@ plt.show()
 
 # TODO: potremmo valutare di tenerne giusto un paio...
 
+# +
 threshold = 0.50
 limitPer = len(df.index) * (1 - threshold)
+
 # Drop columns
 df = df.dropna(thresh=limitPer, axis=1)
+
 # Update numerical df
 df_numerical = df.select_dtypes(include=['float64', 'int64'])
-numerical_missing = get_percentage_missing(df_numerical)
+# -
 
 # ### Checking for mono-value columns
 
