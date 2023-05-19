@@ -1179,7 +1179,8 @@ inspect_col = ['movement', 'verbal.response', 'eye.opening', 'GCS']
 plot_subcorrelation_matrix(corr_matrix=corr_matrix, inspect_col=inspect_col, threshold=0.4)
 
 
-# +
+# We are safe enough to do the following: write a function to discard variables correlated with others by more than a threshold we fix to 0.80.
+
 def remove_highly_correlated(df, threshold=0.5):
     """
     Given a dataframe, removes variables that are highly correlated with the others
@@ -1189,18 +1190,25 @@ def remove_highly_correlated(df, threshold=0.5):
     """
     
     # Create correlation matrix
-    corr_matrix = df.corr().abs()
+    corr_matrix = df.corr(numeric_only=True).abs()
+    
     # Select upper triangle of correlation matrix
-    upper = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(np.bool))
+    upper = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(bool))
+    
     # Find index of feature columns with correlation greater than threshold
     to_drop = [column for column in upper.columns if any(upper[column] > threshold)]
-    # Drop features
-    df.drop(df[to_drop], axis=1, inplace=True)
-    return df
+    
+    # Return with dropped features
+    return df.drop(to_drop, axis=1)
 
 
-#df = remove_highly_correlated(df, threshold=0.8)
-# -
+df_shape = df.shape
+
+df = remove_highly_correlated(df, threshold=0.8)
+
+# We removed this number of features:
+
+df_shape[1] - df.shape[1]
 
 # ## 3. Modeling
 
