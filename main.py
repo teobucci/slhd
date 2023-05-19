@@ -621,19 +621,25 @@ print("Unique values are ", df_numerical['body.temperature.blood.gas'].unique())
 
 threshold = 0.60
 
-missing_cols = numerical_missing[numerical_missing>(threshold*10)].index.tolist()
+missing_cols = numerical_missing[numerical_missing>(threshold*100)].index.tolist()
 print(f'Columns with % of NaNs greater than {threshold:.0%}:')
 print(missing_cols)
 
-limitPer = len(df.index) * threshold
+limitPer = len(df.index) * (1-threshold)
 # Drop columns
-df = df.dropna(thresh=limitPer, axis=1)
+df = df.dropna(thresh=limitPer, axis=1) 
 df = df.drop('body.temperature.blood.gas', axis=1)
 # Update numerical df
 df_numerical = df.select_dtypes(include=['float64', 'int64'])
 numerical_missing = get_percentage_missing(df_numerical)
 
 # Have a closer look at variables with 50%-60% of missing, let us plot the correlation matrix, clustered using hierarchical clustering to see a better block structure.
+
+threshold = 0.50
+
+missing_cols = numerical_missing[numerical_missing>(threshold*100)].index.tolist()
+print(f'Columns with % of NaNs greater than {threshold:.0%}:')
+print(missing_cols)
 
 # +
 import scipy.cluster.hierarchy as spc
