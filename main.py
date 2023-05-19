@@ -204,7 +204,6 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 # %matplotlib inline
-# Graphics in retina format are more sharp and legible
 # %config InlineBackend.figure_format='retina'
 
 from sklearn.model_selection import train_test_split, cross_val_score, cross_val_predict, GridSearchCV, StratifiedKFold
