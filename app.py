@@ -5,51 +5,56 @@ import streamlit as st
 import pandas as pd
 import shap
 import pickle
+import matplotlib.pyplot as plt
+import numpy as np
 
 # Read the model using pickle
 with open('./output/pipeline_cv.pkl', 'rb') as f:
-    model = pickle.load(f)
+    pipeline = pickle.load(f)
+
+# Read encoder
+with open('./output/encoder.pkl', 'rb') as f:
+    encoder = pickle.load(f)
+
+# Read imputer
+with open('./output/imputer.pkl', 'rb') as f:
+    imputer = pickle.load(f)
+
+# Read scaler
+with open('./output/scaler.pkl', 'rb') as f:
+    scaler = pickle.load(f)
+
+# Read file ccolumn_info with pkl
+with open('./output/column_info.pkl', 'rb') as f:
+    column_info = pickle.load(f)
+
+# Read categorical features
+with open('./output/categorical_features.pkl', 'rb') as f:
+    categorical_features = pickle.load(f)
+
+# Read numerical features
+with open('./output/numerical_features.pkl', 'rb') as f:
+    numerical_features = pickle.load(f)
 
 # Load the SHAP explainer
-explainer = shap.Explainer(model)
+explainer = shap.TreeExplainer(pipeline['random_forest'].best_estimator_.named_steps['classifier'])
 
-# Helper function to get SHAP explanations
-def get_shap_explanations(inputs):
-
-    #set the tree explainer as the model of the pipeline
-    explainer = shap.TreeExplainer(pipeline['classifier'])
-
-    #apply the preprocessing to x_test
-    observations = pipeline['imputer'].transform(x_test)
-
-    #get Shap values from preprocessed data
-    shap_values = explainer.shap_values(observations)
-
-    #plot the feature importance
-    shap.summary_plot(shap_values, x_test, plot_type="bar")
-
-
-    shap_values = explainer.shap_values(inputs)
-    return shap_values
+input_data = {}
 
 def generate_sidebar(column_info):
     for column, info in column_info.items():
         st.sidebar.subheader(column)
         column_type = info['type']
         if column_type == 'binary':
-            value = st.sidebar.checkbox("Select", value=False, key=column)
+            input_data[column] = st.sidebar.checkbox("Select", value=False, key=column)
         elif column_type == 'category':
             options = info['value']
-            value = st.sidebar.radio("Select", options, key=column)
+            input_data[column] = st.sidebar.radio("Select", options, key=column)
         elif column_type == 'continuous' or column_type == 'integer':
             min_value, max_value = info['value']
             range_min = min_value# - abs(max_value - min_value) * 0.3
             range_max = max_value# + abs(max_value - min_value) * 0.3
-            value = st.sidebar.number_input("Enter", min_value=range_min, max_value=range_max, key=column)
-        st.sidebar.write("Selected value:", value)
-
-    # Button to compute prediction on click
-    #st.sidebar.button("Compute prediction", on_click=pred())
+            input_data[column] = st.sidebar.number_input("Enter", min_value=range_min, max_value=range_max, key=column)
 
 # Main app
 def main():
@@ -66,59 +71,53 @@ def main():
     # Set the text
     st.markdown('The data used to train the model was given during the course of Statistical Learning for Healthcare Data.')
 
-    # Collect user inputs
-    feature_1 = st.number_input("Feature 1", value=0.0)
-    feature_2 = st.number_input("Feature 2", value=0.0)
-    feature_3 = st.number_input("Feature 3", value=0.0)
-    user_inputs = [feature_1, feature_2, feature_3]
-
-
-    # Read file ccolumn_info with pkl
-    with open('./output/column_info.pkl', 'rb') as f:
-        column_info = pickle.load(f)
-
     generate_sidebar(column_info)
 
     # Perform prediction
     if st.sidebar.button("Predict"):
         # Create a single-row DataFrame based on the column information
-        input_data = {}
-        for column in column_info.keys():
-            if column_info[column]['type'] == 'binary':
-                input_data[column] = [st.sidebar.checkbox(column)]
-            elif column_info[column]['type'] == 'category':
-                input_data[column] = [st.sidebar.radio(column, column_info[column]['value'])]
-            elif column_info[column]['type'] in ['continuous', 'integer']:
-                min_value, max_value = column_info[column]['value']
-                range_min = min_value - abs(max_value - min_value) * 0.3
-                range_max = max_value + abs(max_value - min_value) * 0.3
-                input_data[column] = [st.sidebar.number_input(column, min_value=range_min, max_value=range_max)]
-        
-        input_df = pd.DataFrame(input_data)
+        new_data = pd.DataFrame(input_data, index=['user_input'])
+
+        # Encode
+        new_data_encoded = pd.DataFrame(encoder.transform(new_data[categorical_features]), columns=encoder.get_feature_names_out(categorical_features))
+        new_data = pd.concat([new_data.drop(categorical_features, axis=1).reset_index(drop=True), new_data_encoded.reset_index(drop=True)], axis=1)
+
+        # Impute
+        new_data = pd.DataFrame(imputer.transform(new_data), columns = new_data.columns)
+
+        new_data_unscaled = new_data.copy()
+
+        # Scale
+        new_data[numerical_features] = scaler.transform(new_data[numerical_features])
 
         # Predict class and probabilities
-        prediction = model.predict(processed_inputs)[0]
-        probabilities = model.predict_proba(processed_inputs)[0]
+        prediction = pipeline['random_forest'].best_estimator_.named_steps['classifier'].predict(new_data)
+        probabilities = pipeline['random_forest'].best_estimator_.named_steps['classifier'].predict_proba(new_data)
 
-        # Generate SHAP explanations
-        shap_values = get_shap_explanations(user_inputs)
+        # Display the prediction
+        st.write("### Prediction")
+        st.write("The patient will be readmitted within 6 months: ", prediction[0])
+
+        # Display the prediction probabilities
+        st.write("### Prediction probabilities")
+        st.write("The patient will be readmitted within 6 months: ", np.round(probabilities[0][1], 2))
 
         st.write("### SHAP Explanations")
-        # Display the SHAP values as a force plot
-        shap.force_plot(
-            explainer.expected_value[1],  # Use the class index for binary classification
-            shap_values[1][0, :],  # Use the SHAP values for the positive class
-            processed_inputs.iloc[0, :],  # Display the feature values for the current instance
-            matplotlib=True
-        )
+
+        # Generate SHAP explanations
+        shap_values = explainer(new_data)
+
+        idx = 0
+        exp = shap.Explanation(
+            shap_values.values[:,:,1],
+            shap_values.base_values[:,1],
+            shap_values.data,
+            display_data=new_data_unscaled,
+            feature_names=new_data.columns)
+
+        fig = plt.figure()
+        shap.plots.waterfall(exp[idx], max_display=30)
+        st.pyplot(fig)
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
-
-
