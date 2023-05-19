@@ -1232,6 +1232,14 @@ df_shape[1] - df.shape[1]
 categorical_features = df.select_dtypes(include=['category']).columns.tolist()
 numerical_features = df.select_dtypes(include=[np.number]).columns.tolist()
 
+# +
+with open(str(OUTPUT_FOLDER / 'categorical_features.pkl'), 'wb') as handle:
+    pickle.dump(categorical_features, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+with open(str(OUTPUT_FOLDER / 'numerical_features.pkl'), 'wb') as handle:
+    pickle.dump(numerical_features, handle, protocol=pickle.HIGHEST_PROTOCOL)
+# -
+
 # Make sure the values of categorical don't contain strange characters, because after encoding this might break XGBoost, specifically the `ageCat` variable.
 
 df[categorical_features] = df[categorical_features].applymap(lambda x: re.sub(r'[\[\]<\(\)]', '', x))
