@@ -1357,13 +1357,16 @@ np.round((y_train == True).sum() / len(y_train), 3)
 
 # N. V. Chawla, K. W. Bowyer, L. O.Hall, W. P. Kegelmeyer, “SMOTE: synthetic minority over-sampling technique,” Journal of artificial intelligence research, 321-357, 2002.
 
-oversample = SMOTE(random_state=SEED)
-X_ov, y_ov = oversample.fit_resample(X_train, y_train)
-oversample.get_params()
+# +
+# oversample = SMOTE(random_state=SEED)
+# X_ov, y_ov = oversample.fit_resample(X_train, y_train)
+# oversample.get_params()
 
+# +
 # overwrite
-X_train = X_ov
-y_train = y_ov
+# X_train = X_ov
+# y_train = y_ov
+# -
 
 # #### Scaling
 
