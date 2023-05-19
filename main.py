@@ -224,7 +224,7 @@ from sklearn.compose import ColumnTransformer
 from sklearn.neural_network import MLPClassifier
 from sklearn.naive_bayes import GaussianNB
 from collections import Counter
-#from imblearn.over_sampling import SMOTE
+from imblearn.over_sampling import SMOTE
 import xgboost as xgb
 import pickle
 import re
@@ -1256,11 +1256,11 @@ X_train, X_test, y_train, y_test = train_test_split(X, y,
 # We use the [`IterativeImputer`](https://scikit-learn.org/stable/modules/generated/sklearn.impute.IterativeImputer.html) which is very well suited for [multivariate imputation](https://scikit-learn.org/stable/modules/impute.html#iterative-imputer).
 
 # +
-# # %%time
-# imputer = IterativeImputer(max_iter=10, random_state=0, verbose=2)
-# X_train[numerical_features] = imputer.fit_transform(X_train[numerical_features])
-# X_test[numerical_features] = imputer.transform(X_test[numerical_features])
-# with open(str(OUTPUT_FOLDER / 'imputer.pkl'), 'wb') as handle:
+# #%%time
+#imputer = IterativeImputer(max_iter=10, random_state=0, verbose=2)
+#X_train[numerical_features] = imputer.fit_transform(X_train[numerical_features])
+#X_test[numerical_features] = imputer.transform(X_test[numerical_features])
+#with open(str(OUTPUT_FOLDER / 'imputer.pkl'), 'wb') as handle:
 #     pickle.dump(imputer, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 # +
@@ -1396,7 +1396,7 @@ for name, pipeline in pipelines.items():
 # Save for later
 
 # +
-# with open(str(OUTPUT_FOLDER / 'pipeline_cv.pkl'), 'wb') as handle:
+#with open(str(OUTPUT_FOLDER / 'pipeline_cv.pkl'), 'wb') as handle:
 #     pickle.dump(pipeline_cv, handle, protocol=pickle.HIGHEST_PROTOCOL)
 # -
 
@@ -1667,6 +1667,57 @@ ax.set_aspect('equal')
 ax.set_aspect('equal')
 plt.savefig(str(OUTPUT_FOLDER / 'roc_ensemble.pdf'), bbox_inches='tight')
 plt.show()
+# -
+
+# ## Auto ML with h20
+
+import h2o
+from h2o.automl import H2OAutoML
+
+h2o.init()
+
+X_train['target'] = y_train
+
+train_h2o = h2o.H2OFrame(X_train)
+test_h2o = h2o.H2OFrame(X_test)
+x= train_h2o.columns
+y = 'target'
+x.remove(y)
+
+aml = H2OAutoML(max_models=10, seed=1)
+aml.train(x=x, y=y, training_frame=train_h2o)
+
+aml.leaderboard
+
+se = aml.leader
+metalearner = h2o.get_model(se.metalearner()['name'])
+
+metalearner.varimp_plot()
+
+model = h2o.get_model('XRT_1_AutoML_1_20230519_174038')
+
+model.varimp_plot()
+
+y_pred = aml.predict(test_h2o)
+y_pred = h2o.as_list(y_pred).values
+
+# Calculate the accuracy score
+accuracy = accuracy_score(y_test, y_pred[:,0].astype('bool'))
+print(accuracy)
+
+# +
+fig, axes = plt.subplots(nrows=1, ncols=1, figsize=(16,7))#, height_ratios = [1,3])
+# Calculate the confusion matrix
+cm = confusion_matrix(y_test, y_pred[:,0].astype('bool'))
+#sns.heatmap(cm, annot=True, cmap='coolwarm', fmt='d', ax=axes[0,i])
+axes.set_title(model.__class__.__name__)
+plot_confusion_matrix(conf_mat=cm,
+                      show_absolute=True,
+                      show_normed=True,
+                      colorbar=True, figure=fig, axis=axes)
+
+axes.set_xlabel('Predicted label')
+axes.set_ylabel('True label')
 # -
 
 # ## 4. Conclusion
