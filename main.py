@@ -1671,6 +1671,11 @@ plt.show()
 
 # ## Auto ML with h20
 
+# Per usare h20 serve java, download:
+# https://www.oracle.com/java/technologies/downloads/
+#
+#
+
 import h2o
 from h2o.automl import H2OAutoML
 
