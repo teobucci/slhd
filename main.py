@@ -1330,19 +1330,23 @@ with open(str(OUTPUT_FOLDER / 'encoder.pkl'), 'wb') as handle:
 # We use the [`IterativeImputer`](https://scikit-learn.org/stable/modules/generated/sklearn.impute.IterativeImputer.html) which is very well suited for [multivariate imputation](https://scikit-learn.org/stable/modules/impute.html#iterative-imputer).
 
 # +
-# # %%time
-# imputer = IterativeImputer(max_iter=10, random_state=0, verbose=2)
-# X_train[numerical_features] = imputer.fit_transform(X_train[numerical_features])
-# X_test[numerical_features] = imputer.transform(X_test[numerical_features])
-# with open(str(OUTPUT_FOLDER / 'imputer.pkl'), 'wb') as handle:
-#     pickle.dump(imputer, handle, protocol=pickle.HIGHEST_PROTOCOL)
+# %%time
+#imputer = IterativeImputer(max_iter=10, random_state=0, verbose=2)
+imputer = KNNImputer(n_neighbors=5)
+
+X_train = pd.DataFrame(imputer.fit_transform(X_train), columns = X_train.columns)
+X_test = pd.DataFrame(imputer.transform(X_test), columns = X_test.columns)
+# -
+
+with open(str(OUTPUT_FOLDER / 'imputer.pkl'), 'wb') as handle:
+    pickle.dump(imputer, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 # +
-with open(str(OUTPUT_FOLDER / 'imputer.pkl'), 'rb') as handle:
-    imputer = pickle.load(handle)
-
-X_train[numerical_features] = imputer.transform(X_train[numerical_features])
-X_test[numerical_features] = imputer.transform(X_test[numerical_features])
+# with open(str(OUTPUT_FOLDER / 'imputer.pkl'), 'rb') as handle:
+#     imputer = pickle.load(handle)
+# 
+# X_train[numerical_features] = imputer.transform(X_train[numerical_features])
+# X_test[numerical_features] = imputer.transform(X_test[numerical_features])
 # -
 
 # #### Imbalance
