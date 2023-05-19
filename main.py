@@ -1057,26 +1057,36 @@ df = df.drop(drop_cols, axis=1)
 df_categorical = df.select_dtypes(include=['category', 'bool'])
 # -
 
-# As final step, plot all the numerical features distribution separately in the two classes to see if we have some hints in features that separate well.
+# As final step, plot some numerical features distribution separately with the respect to the target to see if we have some hints in features that separate well.
+
+target_var = 're.admission.within.6.months'
 
 # +
-col_inspect = df_numerical.columns[:32]
-#col_inspect = ['Killip.grade', 'ageCat']
+#col_inspect = df_numerical.columns[:32]
+col_inspect = [
+    'direct.bilirubin',
+    'prothrombin.activity',
+    'neutrophil.ratio',
+    'glomerular.filtration.rate',
+    'uric.acid',
+    'urea',
+    'creatinine.enzymatic.method',
+    'CCI.score',
+    'map',
+    'diastolic.blood.pressure'
+]
 
 # Adjust subplots and figsize
-fig, axes = plt.subplots(8, 4,figsize=[14,20])
+fig, axes = plt.subplots(2, 5,figsize=[14,7])
 axes = axes.flatten()
 
 for idx, col_name in enumerate(col_inspect):
     plt.sca(axes[idx]) # set the current Axes
-    #plt.hist(df_numerical[x],density=True)
     sns.kdeplot(df[df[target_var] == 0][col_name], fill=True, label="Target 0")
     sns.kdeplot(df[df[target_var] == 1][col_name], fill=True, label="Target 1")
-    plt.legend()
+    plt.legend(loc='lower right')
     plt.xticks(fontsize=8, rotation = 45) # Rotates X-Axis Ticks by 45-degrees
     plt.ylabel('')
-    #plt.grid()
-    #plt.title(col_name)
 
 fig.tight_layout()
 plt.show()
