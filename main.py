@@ -1168,11 +1168,15 @@ inspect_col = ['movement', 'verbal.response', 'eye.opening', 'GCS']
 plot_subcorrelation_matrix(corr_matrix=corr_matrix, inspect_col=inspect_col, threshold=0.4)
 
 
+# +
 def remove_highly_correlated(df, threshold=0.5):
-    # Given a dataframe, removes variables that are highly correlated with the others
-    # Returns a dataframe with the highly correlated variables removed
-    # threshold is the correlation threshold to use
-    # Code from https://chrisalbon.com/machine_learning/feature_selection/drop_highly_correlated_features/
+    """
+    Given a dataframe, removes variables that are highly correlated with the others
+    Returns a dataframe with the highly correlated variables removed
+    threshold is the correlation threshold to use
+    Code from https://chrisalbon.com/machine_learning/feature_selection/drop_highly_correlated_features/
+    """
+    
     # Create correlation matrix
     corr_matrix = df.corr().abs()
     # Select upper triangle of correlation matrix
@@ -1183,6 +1187,9 @@ def remove_highly_correlated(df, threshold=0.5):
     df.drop(df[to_drop], axis=1, inplace=True)
     return df
 
+
+#df = remove_highly_correlated(df, threshold=0.8)
+# -
 
 # ## 3. Modeling
 
