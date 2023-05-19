@@ -1066,34 +1066,95 @@ for var in discrete_vars:
 
 # ### Correlation analysis
 
-# Choose only a subset of the correlation matrix
+# We begin with an overall correlation matrix, trying to identify blocks, an then we dig deep into them, trying to discard as many redundant variables as possible.
 
-# Compute the correlation matrix
-corr_matrix = df.corr(numeric_only=True, method='spearman')
+# +
+df_temp = df_numerical
+corr_matrix = df_temp.corr(numeric_only=True, method='pearson')
+pdist = spc.distance.pdist(abs(corr_matrix.values))
 
-# Select a subset of the variables to inspect
+linkage = spc.linkage(pdist, method='complete')
+idx = spc.fcluster(linkage, 0.5 * pdist.max(), 'distance')
 
-# TODO Alice: inserisci qui i nomi delle variabili di cui vedere la correlazione
-inspect_col = ['urea', 'uric.acid']
+columns = [df_temp.columns.tolist()[i] for i in list((np.argsort(idx)))]
+df_temp = df_temp.reindex(columns, axis=1)
 
-corr_matrix = corr_matrix[inspect_col].loc[inspect_col]
+corr_matrix = df_temp.corr()
 
-# Data will not be shown in cells where `mask` is `True`
-
-threshold = 0.4
-mask = np.triu(np.ones_like(corr_matrix, dtype=bool), k=0) | (np.abs(corr_matrix) <= threshold)
-
-# Plot the correlation matrix using seaborn
-fig, ax = plt.subplots(figsize=(10, 10))
-sns.heatmap(corr_matrix,
-            annot=True, fmt='.2f',
-            mask=mask,
-            cmap='coolwarm', center=0, cbar=True,
-            linewidths=.5,
-            ax=ax)
-ax.set_aspect("equal")
-plt.title("Correlation matrix")
+# Create a correlation heatmap
+plt.figure(figsize=(20, 15))
+sns.heatmap(corr_matrix, cmap='coolwarm')
+plt.title('Correlation Heatmap')
 plt.show()
+
+
+# -
+
+def plot_subcorrelation_matrix(corr_matrix, inspect_col, threshold=0.4):
+    
+    sub_corr_matrix = corr_matrix[inspect_col].loc[inspect_col]
+    # Data will not be shown in cells where `mask` is `True`
+    mask = np.triu(np.ones_like(sub_corr_matrix, dtype=bool), k=0) | (np.abs(sub_corr_matrix) <= threshold)
+    
+    # Plot the correlation matrix using seaborn
+    fig, ax = plt.subplots(figsize=(5, 5))
+    sns.heatmap(sub_corr_matrix,
+                annot=True, fmt='.2f',
+                mask=mask,
+                cmap='coolwarm', center=0, cbar=True,
+                linewidths=.5,
+                ax=ax)
+    ax.set_aspect("equal")
+    plt.title("Correlation matrix")
+    plt.show()
+
+
+inspect_col = ['map', 'diastolic.blood.pressure', 'systolic.blood.pressure']
+plot_subcorrelation_matrix(corr_matrix=corr_matrix, inspect_col=inspect_col, threshold=0.4)
+
+inspect_col = ['sodium', 'chloride']
+plot_subcorrelation_matrix(corr_matrix=corr_matrix, inspect_col=inspect_col, threshold=0.4)
+
+inspect_col = ['cholesterol', 'low.density.lipoprotein.cholesterol']
+plot_subcorrelation_matrix(corr_matrix=corr_matrix, inspect_col=inspect_col, threshold=0.4)
+
+inspect_col = ['globulin', 'white.globulin.ratio', 'indirect.bilirubin', 'direct.bilirubin', 'total.bilirubin']
+plot_subcorrelation_matrix(corr_matrix=corr_matrix, inspect_col=inspect_col, threshold=0.4)
+
+inspect_col = ['cystatin', 'urea', 'creatinine.enzymatic.method', 'glomerular.filtration.rate']
+plot_subcorrelation_matrix(corr_matrix=corr_matrix, inspect_col=inspect_col, threshold=0.4)
+
+inspect_col = ['hemoglobin', 'hematocrit', 'red.blood.cell']
+plot_subcorrelation_matrix(corr_matrix=corr_matrix, inspect_col=inspect_col, threshold=0.4)
+
+inspect_col = ['basophil.count', 'basophil.ratio']
+plot_subcorrelation_matrix(corr_matrix=corr_matrix, inspect_col=inspect_col, threshold=0.4)
+
+inspect_col = ['eosinophil.count', 'eosinophil.ratio']
+plot_subcorrelation_matrix(corr_matrix=corr_matrix, inspect_col=inspect_col, threshold=0.4)
+
+inspect_col = ['white.blood.cell', 'neutrophil.count']
+plot_subcorrelation_matrix(corr_matrix=corr_matrix, inspect_col=inspect_col, threshold=0.4)
+
+inspect_col = ['movement', 'verbal.response', 'eye.opening', 'GCS']
+plot_subcorrelation_matrix(corr_matrix=corr_matrix, inspect_col=inspect_col, threshold=0.4)
+
+
+def remove_highly_correlated(df, threshold=0.5):
+    # Given a dataframe, removes variables that are highly correlated with the others
+    # Returns a dataframe with the highly correlated variables removed
+    # threshold is the correlation threshold to use
+    # Code from https://chrisalbon.com/machine_learning/feature_selection/drop_highly_correlated_features/
+    # Create correlation matrix
+    corr_matrix = df.corr().abs()
+    # Select upper triangle of correlation matrix
+    upper = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(np.bool))
+    # Find index of feature columns with correlation greater than threshold
+    to_drop = [column for column in upper.columns if any(upper[column] > threshold)]
+    # Drop features
+    df.drop(df[to_drop], axis=1, inplace=True)
+    return df
+
 
 # ## 3. Modeling
 
