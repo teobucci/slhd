@@ -1271,6 +1271,35 @@ df = pd.concat([df.drop(categorical_features, axis=1).reset_index(drop=True), df
 # Concatenate the encoded features with the original numerical columns
 #X_train = pd.concat([X_train.drop(categorical_features, axis=1).reset_index(drop=True), train_encoded.reset_index(drop=True)], axis=1)
 #X_test = pd.concat([X_test.drop(categorical_features, axis=1).reset_index(drop=True), test_encoded.reset_index(drop=True)], axis=1)
+# +
+# for streamlit
+
+def generate_column_info(dataframe):
+    column_info = {}
+    for column in dataframe.drop([target_var], axis=1).columns:
+        column_type = dataframe[column].dtype
+        if column_type == 'object' or pd.api.types.is_categorical_dtype(column_type):
+            unique_values = dataframe[column].unique().tolist()
+            column_info[column] = {"type": "category", "value": unique_values}
+        elif pd.api.types.is_bool_dtype(column_type):
+            unique_values = dataframe[column].unique().tolist()
+            column_info[column] = {"type": "binary", "value": unique_values}
+        elif pd.api.types.is_numeric_dtype(column_type):
+            min_value = dataframe[column].min()
+            max_value = dataframe[column].max()
+            if pd.api.types.is_integer_dtype(column_type):
+                column_info[column] = {"type": "integer", "value": [min_value, max_value]}
+            else:
+                column_info[column] = {"type": "continuous", "value": [min_value, max_value]}
+    return column_info
+
+
+
+# Generate column information dictionary
+column_info = generate_column_info(df)
+
+with open(str(OUTPUT_FOLDER / 'column_info.pkl'), 'wb') as handle:
+    pickle.dump(column_info, handle, protocol=pickle.HIGHEST_PROTOCOL)
 # -
 
 # ### Splitting data into training and testing sets
