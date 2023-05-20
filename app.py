@@ -97,7 +97,7 @@ def main():
 
         # Predict class and probabilities
         prediction = pipeline['random_forest'].best_estimator_.named_steps['classifier'].predict(new_data)
-        probabilities = pipeline['random_forest'].best_estimator_.named_steps['classifier'].predict_proba(new_data)
+        probabilities = pipeline['random_forest'].best_estimator_.named_steps['classifier'].predict_proba(new_data)[0][1]
 
         # Display the prediction
         st.write("### Prediction")
@@ -105,8 +105,18 @@ def main():
 
         # Display the prediction probabilities
         st.write("### Prediction probabilities")
-        st.write("The patient will be readmitted within 6 months: ", np.round(probabilities[0][1], 2))
 
+        # Assign a string of risk based on the probability
+        if probabilities < 0.3:
+            output_string = "Low"
+        elif probabilities < 0.7:
+            output_string = "Medium"
+        else:
+            output_string = "High"
+        
+        st.write(f"Risk that the patient will be readmitted within 6 months: {output_string} ({np.round(probabilities, 2)}/1)")
+
+        # Display the SHAP explanations
         st.write("### SHAP Explanations")
 
         # Generate SHAP explanations
