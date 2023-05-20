@@ -1,6 +1,3 @@
-# this is the commad to run the app
-# streamlit run app.py
-
 import pickle
 import streamlit as st
 import pandas as pd
@@ -41,7 +38,10 @@ explainer = shap.TreeExplainer(pipeline['random_forest'].best_estimator_.named_s
 
 input_data = {}
 
-def generate_sidebar(column_info):
+def generate_sidebar(column_info: dict):
+    """
+    Generate the sidebar with the input fields
+    """
     for column, info in column_info.items():
         st.sidebar.subheader(column)
         column_type = info['type']
@@ -58,6 +58,10 @@ def generate_sidebar(column_info):
 
 # Main app
 def main():
+    """
+    Main function of the app
+    Run the app with: streamlit run app.py
+    """
 
     # Set the title
     st.title('Heart Failure: predicting readmission after 6 months')
@@ -85,6 +89,7 @@ def main():
         # Impute
         new_data = pd.DataFrame(imputer.transform(new_data), columns = new_data.columns)
 
+        # Copy the data before scaling
         new_data_unscaled = new_data.copy()
 
         # Scale
