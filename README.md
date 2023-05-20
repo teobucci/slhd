@@ -61,6 +61,11 @@ conda activate slhd
 conda install --file requirements.txt
 ```
 
+To reproduce the visualization of trees, you need the `graphviz` package, which can be installed with
+```bash
+brew install graphviz
+```
+
 # Folder Structure
 
 # Usage
