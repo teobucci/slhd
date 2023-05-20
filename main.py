@@ -1034,14 +1034,14 @@ df_numerical = df.select_dtypes(include=['float64', 'int64'])
 # #### More in-depth study for some numerical features
 # Control when for more than 90 percent of patients the variable takes nearly equal values
 
-def check_histogram_bins(data, numerical_features,threshold=0.8):
+def check_histogram_bins(data, numerical_features,threshold=0.9):
 
     bin_counts = []
     selected_features = []
 
     for feature in numerical_features:
         feature_values = data[feature]
-        counts, bins, _ = plt.hist(feature_values, bins='auto')
+        counts, bins, _ = plt.hist(feature_values, bins=10)
         bin_counts.append(counts)
 
         # Check if a bin satisfies the threshold condition
@@ -1055,6 +1055,23 @@ def check_histogram_bins(data, numerical_features,threshold=0.8):
 
 
 inspect_columns = check_histogram_bins(df_numerical,df_numerical.columns)
+
+# visit.times, eye.opening, verabal.response, movement and GCS are discerete numerical variable and it's therefore reasonable that a lot of patients are characterised by the same value.
+#
+# For example visit.times has 1807.0 with 1 visit and only 144 with more visits.
+
+inspect_columns.remove('visit.times')
+inspect_columns.remove('eye.opening')
+inspect_columns.remove('verbal.response')
+inspect_columns.remove('movement')
+inspect_columns.remove('GCS')
+
+# Plot with more bins
+
+df_numerical[inspect_columns].hist(layout=(21,4), figsize=(20,60),bins=20)
+plt.show()
+
+# TODO: Bisogna finire la parte degli outlier per decidere definitivamente se toglierle perchè con un range più piccolo (tolti gli outlier) magari la sitauzione cambia
 
 # #### Barplot of categorical variables
 
