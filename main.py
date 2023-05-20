@@ -1028,6 +1028,34 @@ df.loc[df['triglyceride'] > 10, 'triglyceride'] = np.nan
 
 get_outliers(df, 'dischargeDay', threshold=8)
 
+df_numerical = df.select_dtypes(include=['float64', 'int64'])
+
+
+# #### More in-depth study for some numerical features
+# Control when for more than 90 percent of patients the variable takes nearly equal values
+
+def check_histogram_bins(data, numerical_features,threshold=0.8):
+
+    bin_counts = []
+    selected_features = []
+
+    for feature in numerical_features:
+        feature_values = data[feature]
+        counts, bins, _ = plt.hist(feature_values, bins='auto')
+        bin_counts.append(counts)
+
+        # Check if a bin satisfies the threshold condition
+        for j in range(len(counts)):
+            if counts[j] >= threshold * data.shape[0]:
+                selected_features.append(feature)
+                print(f"Feature {feature}: Bin {j+1} - Count: {counts[j]}")
+
+    plt.close()  # Close the figure to prevent unnecessary plots
+    return selected_features
+
+
+inspect_columns = check_histogram_bins(df_numerical,df_numerical.columns)
+
 # #### Barplot of categorical variables
 
 # +
@@ -1048,9 +1076,33 @@ for idx, col_name in enumerate(col_inspect):
 
 fig.tight_layout()
 plt.show()
+
+
 # -
 
 # It's important to reduce dimensionality as much as possible, both for interpretability and model training. We can clearly see that some variables are meaningless because they belong essentially all to the same type, we can't use these variables for any kind of separation so we discard some of them.
+
+def check_countplot_bins(data,categorical_features, threshold=0.95):
+
+    bin_counts = []
+    selected_features = []
+
+    for var in categorical_features:
+        feature_values = data[var]
+        value_counts = pd.Series(feature_values).value_counts()
+        sns.countplot(x=feature_values)
+        
+
+        # Check if a category satisfies the threshold condition
+        for index, value_count in value_counts.items():
+            if value_count >= threshold * data.shape[0]:
+                selected_features.append(var)
+                print(f"Feature {var}: Category {index} - Count: {value_count}")
+    plt.close()
+
+    return selected_features
+
+check_countplot_bins(df_categorical,df_categorical.columns)
 
 # +
 drop_cols = [
