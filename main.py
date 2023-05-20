@@ -782,17 +782,22 @@ to_drop += ['potassium.ion','high.sensitivity.protein']
 
 print("Columns that we remove: " ,to_drop, "\nColumn that we keep: ", [item for item in missing_cols if item not in to_drop])
 
-
-
 # +
-threshold = 0.50
-limitPer = len(df.index) * (1 - threshold)
-
 # Drop columns
-df = df.dropna(thresh=limitPer, axis=1)
+df = df.drop(columns=to_drop)
 
 # Update numerical df
 df_numerical = df.select_dtypes(include=['float64', 'int64'])
+
+# +
+#threshold = 0.50
+#limitPer = len(df.index) * (1 - threshold)
+
+# Drop columns
+#df = df.dropna(thresh=limitPer, axis=1)
+
+# Update numerical df
+#df_numerical = df.select_dtypes(include=['float64', 'int64'])
 # -
 
 # ### Checking for mono-value columns
@@ -818,7 +823,7 @@ df_numerical = df.select_dtypes(include=['float64', 'int64'])
 
 len(df_numerical.columns)
 
-df_numerical[df_numerical.columns[:83]].hist(layout=(21,4), figsize=(15,80))
+df_numerical[df_numerical.columns[:len(df_numerical.columns)]].hist(layout=(24,4), figsize=(15,80))
 plt.show()
 
 # #### Outlier detection
@@ -1197,7 +1202,7 @@ plt.show()
 
 # It's important to reduce dimensionality as much as possible, both for interpretability and model training. We can clearly see that some variables are meaningless because they belong essentially all to the same type, we can't use these variables for any kind of separation so we discard some of them.
 
-def check_countplot_bins(data,categorical_features, threshold=0.95):
+def check_countplot_bins(data,categorical_features, threshold=0.90):
 
     bin_counts = []
     selected_features = []
@@ -1217,7 +1222,8 @@ def check_countplot_bins(data,categorical_features, threshold=0.95):
 
     return selected_features
 
-check_countplot_bins(df_categorical,df_categorical.columns)
+# +
+#drop_cols = check_countplot_bins(df_categorical,df_categorical.columns)
 
 # +
 drop_cols = [
@@ -1377,8 +1383,7 @@ def remove_highly_correlated(df, threshold=0.5):
     to_drop = [column for column in upper.columns if any(upper[column] > threshold)]
     
     # Return with dropped features
-    return to_drop
-    #return df.drop(to_drop, axis=1)
+    return df.drop(to_drop, axis=1)
 
 
 df_shape = df.shape
