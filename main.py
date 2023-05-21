@@ -229,6 +229,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.neural_network import MLPClassifier
 from sklearn.naive_bayes import GaussianNB
+import scipy.cluster.hierarchy as spc
 from collections import Counter
 from imblearn.over_sampling import SMOTE
 import xgboost as xgb
@@ -641,7 +642,6 @@ print(f'Columns with % of NaNs greater than {threshold:.0%}:')
 print(missing_cols)
 
 # +
-import scipy.cluster.hierarchy as spc
 
 df_temp = df_numerical[numerical_missing[numerical_missing>50][numerical_missing<60].index.tolist()]
 corr_matrix = df_temp.corr()
