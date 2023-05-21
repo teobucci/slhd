@@ -769,7 +769,7 @@ df_numerical = df.select_dtypes(include=['float64', 'int64'])
 
 len(df_numerical.columns)
 
-df_numerical[df_numerical.columns[:len(df_numerical.columns)]].hist(layout=(24,4), figsize=(15,80))
+df_numerical.hist(layout=(24,4), figsize=(15,80))
 plt.show()
 
 # #### Outlier detection
