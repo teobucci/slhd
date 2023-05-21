@@ -1,6 +1,6 @@
-# # Heart Failure re-hospitalizations
+# # Heart Failure: predicting hospital re-admission after 6 months
 #
-# Project for the _Statistical Learning for Healthcare Data_ course held at Politecnico di Milano in the academic year 2022-2023 by Professor Manuela Ferrario and Professor Anna Maria Paganoni.
+# Project for the _Statistical Learning for Healthcare Data_ (056867) course held at Politecnico di Milano in the academic year 2022/2023 by Professor Manuela Ferrario and Professor Anna Maria Paganoni.
 #
 # **It is recommended to [view this notebook in nbviewer](https://nbviewer.org/) for the best viewing experience.**
 #
