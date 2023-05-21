@@ -1165,29 +1165,6 @@ plt.show()
 
 # It's important to reduce dimensionality as much as possible, both for interpretability and model training. We can clearly see that some variables are meaningless because they belong essentially all to the same type, we can't use these variables for any kind of separation so we discard some of them.
 
-def check_countplot_bins(data,categorical_features, threshold=0.90):
-
-    bin_counts = []
-    selected_features = []
-
-    for var in categorical_features:
-        feature_values = data[var]
-        value_counts = pd.Series(feature_values).value_counts()
-        sns.countplot(x=feature_values)
-
-
-        # Check if a category satisfies the threshold condition
-        for index, value_count in value_counts.items():
-            if value_count >= threshold * data.shape[0]:
-                selected_features.append(var)
-                print(f"Feature {var}: Category {index} - Count: {value_count}")
-    plt.close()
-
-    return selected_features
-
-# +
-#drop_cols = check_countplot_bins(df_categorical,df_categorical.columns)
-
 # +
 drop_cols = [
     'connective.tissue.disease',
