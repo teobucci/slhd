@@ -217,7 +217,7 @@ from sklearn.model_selection import train_test_split, GridSearchCV, StratifiedKF
 from sklearn.impute import SimpleImputer, KNNImputer
 # from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.linear_model import LogisticRegression
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeClassifier, export_graphviz
 from sklearn.ensemble import RandomForestClassifier, BaggingClassifier, AdaBoostClassifier
 # from sklearn.svm import SVC, LinearSVC
 from sklearn.metrics import confusion_matrix, roc_curve, auc, precision_recall_curve
@@ -234,6 +234,10 @@ import scipy.cluster.hierarchy as spc
 from collections import Counter
 from imblearn.over_sampling import SMOTE
 import xgboost as xgb
+import shap
+
+from IPython.display import Image
+from mlxtend.plotting import plot_confusion_matrix
 # -
 
 # Fix the seed for later
@@ -1691,7 +1695,6 @@ _ = tree.plot_tree(classifier,
 
 # We can export as a figure but we must use `graphviz`
 
-from sklearn.tree import export_graphviz
 export_graphviz(classifier,
                 out_file=str(OUTPUT_FOLDER / 'decision_tree.dot'),
                 feature_names = X_test.columns.tolist(),
@@ -1699,7 +1702,6 @@ export_graphviz(classifier,
                 filled=True)
 
 # !dot -Tpng output/decision_tree.dot -o output/decision_tree.png -Gdpi=600
-from IPython.display import Image
 Image(filename = str(OUTPUT_FOLDER / 'decision_tree.png'))
 
 importance, sorted_indices = np.sort(classifier.feature_importances_), np.argsort(classifier.feature_importances_)
@@ -1732,8 +1734,6 @@ oob_error = 1 - classifier.oob_score_
 oob_error
 
 # ### AUC and confusion matrices
-
-from mlxtend.plotting import plot_confusion_matrix
 
 # +
 fig, axes = plt.subplots(nrows=2, ncols=4, figsize=(16,7))#, height_ratios = [1,3])
@@ -1831,8 +1831,6 @@ df_performance.to_latex(
 # +
 new_data = X.iloc[0].to_frame().T
 #y.iloc[0] False
-
-import shap
 
 # Encode
 new_data_encoded = pd.DataFrame(encoder.transform(new_data[categorical_features]), columns=encoder.get_feature_names_out(categorical_features))
