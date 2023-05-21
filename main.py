@@ -1723,7 +1723,8 @@ plt.title('Feature Importance in Random Forest Classifier')
 plt.savefig(str(OUTPUT_FOLDER / 'feature_importance_RandomForestClassifier.pdf'), bbox_inches='tight')
 plt.show()
 
-oob_error = 1 - clf.oob_score_
+oob_error = 1 - classifier.oob_score_
+oob_error
 
 # ### AUC and confusion matrices
 
