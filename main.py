@@ -1376,7 +1376,7 @@ y = df[target_var]
 # Split the dataset into training and testing sets
 
 X_train, X_test, y_train, y_test = train_test_split(X, y,
-                                                    test_size=0.2,
+                                                    test_size=0.15,
                                                     stratify=y, # preserve target propotions
                                                     random_state=SEED+2)
 
@@ -1563,10 +1563,8 @@ for name, pipeline in pipelines.items():
 
 # Save for later
 
-# +
-#with open(str(OUTPUT_FOLDER / 'pipeline_cv.pkl'), 'wb') as handle:
-#     pickle.dump(pipeline_cv, handle, protocol=pickle.HIGHEST_PROTOCOL)
-# -
+with open(str(OUTPUT_FOLDER / 'pipeline_cv.pkl'), 'wb') as handle:
+    pickle.dump(pipeline_cv, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 with open(str(OUTPUT_FOLDER / 'pipeline_cv.pkl'), 'rb') as handle:
     pipeline_cv = pickle.load(handle)
