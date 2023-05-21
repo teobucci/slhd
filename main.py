@@ -1378,7 +1378,7 @@ y = df[target_var]
 X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                     test_size=0.15,
                                                     stratify=y, # preserve target propotions
-                                                    random_state=SEED+2)
+                                                    random_state=SEED)
 
 # Given the reduced size of the dataset, we can simultaneously explore different models and tune them, to have the best result for each class of models.
 
