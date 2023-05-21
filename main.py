@@ -464,7 +464,7 @@ for i in range(len(data.columns)):
     for j in range(i+1, len(data.columns)):
         # Calculate the Cohen score between the ith and jth variables
         score = cohen_kappa_score(data.iloc[:,i], data.iloc[:,j])
-        
+
         # Add the score to the score table
         score_table.iloc[i,j] = score
         score_table.iloc[j,i] = score
@@ -765,7 +765,7 @@ to_drop += ['potassium.ion','high.sensitivity.protein']
 #for var in numerical_missing.axes[0].tolist():
 #    if var.endswith('hemoglobin'):
 #        hemoglobin.append(var)
-        
+
 #df_numerical[hemoglobin].dropna()
 #corr_hemoglobin = df_numerical[hemoglobin].dropna().corr()
 
@@ -885,9 +885,9 @@ plt.show()
 # To spot outliers, we compute their z-score and print the values. If we believe that some values are outliers, instead of discarding completely the entry, we set the value to `NaN`, to be recovered during the imputation later in the analysis.
 
 def get_outliers(df, feature, threshold=3):
-    
+
     df2 = df.copy()
-    
+
     # calculate the Z-score for each value in the 'value' column
     df2['zscore'] = (df2[feature] - df2[feature].mean()) / df2[feature].std(ddof=0)
 
@@ -901,8 +901,8 @@ def get_outliers(df, feature, threshold=3):
 
 get_outliers(df, 'respiration', threshold=9)
 
-# The average respiratory rate (number of respiratory acts in one minute) is recorded in a range between 16 and 20.  
-# 36 respiratory acts in a minute means the patient is likely to have tachypneum or polypneum.  
+# The average respiratory rate (number of respiratory acts in one minute) is recorded in a range between 16 and 20.
+# 36 respiratory acts in a minute means the patient is likely to have tachypneum or polypneum.
 # The only non-physical value is 0.
 
 df.loc[df['respiration'] == 0, 'respiration'] = np.nan
@@ -920,27 +920,27 @@ get_outliers(df, 'body.temperature', threshold=6)
 
 get_outliers(df, 'BMI', threshold=1)
 
-# According to the World Health Organization (WHO) a healthy subject is indicated by a BMI between 18.5 and 24.9  
-# The threshold value of BMI in adults is 25 for overweight and 30 for obesity.   
-# In the underweight condition, the BMI does not reach the value of 18.5  
+# According to the World Health Organization (WHO) a healthy subject is indicated by a BMI between 18.5 and 24.9
+# The threshold value of BMI in adults is 25 for overweight and 30 for obesity.
+# In the underweight condition, the BMI does not reach the value of 18.5
 #
 
 df.loc[(df['BMI'] >= 100) | (df['BMI'] == 0), 'BMI'] = np.nan
 
 get_outliers(df, 'fio2', threshold=3)
 
-# fio2 is the fraction of inspired oxygenation (%).  
-# fiO2 is 21(%) if the patient is in spontaneous breathing without oxygen supplements    
-# If the patient has an oxygen supplement the fiO2 is a fraction variable according to the amount of Oxygen inhaled, which depends on various factors: oxygen flows, presence or absence of reservoir, respiratory rate, total volume     
-# The fio2 can be setted by the clinician himself 
+# fio2 is the fraction of inspired oxygenation (%).
+# fiO2 is 21(%) if the patient is in spontaneous breathing without oxygen supplements
+# If the patient has an oxygen supplement the fiO2 is a fraction variable according to the amount of Oxygen inhaled, which depends on various factors: oxygen flows, presence or absence of reservoir, respiratory rate, total volume
+# The fio2 can be setted by the clinician himself
 #
 
 get_outliers(df, 'systolic.blood.pressure', threshold=3)
 
-# In a healthy subject the systolic pressur must be around 120 mmHg  
-# Subjects with pressure >140 mmHg suffer of hypertension  
-# The patient who has a pressure equal to 50 mmHg is probably affected by hypotension  
-# Values = 0 or >200 are outliers 
+# In a healthy subject the systolic pressur must be around 120 mmHg
+# Subjects with pressure >140 mmHg suffer of hypertension
+# The patient who has a pressure equal to 50 mmHg is probably affected by hypotension
+# Values = 0 or >200 are outliers
 
 df.loc[(df['systolic.blood.pressure'] >= 200) | (df['systolic.blood.pressure'] == 0), 'systolic.blood.pressure'] = np.nan
 
@@ -950,8 +950,8 @@ df.loc[(df['systolic.blood.pressure'] >= 200) | (df['systolic.blood.pressure'] =
 
 get_outliers(df, 'diastolic.blood.pressure', threshold=4)
 
-# In a healthy subject the diastolic pressur must be around 80 mmHg  
-# Subjects with pressure >110 mmHg suffer of hypertension  
+# In a healthy subject the diastolic pressur must be around 80 mmHg
+# Subjects with pressure >110 mmHg suffer of hypertension
 
 df.loc[(df['diastolic.blood.pressure'] >= 110) | (df['diastolic.blood.pressure'] == 0), 'diastolic.blood.pressure'] = np.nan
 
@@ -961,15 +961,15 @@ df.loc[(df['diastolic.blood.pressure'] >= 110) | (df['diastolic.blood.pressure']
 
 get_outliers(df, 'map', threshold=3)
 
-# Map (Mean Arterial pressure)  
-# The normal MAP range is between 70 and 100 mmHg. 
+# Map (Mean Arterial pressure)
+# The normal MAP range is between 70 and 100 mmHg.
 # Mean arterial pressures that deviate from this range for prolonged periods of time can have drastic negative effects on the body.
 
 df.loc[df['map'] == 0, 'map'] = np.nan
 
 get_outliers(df, 'left.ventricular.end.diastolic.diameter.LV', threshold=3)
 
-# Left ventricular end diastolic diameter LV (cm) normal range: 3.5 - 5.6 cm  
+# Left ventricular end diastolic diameter LV (cm) normal range: 3.5 - 5.6 cm
 # From the histogram we can see that the values are not in cm
 
 df['left.ventricular.end.diastolic.diameter.LV'].hist()
@@ -991,26 +991,26 @@ df.loc[df['creatinine.enzymatic.method'] > 200, 'creatinine.enzymatic.method'] =
 
 get_outliers(df, 'urea', threshold=4)
 
-# urea (mmol/l), ref:1.7 - 8.3 mmol/L  
-# Abnormal levels of urea and creatine in the blood may be indicative of renal dysfunction.  
+# urea (mmol/l), ref:1.7 - 8.3 mmol/L
+# Abnormal levels of urea and creatine in the blood may be indicative of renal dysfunction.
 # This means that the kidneys fail to properly eliminate toxic substances in the body
 
 # +
-#controllare il valore e fare la conversione 
+#controllare il valore e fare la conversione
 #df.loc[df['urea'] >10, 'urea'] = np.nan
 # -
 
 get_outliers(df, 'cystatin', threshold=6)
 
-# cystatin (mg/L); ref:0.51–0.98  
+# cystatin (mg/L); ref:0.51–0.98
 # High levels of cysteine in the blood are associated with an increased risk of cardiovascular disease, therefore more likely to suffer diseases such as heart attack, intermittent claudication, ischemic heart disease etc
 
 df.loc[df['cystatin'] >=10, 'cystatin'] = np.nan
 
 get_outliers(df, 'white.blood.cell', threshold=6)
 
-# white blood cell count (*10^9/L); ref: 4 -10 
-# Leukocytosis, which is the increase in the number of white blood cells above 11, is often caused by the normal response of the body to fight an infection or by certain drugs such as corticosteroids  
+# white blood cell count (*10^9/L); ref: 4 -10
+# Leukocytosis, which is the increase in the number of white blood cells above 11, is often caused by the normal response of the body to fight an infection or by certain drugs such as corticosteroids
 # threshold can be setted >= 11.6
 
 df.loc[df['white.blood.cell'] >=11.6, 'white.blood.cell'] = np.nan
@@ -1025,7 +1025,7 @@ get_outliers(df, 'eosinophil.ratio', threshold=8)
 
 get_outliers(df, 'basophil.count', threshold=8)
 
-# basophil.count(*10^9/L); ref: 0 - 0.1  
+# basophil.count(*10^9/L); ref: 0 - 0.1
 # An higher count of basophilis can be a symptom of chronic myeloid leukemia
 
 df.loc[df['basophil.count'] > 0.280, 'basophil.count'] = np.nan
@@ -1212,7 +1212,7 @@ def check_countplot_bins(data,categorical_features, threshold=0.90):
         feature_values = data[var]
         value_counts = pd.Series(feature_values).value_counts()
         sns.countplot(x=feature_values)
-        
+
 
         # Check if a category satisfies the threshold condition
         for index, value_count in value_counts.items():
@@ -1305,10 +1305,10 @@ plt.show()
 # -
 
 def plot_subcorrelation_matrix(corr_matrix, inspect_col, threshold=0.4):
-    
+
     if not inspect_col or len(inspect_col) == 1:
         return
-    
+
     if len(inspect_col) == 2:
         correlation_value = corr_matrix.values[0,1]
         if correlation_value >= threshold:
@@ -1373,16 +1373,16 @@ def remove_highly_correlated(df, threshold=0.5):
     threshold is the correlation threshold to use
     Code from https://chrisalbon.com/machine_learning/feature_selection/drop_highly_correlated_features/
     """
-    
+
     # Create correlation matrix
     corr_matrix = df.corr(numeric_only=True).abs()
-    
+
     # Select upper triangle of correlation matrix
     upper = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(bool))
-    
+
     # Find index of feature columns with correlation greater than threshold
     to_drop = [column for column in upper.columns if any(upper[column] > threshold)]
-    
+
     # Return with dropped features
     return df.drop(to_drop, axis=1)
 
@@ -1524,7 +1524,7 @@ with open(str(OUTPUT_FOLDER / 'imputer.pkl'), 'wb') as handle:
 # +
 # with open(str(OUTPUT_FOLDER / 'imputer.pkl'), 'rb') as handle:
 #     imputer = pickle.load(handle)
-# 
+#
 # X_train[numerical_features] = imputer.transform(X_train[numerical_features])
 # X_test[numerical_features] = imputer.transform(X_test[numerical_features])
 # -
@@ -1579,7 +1579,7 @@ models = {
         'model': AdaBoostClassifier(),
         'param_grid': {'classifier__n_estimators': [10, 50, 100, 500],
                       'classifier__learning_rate': [0.0001, 0.001, 0.01, 0.1, 1.0]}
-    },    
+    },
     'random_forest': {
         'model': RandomForestClassifier(),
         'param_grid': {'classifier__n_estimators': [100, 250, 450, 600],
@@ -1593,7 +1593,7 @@ models = {
     },
     'decision_tree_classifier': {
         'model': DecisionTreeClassifier(),
-        'param_grid': {'classifier__criterion': ['entropy','gini'], 
+        'param_grid': {'classifier__criterion': ['entropy','gini'],
                        'classifier__max_depth': [5,10],
                        'classifier__min_samples_split': [5,10,20],
                        'classifier__min_samples_leaf': [5,10]}
@@ -1852,7 +1852,7 @@ i = 0
 roc_details = {}
 
 for name, pipeline in pipeline_cv.items():
-    
+
     model = pipeline.best_estimator_.named_steps['classifier']
 
     # Make predictions on the testing set
@@ -1877,7 +1877,7 @@ for name, pipeline in pipeline_cv.items():
     y_score = pipeline.predict_proba(X_test)[:,1]
     fpr, tpr, _ = roc_curve(y_test, y_score)
     roc_auc = auc(fpr, tpr)
-    
+
     # Save for later
     roc_details[model.__class__.__name__] = {
         'fpr': fpr,
@@ -1891,10 +1891,10 @@ for name, pipeline in pipeline_cv.items():
         'ROC AUC': roc_auc,
         'Accuracy': accuracy,
     }
-    
+
     # Append the row to the list
     rows.append(row)
-    
+
     i += 1
 
 plt.tight_layout()
@@ -1941,13 +1941,13 @@ predictions = []
 
 # Make predictions with each model
 for name, pipeline in pipeline_cv.items():
-    
+
     if name in ['xgboost', 'random_forest', 'logistic_regression', 'ada_boost']:
         # Make predictions on the testing set
         y_score = pipeline.predict_proba(X_test)#[:,1]
         predictions.append(y_score)
-    
-    
+
+
 # Take the average of predictions
 ensemble_predictions = np.mean(predictions, axis=0)
 
@@ -1963,7 +1963,7 @@ fig, ax = plt.subplots(figsize=(8,8))
 
 fpr, tpr, _ = roc_curve(y_test, ensemble_predictions[:,1])
 roc_auc = auc(fpr, tpr)
-    
+
 ax.plot([0, 1], [0, 1], linestyle='--', color='gray')
 ax.set_xlim([0.0, 1.0])
 ax.set_ylim([0.0, 1.05])
