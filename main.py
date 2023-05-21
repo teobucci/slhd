@@ -278,22 +278,8 @@ missing_drugs = ~df_drugs.index.isin(df.index)
 print('Missing patients from the patients dataframe:')
 print(df_drugs[missing_drugs].index)
 
-# +
-#df_drugs.shape
-# -
-
 # More drugs were given to the same patient.
 
-# +
-#df_drugs.head()
-
-# +
-#df_drugs['Administration'] = df_drugs['Drug_name'].apply(lambda x: 'injection' if 'injection' in x.lower() else 'tablet')
-#df_drugs['Drug_name'] = df_drugs['Drug_name'].apply(lambda x: x.replace('injection', '').replace('tablet', ''))
-
-# +
-#pd.DataFrame(df_drugs['Drug_name'].unique(), columns=['name'])
-# -
 
 # Create a pivot table of drugs, with patients as rows and drugs as columns
 drug_pivot = df_drugs.pivot_table(index='inpatient.number', columns='Drug_name', fill_value=0, aggfunc=lambda x: 1)
