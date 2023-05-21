@@ -1221,27 +1221,8 @@ plt.show()
 
 # We begin with an overall correlation matrix, trying to identify blocks, an then we dig deep into them, trying to discard as many redundant variables as possible.
 
-# +
-df_temp = df_numerical
-corr_matrix = df_temp.corr(numeric_only=True, method='pearson')
-pdist = spc.distance.pdist(abs(corr_matrix.values))
+corr_matrix = df_numerical.corr()
 
-linkage = spc.linkage(pdist, method='complete')
-idx = spc.fcluster(linkage, 0.5 * pdist.max(), 'distance')
-
-columns = [df_temp.columns.tolist()[i] for i in list((np.argsort(idx)))]
-df_temp = df_temp.reindex(columns, axis=1)
-
-corr_matrix = df_temp.corr()
-
-# Create a correlation heatmap
-plt.figure(figsize=(20, 15))
-sns.heatmap(corr_matrix, cmap='coolwarm')
-plt.title('Correlation Heatmap')
-plt.show()
-
-
-# -
 
 def plot_subcorrelation_matrix(corr_matrix, inspect_col, threshold=0.4):
 
