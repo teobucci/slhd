@@ -643,170 +643,35 @@ numerical_missing = get_percentage_missing(df_numerical)
 
 # Variables with missingness between 50%-60% deserve a closer look, because they are many and we don't want to discard too much information. Let us plot their correlation matrix, clustered using hierarchical clustering to see a better block structure.
 
-threshold = 0.50
-
-missing_cols = numerical_missing[numerical_missing>(threshold*100)].index.tolist()
-print(f'Columns with % of NaNs greater than {threshold:.0%}:')
 print(missing_cols)
 
-# +
-
-df_temp = df_numerical[numerical_missing[numerical_missing>50][numerical_missing<60].index.tolist()]
-corr_matrix = df_temp.corr()
-
-# Use correlation matrix as distance
-pdist = spc.distance.pdist(abs(corr_matrix.values))
-
-linkage = spc.linkage(pdist, method='complete')
-idx = spc.fcluster(linkage, 0.5 * pdist.max(), 'distance')
-
-columns = [df_temp.columns.tolist()[i] for i in list((np.argsort(idx)))]
-df_temp = df_temp.reindex(columns, axis=1)
-
-corr_matrix = df_temp.corr()
-
-# Create a correlation heatmap
-plt.figure(figsize=(20, 15))
-sns.heatmap(corr_matrix, annot=True, cmap='coolwarm')
-plt.title('Correlation Heatmap')
-plt.show()
-# -
-
-# Some blocks can be identified. To decide whether it is useful to keep some of these variables we check whether they are highly correlated with variables with a lower percentage of NaN, which would therefore be a better choice.
-
-to_drop = []
 
 
-def check_correlation(data, selected_vars, threshold = 0.5):
-    """
-    Given a dataframe and a list of variables for which we want to check if exists at
-    least another variable with high correlation.
-    Return a list of highly correlated variables.
-    """
-    # Initialize high correlated variables as a set
-    correlated_vars = set()
 
-    # Calculate correlation matrix
-    corr_matrix = data.corr()
 
-    # Iterate over selected variables
-    for var in selected_vars:
-        # Get highly correlated variables for each selected variable
-        highly_corr_vars = corr_matrix.index[(corr_matrix[var] > threshold) | (corr_matrix[var] < -threshold)].tolist()
-        correlated_vars.update(highly_corr_vars)
 
-    # Remove selected variables from the correlated variables set
-    correlated_vars -= set(selected_vars)
 
-    return list(correlated_vars)
+
+
+
+
+
+
 
 
 # +
-selected_vars = ['partial.pressure.of.carbon.dioxide','standard.residual.base','measured.residual.base',
-                'measured.bicarbonate','total.carbon.dioxide','standard.bicarbonate','lactate','pH','anion.gap','potassium.ion']
-df_temp = df[numerical_missing[numerical_missing<=50].index.tolist()+selected_vars]
-correlated_vars = check_correlation(df_temp,selected_vars)
-
-plt.figure(figsize=(8, 6))
-sns.heatmap(df[selected_vars+correlated_vars].corr(), annot=True ,cmap="coolwarm")
-plt.title("Correlation Heatmap")
-plt.show()
 
 # -
 
-# The last 3 rows are the variables that are highlt correlated with at least one of the above.
-#
-# We can observe that 'partial.pressure.of.carbon.dioxide','standard.residual.base','measured.residual.base','measured.bicarbonate','total.carbon.dioxide' and 'standard.bicarbonate' are all highly correlated with 'carbon.dioxide.binding.capacity'. It's a better choice to keep only this last one since it has less NaN values than the others.
-#
-# 'lactate' is instead correllated with 'lactate.dehydrogenase', for the same reason we remove 'lactate'
-#
-# 'pH' and 'anion.gap' are the only two left, at this stage they aren't highly correllated with any other. We can keep them.
-
-to_drop +=['partial.pressure.of.carbon.dioxide','standard.residual.base','measured.residual.base','measured.bicarbonate',
-           'total.carbon.dioxide', 'standard.bicarbonate','lactate']
-
-# +
-selected_vars = ['partial.oxygen.pressure','oxyhemoglobin','reduced.hemoglobin','oxygen.saturation']
-df_temp = df[numerical_missing[numerical_missing<=50].index.tolist()+selected_vars]
-correlated_vars = check_correlation(df_temp,selected_vars)
-
-plt.figure(figsize=(8, 6))
-sns.heatmap(df[selected_vars+correlated_vars].corr(), annot=True ,cmap="coolwarm")
-plt.title("Correlation Heatmap")
-plt.show()
-# -
-
-# None of these variables have high correlation with the others in the data set, a possible choice is to keep 'oxyhemoglobin' which is the one with higher correlation with the others
-
-to_drop += ['partial.oxygen.pressure','reduced.hemoglobin','oxygen.saturation']
-
-# +
-selected_vars = ['hematocrit.blood.gas','total.hemoglobin']
-df_temp = df[numerical_missing[numerical_missing<=50].index.tolist()+selected_vars]
-correlated_vars = check_correlation(df_temp,selected_vars)
-
-plt.figure(figsize=(8, 6))
-sns.heatmap(df[selected_vars+correlated_vars].corr(), annot=True ,cmap="coolwarm")
-plt.title("Correlation Heatmap")
-plt.show()
-# -
-
-to_drop +=  ['hematocrit.blood.gas','total.hemoglobin']
-
-# +
-selected_vars = ['potassium.ion','methemoglobin','carboxyhemoglobin','high.sensitivity.protein','glucose.blood.gas','mitral.valve.EMS']
-df_temp = df[numerical_missing[numerical_missing<=50].index.tolist()+selected_vars]
-correlated_vars = check_correlation(df_temp,selected_vars)
-
-plt.figure(figsize=(8, 6))
-sns.heatmap(df[selected_vars+correlated_vars].corr(), annot=True ,cmap="coolwarm")
-plt.title("Correlation Heatmap")
-plt.show()
-# -
-
-to_drop += ['potassium.ion','high.sensitivity.protein']
-
-# Hemoglobin correlation
-
-# +
-#hemoglobin = []
-#for var in numerical_missing.axes[0].tolist():
-#    if var.endswith('hemoglobin'):
-#        hemoglobin.append(var)
-
-#df_numerical[hemoglobin].dropna()
-#corr_hemoglobin = df_numerical[hemoglobin].dropna().corr()
 
 
-# Create a correlation heatmap
-#plt.figure(figsize=(20, 15))
-#sns.heatmap(corr_hemoglobin, annot=True, cmap='coolwarm')
-#plt.title('Correlation Heatmap')
-#plt.show()
-# -
 
-# We see a few blocks, from which we deduce that many of these variables contain the same information, and given that all of them have a % of NaN greater than 50%, we can safely remove them, knowing that the amount of information we're discarding is not as much as one might expect.
-
-# TODO: potremmo valutare di tenerne giusto un paio...
-
-print("Columns that we remove: " ,to_drop, "\nColumn that we keep: ", [item for item in missing_cols if item not in to_drop])
 
 # +
 # Drop columns
-df = df.drop(columns=to_drop)
 
 # Update numerical df
 df_numerical = df.select_dtypes(include=['float64', 'int64'])
-
-# +
-#threshold = 0.50
-#limitPer = len(df.index) * (1 - threshold)
-
-# Drop columns
-#df = df.dropna(thresh=limitPer, axis=1)
-
-# Update numerical df
-#df_numerical = df.select_dtypes(include=['float64', 'int64'])
 # -
 
 # ### Checking for mono-value columns
