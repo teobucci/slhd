@@ -1553,7 +1553,7 @@ for name, pipeline in pipelines.items():
         scoring=scoring,
         refit="AUC",
         return_train_score=True,
-        verbose=2
+        verbose=0
     )
     grid_search.fit(X_train, y_train)
     pipeline_cv[name] = grid_search
