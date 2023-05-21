@@ -307,11 +307,10 @@ merged_df.head()
 for drug_name in drug_pivot.columns:
     merged_df[drug_name] = merged_df[drug_name].fillna(value=0)
 
-# +
-#merged_df.loc[863648]
-# -
+INCLUDE_DRUGS = True
 
-# TODO: ora bisogna fare qualcosa con sto merged
+if INCLUDE_DRUGS:
+    df = merged_df
 
 # ### Information about the memory usage
 #
