@@ -560,6 +560,8 @@ for name, features in zip(names, [numerical_missing, categorical_missing]):
     print(f"Among the {name} features, {len(features)} contain missing values")
 # -
 
+# #### Categorical
+
 # The single categorical feature that contains missing values is `occupation` with 1.34% of missing values.
 
 categorical_missing
@@ -577,6 +579,8 @@ df = df.astype({'occupation': 'category'})
 df_categorical = df.select_dtypes(include=['category', 'bool'])
 df_numerical = df.select_dtypes(include=['float64', 'int64'])
 
+
+# #### Numerical
 
 # There are many more numerical features with missing values, to understand the amplitude of it, let us plot the percentage of missing values per feature.
 
