@@ -1482,7 +1482,8 @@ models = {
         'param_grid': {'classifier__n_estimators': [100, 250, 450, 600],
                        'classifier__max_depth': [5, 10, 15, 20],
                        'classifier__max_features': ['sqrt', 'log2'],
-                       'classifier__criterion' :['entropy']}
+                       'classifier__criterion' :['entropy'],
+                       'classifier__oob_score': [True]}
     },
     'knn': {
         'model': KNeighborsClassifier(),
@@ -1694,6 +1695,8 @@ plt.xlabel('Importance')
 plt.title('Feature Importance in Random Forest Classifier')
 plt.savefig(str(OUTPUT_FOLDER / 'feature_importance_RandomForestClassifier.pdf'), bbox_inches='tight')
 plt.show()
+
+oob_error = 1 - clf.oob_score_
 
 # ### AUC and confusion matrices
 
