@@ -1387,6 +1387,10 @@ def remove_highly_correlated(df, threshold=0.5):
 
     # Find index of feature columns with correlation greater than threshold
     to_drop = [column for column in upper.columns if any(upper[column] > threshold)]
+    
+    # Print dropped columns
+    print("Dropping the following columns")
+    print(to_drop)
 
     # Return with dropped features
     return df.drop(to_drop, axis=1)
