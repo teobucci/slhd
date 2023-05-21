@@ -1878,33 +1878,7 @@ plt.savefig(str(OUTPUT_FOLDER / 'roc_ensemble.pdf'), bbox_inches='tight')
 plt.show()
 # -
 
-# ## 4. Conclusion
-#
-# ### Summary of findings
-#
-# ### Recommendations for further research
-#
-# ### Limitations of the analysis
-
 # # Extras
-
-# Out of bag score.
-#
-# It permits to have an overview without the cv validation test, of course the results should be then tested on the test set.
-
-bag_clf = BaggingClassifier(DecisionTreeClassifier(), n_estimators=500, bootstrap=True,
-                            oob_score=True, n_jobs=-1,random_state=42)
-bag_clf.fit(X_train, y_train)
-
-bag_clf.oob_score_
-
-#
-
-
-
-
-
-
 
 # ## `lazypredict`
 #
