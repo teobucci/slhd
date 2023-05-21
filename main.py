@@ -1639,8 +1639,8 @@ classifier = pipeline_cv['logistic_regression'].best_estimator_.named_steps['cla
 
 fig, ax = plt.subplots(figsize=(8,8))
 coeff = pd.DataFrame()
-coeff["feature"] = X_train.columns
-coeff["w"] = classifier.coef_[0]
+coeff['feature'] = X_train.columns
+coeff['w'] = classifier.coef_[0]
 coeff = coeff.sort_values(by=['w'])
 sns.barplot(data=coeff[abs(coeff.w) > 0.05], x='w', y='feature', color='c')
 plt.savefig(str(OUTPUT_FOLDER / 'feature_importance_weightsLogisticRegression.pdf'), bbox_inches='tight')
@@ -1661,11 +1661,11 @@ perfect_recall = np.linspace(0, 1, num=len(perfect_precision))
 plt.plot(recalls, precisions, 'r-', label='Logistic')
 plt.plot([0, 1], [zero_skill, zero_skill], 'b--', label='Zero skill')
 plt.plot(perfect_recall, perfect_precision, 'g--', linewidth=2, label='Perfect model')
-plt.xlabel("Recall")
-plt.ylabel("Precision")
+plt.xlabel('Recall')
+plt.ylabel('Precision')
 plt.axis([0, 1, 0, 1])
 #plt.grid()
-plt.title("Precision Recall curve")
+plt.title('Precision Recall curve')
 plt.legend()
 plt.show()
 # -
@@ -1677,7 +1677,7 @@ classifier = pipeline_cv['decision_tree_classifier'].best_estimator_.named_steps
 
 from sklearn import tree
 text_representation = tree.export_text(classifier)
-with open("decistion_tree.log", "w") as f:
+with open('decistion_tree.log', 'w') as f:
     f.write(text_representation)
 
 # The `plot_tree` returns annotations for the plot, to not show them in the notebook I assigned returned value to `_`
