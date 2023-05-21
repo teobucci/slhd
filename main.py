@@ -229,6 +229,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.neural_network import MLPClassifier
 from sklearn.naive_bayes import GaussianNB
+from sklearn.utils import class_weight
 import scipy.cluster.hierarchy as spc
 from collections import Counter
 from imblearn.over_sampling import SMOTE
@@ -1438,6 +1439,12 @@ with open(str(OUTPUT_FOLDER / 'imputer.pkl'), 'wb') as handle:
 
 np.round((y_train == True).sum() / len(y_train), 3)
 
+class_weights = class_weight.compute_class_weight(class_weight='balanced',
+                                                  classes=np.unique(y_train),
+                                                  y=y_train)
+class_weights = dict(zip(np.unique(y_train), class_weights))
+class_weights
+
 # #### Scaling
 
 # +
@@ -1472,7 +1479,8 @@ models = {
         'model': LogisticRegression(max_iter=10000),
         'param_grid': {
             'classifier__C': np.logspace(-3, 3, 7),
-            'classifier__random_state': [SEED]
+            'classifier__random_state': [SEED],
+            'classifier__class_weight': [class_weights]
         }
     },
     'ada_boost': {
@@ -1492,6 +1500,7 @@ models = {
             'classifier__criterion' :['entropy'],
             'classifier__oob_score': [True],
             'classifier__random_state': [SEED],
+            'classifier__class_weight': [class_weights]
         }
     },
     'knn': {
