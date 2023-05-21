@@ -296,7 +296,7 @@ print(df_drugs[missing_drugs].index)
 # -
 
 # Create a pivot table of drugs, with patients as rows and drugs as columns
-drug_pivot = df_drugs.pivot_table(index='inpatient.number', columns='Drug_name', fill_value='No', aggfunc=lambda x: 'Yes')
+drug_pivot = df_drugs.pivot_table(index='inpatient.number', columns='Drug_name', fill_value=0, aggfunc=lambda x: 1)
 drug_pivot.head()
 
 # Merge the patient dataframe with the drug pivot table
@@ -305,7 +305,7 @@ merged_df.head()
 
 # Fill patients without any drug with No
 for drug_name in drug_pivot.columns:
-    merged_df[drug_name] = merged_df[drug_name].fillna(value='No')
+    merged_df[drug_name] = merged_df[drug_name].fillna(value=0)
 
 # +
 #merged_df.loc[863648]
