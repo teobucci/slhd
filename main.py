@@ -268,6 +268,8 @@ df = df.drop(columns=df.columns[0], axis=1)
 df_drugs = pd.read_csv((DATA_FOLDER / "dat_md.csv"), index_col=1)
 df_drugs = df_drugs.drop(columns=df_drugs.columns[0], axis=1)
 
+df_drugs.head()
+
 # Check which patients are missing from the drugs dataframe
 missing_patients = ~df.index.isin(df_drugs.index)
 print('Missing patients from the drugs dataframe:')
@@ -279,7 +281,10 @@ print('Missing patients from the patients dataframe:')
 print(df_drugs[missing_drugs].index)
 
 # More drugs were given to the same patient.
+#
+# Let's see the unique drugs.
 
+pd.DataFrame(df_drugs['Drug_name'].unique(), columns=['name'])
 
 # Create a pivot table of drugs, with patients as rows and drugs as columns
 drug_pivot = df_drugs.pivot_table(index='inpatient.number', columns='Drug_name', fill_value=0, aggfunc=lambda x: 1)
