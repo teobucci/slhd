@@ -1591,8 +1591,10 @@ for name, pipeline in pipelines.items():
 
 # Save for later
 
-with open(str(OUTPUT_FOLDER / 'pipeline_cv.pkl'), 'wb') as handle:
-    pickle.dump(pipeline_cv, handle, protocol=pickle.HIGHEST_PROTOCOL)
+# +
+# with open(str(OUTPUT_FOLDER / 'pipeline_cv.pkl'), 'wb') as handle:
+#     pickle.dump(pipeline_cv, handle, protocol=pickle.HIGHEST_PROTOCOL)
+# -
 
 with open(str(OUTPUT_FOLDER / 'pipeline_cv.pkl'), 'rb') as handle:
     pipeline_cv = pickle.load(handle)
