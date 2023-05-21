@@ -1569,42 +1569,6 @@ with open(str(OUTPUT_FOLDER / 'pipeline_cv.pkl'), 'wb') as handle:
 with open(str(OUTPUT_FOLDER / 'pipeline_cv.pkl'), 'rb') as handle:
     pipeline_cv = pickle.load(handle)
 
-# +
-new_data = X.iloc[0].to_frame().T
-#y.iloc[0] False
-
-import shap
-
-# Encode
-new_data_encoded = pd.DataFrame(encoder.transform(new_data[categorical_features]), columns=encoder.get_feature_names_out(categorical_features))
-new_data = pd.concat([new_data.drop(categorical_features, axis=1).reset_index(drop=True), new_data_encoded.reset_index(drop=True)], axis=1)
-
-# Impute
-new_data = pd.DataFrame(imputer.transform(new_data), columns = new_data.columns)
-
-new_data_unscaled = new_data.copy()
-
-# Scale
-new_data[numerical_features] = scaler.transform(new_data[numerical_features])
-
-# Load the SHAP explainer
-explainer = shap.TreeExplainer(pipeline_cv['random_forest'].best_estimator_.named_steps['classifier'])
-
-shap_values = explainer(new_data)
-
-
-idx = 0
-exp = shap.Explanation(
-    shap_values.values[:,:,1],
-    shap_values.base_values[:,1],
-    shap_values.data,
-    display_data=new_data_unscaled,
-    feature_names=new_data.columns)
-shap.plots.waterfall(exp[idx], max_display=20)
-# -
-
-pipeline_cv['random_forest'].best_estimator_.named_steps['classifier'].predict_proba(new_data)[0][1]
-
 # ### Evaluating model performance
 
 # The `GridSearchCV` objects has the following useful attributes
@@ -1825,6 +1789,44 @@ df_performance.to_latex(
     float_format="{:.4f}".format,
     caption="Comparison of performance of the different models"
 )
+
+# ### Explaining predictions with SHAP
+
+# +
+new_data = X.iloc[0].to_frame().T
+#y.iloc[0] False
+
+import shap
+
+# Encode
+new_data_encoded = pd.DataFrame(encoder.transform(new_data[categorical_features]), columns=encoder.get_feature_names_out(categorical_features))
+new_data = pd.concat([new_data.drop(categorical_features, axis=1).reset_index(drop=True), new_data_encoded.reset_index(drop=True)], axis=1)
+
+# Impute
+new_data = pd.DataFrame(imputer.transform(new_data), columns = new_data.columns)
+
+new_data_unscaled = new_data.copy()
+
+# Scale
+new_data[numerical_features] = scaler.transform(new_data[numerical_features])
+
+# Load the SHAP explainer
+explainer = shap.TreeExplainer(pipeline_cv['random_forest'].best_estimator_.named_steps['classifier'])
+
+shap_values = explainer(new_data)
+
+
+idx = 0
+exp = shap.Explanation(
+    shap_values.values[:,:,1],
+    shap_values.base_values[:,1],
+    shap_values.data,
+    display_data=new_data_unscaled,
+    feature_names=new_data.columns)
+shap.plots.waterfall(exp[idx], max_display=20)
+# -
+
+pipeline_cv['random_forest'].best_estimator_.named_steps['classifier'].predict_proba(new_data)[0][1]
 
 # +
 # ensemble
