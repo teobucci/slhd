@@ -1008,13 +1008,22 @@ get_outliers(df, 'thrombin.time', threshold=3)
 
 df.loc[df['thrombin.time'] > 78, 'thrombin.time'] = np.nan
 
-get_outliers(df, 'high.sensitivity.troponin', threshold=8)
+# The variable `high.sensitivity.troponin` presents an anomalous range of values and a probably wrong unit of measure since from the dataset information: `high.sensitivity.troponin` (pg/mL); ref:0-14
+#
+# According to [literature](https://www.reglab.org/news/new-test-high-sensitivity-troponin-i/):
+#
+# > The new reference range is ≤15 pg/ml for females and ≤20 pg/ml for males; results above these values indicate the possibility of myocardial infarction and require additional patient evaluation. An elevated and actionable value of hs TnI is > 100 pg/mL for males and > 75 pg/mL for females, and indicates an increased likelihood of myocardial damagewomen.
 
-# high.sensitivity.troponin (pg/mL); ref:0 -14
+df['high.sensitivity.troponin'].hist()
+plt.show()
 
-df.loc[df['high.sensitivity.troponin'] > 26, 'high.sensitivity.troponin'] = np.nan
+# Given the many values set to 0 and the anomalous bins, we simply use statistics and remove some values based on z-score
+
+get_outliers(df, 'high.sensitivity.troponin', threshold=3)
 
 get_outliers(df, 'prothrombin.time.ratio', threshold=8)
+df.loc[df['high.sensitivity.troponin'] > 7, 'high.sensitivity.troponin'] = np.nan
+
 
 get_outliers(df, 'sodium', threshold=8)
 
