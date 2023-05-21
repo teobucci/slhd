@@ -1219,7 +1219,7 @@ plt.show()
 
 # ### Correlation analysis
 
-# We begin with an overall correlation matrix, trying to identify blocks, an then we dig deep into them, trying to discard as many redundant variables as possible.
+# Using clinical knowledge, we inspect some groups of variables we think could be quite correlated.
 
 corr_matrix = df_numerical.corr()
 
