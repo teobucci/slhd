@@ -875,10 +875,16 @@ df.loc[(df['BMI'] >= 100) | (df['BMI'] == 0), 'BMI'] = np.nan
 get_outliers(df, 'fio2', threshold=3)
 
 # fio2 is the fraction of inspired oxygenation (%).
-# fiO2 is 21(%) if the patient is in spontaneous breathing without oxygen supplements
+#
+# fiO2 is 21(%) if the patient is in spontaneous breathing without oxygen supplements.
+#
 # If the patient has an oxygen supplement the fiO2 is a fraction variable according to the amount of Oxygen inhaled, which depends on various factors: oxygen flows, presence or absence of reservoir, respiratory rate, total volume
+#
 # The fio2 can be setted by the clinician himself
 #
+# Even though 100% is not unfeasible, we decide to discard it to avoid numerical instabilities.
+
+df.loc[(df['fio2'] == 100), 'fio2'] = np.nan
 
 get_outliers(df, 'systolic.blood.pressure', threshold=3)
 
