@@ -298,7 +298,7 @@ merged_df.head()
 for drug_name in drug_pivot.columns:
     merged_df[drug_name] = merged_df[drug_name].fillna(value=0)
 
-INCLUDE_DRUGS = True
+INCLUDE_DRUGS = False
 
 if INCLUDE_DRUGS:
     df = merged_df
