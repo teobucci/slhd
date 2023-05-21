@@ -1400,6 +1400,17 @@ df = remove_highly_correlated(df, threshold=0.8)
 
 df_shape[1] - df.shape[1]
 
+# ## 3. Modeling
+
+# ### Feature engineering
+
+# Create a range for each one of this value, based on medical knowledge (i.e. instead of having values for systolic.blood.pressure between 0 and 252 we can create three categories that are 'low','normal','high') TODO
+
+# +
+# feature engineering
+#df_numerical['logduration']=df_numerical['duration'].apply(lambda x: math.log(x+1))
+# -
+
 # separate categorical and numerical features
 categorical_features = df.select_dtypes(include=['category']).columns.tolist()
 numerical_features = df.select_dtypes(include=[np.number]).columns.tolist()
@@ -1417,16 +1428,6 @@ with open(str(OUTPUT_FOLDER / 'numerical_features.pkl'), 'wb') as handle:
 df[categorical_features] = df[categorical_features].applymap(lambda x: re.sub(r'[\[\]<\(\)]', '', x))
 df[categorical_features] = df[categorical_features].applymap(lambda x: re.sub(r',', '_', x))
 
-
-# ## 3. Modeling
-
-# ### Feature engineering
-
-# Create a range for each one of this value, based on medical knowledge (i.e. instead of having values for systolic.blood.pressure between 0 and 252 we can create three categories that are 'low','normal','high') TODO
-
-# +
-# feature engineering
-#df_numerical['logduration']=df_numerical['duration'].apply(lambda x: math.log(x+1))
 
 # +
 # for streamlit
