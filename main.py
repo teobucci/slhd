@@ -643,32 +643,104 @@ numerical_missing = get_percentage_missing(df_numerical)
 
 # Variables with missingness between 50%-60% deserve a closer look, because they are many and we don't want to discard too much information. Let us plot their correlation matrix, clustered using hierarchical clustering to see a better block structure.
 
+missing_cols = numerical_missing[(numerical_missing>50) & (numerical_missing<60)].index.tolist()
+print(f'Columns with % of NaNs between 50% and 60%:')
 print(missing_cols)
 
 
+def plot_clustered_correlation_matrix(dataframe):
+    
+    corr_matrix = dataframe.corr()
+    
+    # Use correlation matrix as distance
+    pdist = spc.distance.pdist(abs(corr_matrix.values))
+
+    linkage = spc.linkage(pdist, method='complete')
+    idx = spc.fcluster(linkage, 0.5 * pdist.max(), 'distance')
+
+    columns = [dataframe.columns.tolist()[i] for i in list((np.argsort(idx)))]
+    dataframe = dataframe.reindex(columns, axis=1)
+
+    corr_matrix = dataframe.corr()
+
+    # Create a correlation heatmap
+    plt.figure(figsize=(20, 15))
+    sns.heatmap(corr_matrix, annot=True, cmap='coolwarm')
+    plt.title('Correlation Heatmap')
+    plt.show()
 
 
+plot_clustered_correlation_matrix(df_numerical[missing_cols])
 
 
+# Some blocks can be identified. To decide whether it is useful to keep some of these variables we check whether they are highly correlated with variables with a lower percentage of NaN, which would therefore be a better choice.
+
+def analyze_correlation(df, columns, threshold=0.8):
+
+    # Create a list of all the columns
+    all_columns = list(df.columns)
+
+    # Create a list of the columns that are not in the list of columns
+    other_columns = [column for column in all_columns if column not in columns]
+        
+    # Create a dataframe with the column as index and the most correlated column and the value of the correlation as columns
+    output = pd.DataFrame(index=columns, columns=['most_correlated_column', 'correlation'])
+
+    # For each column in the list of columns
+    for column in columns:
+        
+        # Create a list of the correlations between the column and the other columns
+        correlations = [df[column].corr(df[other_column]) for other_column in other_columns]
+
+        # Find the index of the column that is most correlated to the column
+        max_index = np.argmax(np.absolute(correlations))
+
+        # If the correlation is above a threshold
+        if correlations[max_index] > threshold:
+                    
+            # Set the most correlated column and the value of the correlation in the dataframe
+            # Round the correlation to 2 decimals
+            output.loc[column, 'most_correlated_column'] = other_columns[max_index]
+            output.loc[column, 'correlation'] = np.round(correlations[max_index], 2)
+        
+        # If the correlation is below a threshold
+        else:
+                        
+            # Set the most correlated column to None and the value of the correlation to None
+            output.loc[column, 'most_correlated_column'] = None
+            output.loc[column, 'correlation'] = None
+    
+    # Return the dataframe
+    return output
 
 
+df_correlation_analysis = analyze_correlation(df_numerical,missing_cols) 
+df_correlation_analysis
 
-
-
-
-
-
-
-# +
-
-# -
-
-
-
-
+# Extract columns with a correlation above a threshold
+columns_to_drop = df_correlation_analysis[df_correlation_analysis['most_correlated_column'].notnull()].index.tolist()
+columns_to_drop
 
 # +
 # Drop columns
+df = df.drop(columns=columns_to_drop)
+
+# Update numerical df
+df_numerical = df.select_dtypes(include=['float64', 'int64'])
+# -
+
+# Let's see how much we reduced the missing columns
+
+numerical_missing = get_percentage_missing(df_numerical)
+missing_cols = numerical_missing[(numerical_missing>50) & (numerical_missing<60)].index.tolist()
+
+plot_clustered_correlation_matrix(df_numerical[missing_cols])
+
+# We see less variables and less blocks, one last thing is we can interal variables from the missing values, such as 2 out of the 3 in the upper-left block. Let us keep just `oxygen.saturation`
+
+# +
+# Drop columns
+df = df.drop(columns=['oxyhemoglobin', 'reduced.hemoglobin'])
 
 # Update numerical df
 df_numerical = df.select_dtypes(include=['float64', 'int64'])
