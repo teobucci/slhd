@@ -1470,37 +1470,49 @@ with open(str(OUTPUT_FOLDER / 'scaler.pkl'), 'wb') as handle:
 models = {
     'logistic_regression': {
         'model': LogisticRegression(max_iter=10000),
-        'param_grid': {'classifier__C': np.logspace(-3, 3, 7)}
+        'param_grid': {
+            'classifier__C': np.logspace(-3, 3, 7)
+        }
     },
     'ada_boost': {
         'model': AdaBoostClassifier(),
-        'param_grid': {'classifier__n_estimators': [10, 50, 100, 500],
-                      'classifier__learning_rate': [0.0001, 0.001, 0.01, 0.1, 1.0]}
+        'param_grid': {
+            'classifier__n_estimators': [10, 50, 100, 500],
+            'classifier__learning_rate': [0.0001, 0.001, 0.01, 0.1, 1.0]
+        }
     },
     'random_forest': {
         'model': RandomForestClassifier(),
-        'param_grid': {'classifier__n_estimators': [100, 250, 450, 600],
-                       'classifier__max_depth': [5, 10, 15, 20],
-                       'classifier__max_features': ['sqrt', 'log2'],
-                       'classifier__criterion' :['entropy'],
-                       'classifier__oob_score': [True]}
+        'param_grid': {
+            'classifier__n_estimators': [100, 250, 450, 600],
+            'classifier__max_depth': [5, 10, 15, 20],
+            'classifier__max_features': ['sqrt', 'log2'],
+            'classifier__criterion' :['entropy'],
+            'classifier__oob_score': [True]
+        }
     },
     'knn': {
         'model': KNeighborsClassifier(),
-        'param_grid': {'classifier__n_neighbors': np.arange(5,80,10)}
+        'param_grid': {
+            'classifier__n_neighbors': np.arange(5,80,10)
+        }
     },
     'decision_tree_classifier': {
         'model': DecisionTreeClassifier(),
-        'param_grid': {'classifier__criterion': ['entropy','gini'],
-                       'classifier__max_depth': [5,10],
-                       'classifier__min_samples_split': [5,10,20],
-                       'classifier__min_samples_leaf': [5,10]}
+        'param_grid': {
+            'classifier__criterion': ['entropy','gini'],
+            'classifier__max_depth': [5,10],
+            'classifier__min_samples_split': [5,10,20],
+            'classifier__min_samples_leaf': [5,10]
+        }
     },
     'mlp': {
         'model': MLPClassifier(),
-        'param_grid': {'classifier__hidden_layer_sizes': [(10, 5),(100,20,5)],
-                       'classifier__max_iter': [2000],
-                       'classifier__alpha': [0.01]}
+        'param_grid': {
+            'classifier__hidden_layer_sizes': [(10, 5),(100,20,5)],
+            'classifier__max_iter': [2000],
+            'classifier__alpha': [0.01]
+        }
     },
     'naive_bayes': {
         'model': GaussianNB(),
