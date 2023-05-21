@@ -1637,12 +1637,12 @@ classifier = pipeline_cv['logistic_regression'].best_estimator_.named_steps['cla
 
 # [This website](https://stats.oarc.ucla.edu/other/mult-pkg/faq/general/faq-how-do-i-interpret-odds-ratios-in-logistic-regression/) provides an insightful interpretation of the coefficients in a logistic regression model.
 
-fig, ax = plt.subplots(figsize=(8,6))
+fig, ax = plt.subplots(figsize=(8,8))
 coeff = pd.DataFrame()
 coeff["feature"] = X_train.columns
 coeff["w"] = classifier.coef_[0]
 coeff = coeff.sort_values(by=['w'])
-sns.barplot(data=coeff[abs(coeff.w) > 1], y="feature", x="w", palette="Blues_d", orient="h")
+sns.barplot(data=coeff[abs(coeff.w) > 0.05], x='w', y='feature', color='c')
 plt.savefig(str(OUTPUT_FOLDER / 'feature_importance_weightsLogisticRegression.pdf'), bbox_inches='tight')
 plt.show()
 
@@ -1700,11 +1700,13 @@ export_graphviz(classifier,
 from IPython.display import Image
 Image(filename = str(OUTPUT_FOLDER / 'decision_tree.png'))
 
-GiniScore, j = np.sort(classifier.feature_importances_), np.argsort(classifier.feature_importances_)
-GiniScore, j = GiniScore[-10:],j[-10:]
-sns.barplot(y=X.columns[j], x=GiniScore, color='g')
-plt.title('Feature importances using MDI')
+importance, sorted_indices = np.sort(classifier.feature_importances_), np.argsort(classifier.feature_importances_)
+importance, sorted_indices = importance[-10:], sorted_indices[-10:]
+importance, sorted_indices = importance[::-1], sorted_indices[::-1]
+sns.barplot(x=importance, y=X.columns[j], color='c')
+plt.title('Feature Importance in Decision Tree Classifier')
 plt.xlabel('Mean decrease in impurity')
+plt.ylabel('Features')
 plt.savefig(str(OUTPUT_FOLDER / 'feature_importance_DecisionTreeClassifier.pdf'), bbox_inches='tight')
 plt.show()
 
@@ -1712,13 +1714,14 @@ plt.show()
 
 classifier = pipeline_cv['random_forest'].best_estimator_.named_steps['classifier']
 
+fig, ax = plt.subplots(figsize=(8,6))
 # Feature Importance
 importance, sorted_indices = np.sort(classifier.feature_importances_), np.argsort(classifier.feature_importances_)
 importance, sorted_indices = importance[-30:], sorted_indices[-30:]
 importance, sorted_indices = importance[::-1], sorted_indices[::-1]
-sns.barplot(y=X.columns[sorted_indices], x=importance, color='g')
+sns.barplot(x=importance, y=X.columns[sorted_indices], color='c')
+plt.xlabel('Mean decrease in impurity')
 plt.ylabel('Features')
-plt.xlabel('Importance')
 plt.title('Feature Importance in Random Forest Classifier')
 plt.savefig(str(OUTPUT_FOLDER / 'feature_importance_RandomForestClassifier.pdf'), bbox_inches='tight')
 plt.show()
