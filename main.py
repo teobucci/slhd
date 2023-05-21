@@ -1126,8 +1126,7 @@ def check_histogram_bins(data, numerical_features,threshold=0.9):
 inspect_columns = check_histogram_bins(df_numerical,df_numerical.columns)
 
 # visit.times, eye.opening, verabal.response, movement and GCS are discerete numerical variable and it's therefore reasonable that a lot of patients are characterised by the same value.
-#
-# For example visit.times has 1807.0 with 1 visit and only 144 with more visits.
+# Discard them from the suspicious columns.
 
 inspect_columns.remove('visit.times')
 inspect_columns.remove('eye.opening')
@@ -1137,10 +1136,10 @@ inspect_columns.remove('GCS')
 
 # Plot with more bins
 
-df_numerical[inspect_columns].hist(layout=(21,4), figsize=(20,60),bins=20)
+df_numerical[inspect_columns].hist(layout=(3,3), figsize=(10,10), bins=20)
 plt.show()
 
-# TODO: Bisogna finire la parte degli outlier per decidere definitivamente se toglierle perchè con un range più piccolo (tolti gli outlier) magari la sitauzione cambia
+# The problem with these variables is not trivial: it's likely that part of them was inserted in a different unit of measure, however they are marked in the top important variables in many models. We decide to just keep them as is, but this range it's really likely it will affect scaling.
 
 # #### Barplot of categorical variables
 
@@ -1162,8 +1161,6 @@ for idx, col_name in enumerate(col_inspect):
 
 fig.tight_layout()
 plt.show()
-
-
 # -
 
 # It's important to reduce dimensionality as much as possible, both for interpretability and model training. We can clearly see that some variables are meaningless because they belong essentially all to the same type, we can't use these variables for any kind of separation so we discard some of them.
