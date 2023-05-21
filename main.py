@@ -1394,7 +1394,7 @@ def remove_highly_correlated(df, threshold=0.5):
 
 df_shape = df.shape
 
-df = remove_highly_correlated(df, threshold=0.8)
+df = remove_highly_correlated(df, threshold=0.85)
 
 # We removed this number of features:
 
