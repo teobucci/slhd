@@ -966,13 +966,16 @@ get_outliers(df, 'white.blood.cell', threshold=6)
 
 df.loc[df['white.blood.cell'] >=11.6, 'white.blood.cell'] = np.nan
 
+# `eosinophil.ratio` was probably supposed to be a percentage, as we see from the histogram, and since the data information says the ref range is 0.5-5 we multiply by 100 and check outliers.
+
+df['eosinophil.ratio'].hist()
+plt.show()
+
+df['eosinophil.ratio'] = df['eosinophil.ratio'] * 100
+
 get_outliers(df, 'eosinophil.ratio', threshold=8)
 
-# eosinophil.ratio; ref: 0.5 -5
-
-# +
-#df.loc[df['eosinophil.ratio'] > 0.270, 'eosinophil.ratio'] = np.nan
-# -
+df.loc[df['eosinophil.ratio'] > 30, 'eosinophil.ratio'] = np.nan
 
 get_outliers(df, 'basophil.count', threshold=8)
 
