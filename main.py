@@ -1313,8 +1313,6 @@ df_shape[1] - df.shape[1]
 
 # ### Feature engineering
 
-# Create a range for each one of this value, based on medical knowledge (i.e. instead of having values for systolic.blood.pressure between 0 and 252 we can create three categories that are 'low','normal','high') TODO
-
 # +
 # feature engineering
 #df_numerical['logduration']=df_numerical['duration'].apply(lambda x: math.log(x+1))
@@ -1338,9 +1336,9 @@ df[categorical_features] = df[categorical_features].applymap(lambda x: re.sub(r'
 df[categorical_features] = df[categorical_features].applymap(lambda x: re.sub(r',', '_', x))
 
 
-# +
-# for streamlit
+# The following cell is needed to generate the input fields in the web app.
 
+# +
 def generate_column_info(dataframe):
     column_info = {}
     for column in dataframe.drop([target_var], axis=1).columns:
@@ -1360,11 +1358,10 @@ def generate_column_info(dataframe):
                 column_info[column] = {"type": "continuous", "value": [min_value, max_value]}
     return column_info
 
-
-
 # Generate column information dictionary
 column_info = generate_column_info(df)
 
+# Dump into file
 with open(str(OUTPUT_FOLDER / 'column_info.pkl'), 'wb') as handle:
     pickle.dump(column_info, handle, protocol=pickle.HIGHEST_PROTOCOL)
 # -
@@ -1375,12 +1372,6 @@ with open(str(OUTPUT_FOLDER / 'column_info.pkl'), 'wb') as handle:
 
 X = df.drop([target_var], axis=1)
 y = df[target_var]
-
-# +
-#cat_dummies = pd.get_dummies(X[categorical_features], drop_first=False)
-#X = X.drop(categorical_features, axis=1)
-#X = pd.concat([X, cat_dummies], axis=1)
-# -
 
 # Split the dataset into training and testing sets
 
@@ -1422,16 +1413,13 @@ with open(str(OUTPUT_FOLDER / 'encoder.pkl'), 'wb') as handle:
 #
 # #### Imputation
 
-# We use the [`IterativeImputer`](https://scikit-learn.org/stable/modules/generated/sklearn.impute.IterativeImputer.html) which is very well suited for [multivariate imputation](https://scikit-learn.org/stable/modules/impute.html#iterative-imputer).
-
 # +
 # %%time
-#imputer = IterativeImputer(max_iter=10, random_state=0, verbose=2)
+#imputer = IterativeImputer(max_iter=10, random_state=0, verbose=2) # Doesn't improve much but takes 10 min to run
 imputer = KNNImputer(n_neighbors=5)
 
 X_train = pd.DataFrame(imputer.fit_transform(X_train), columns = X_train.columns)
 X_test = pd.DataFrame(imputer.transform(X_test), columns = X_test.columns)
-# -
 
 with open(str(OUTPUT_FOLDER / 'imputer.pkl'), 'wb') as handle:
     pickle.dump(imputer, handle, protocol=pickle.HIGHEST_PROTOCOL)
@@ -1439,7 +1427,7 @@ with open(str(OUTPUT_FOLDER / 'imputer.pkl'), 'wb') as handle:
 # +
 # with open(str(OUTPUT_FOLDER / 'imputer.pkl'), 'rb') as handle:
 #     imputer = pickle.load(handle)
-#
+# 
 # X_train[numerical_features] = imputer.transform(X_train[numerical_features])
 # X_test[numerical_features] = imputer.transform(X_test[numerical_features])
 # -
@@ -1450,27 +1438,18 @@ with open(str(OUTPUT_FOLDER / 'imputer.pkl'), 'wb') as handle:
 
 np.round((y_train == True).sum() / len(y_train), 3)
 
-# N. V. Chawla, K. W. Bowyer, L. O.Hall, W. P. Kegelmeyer, “SMOTE: synthetic minority over-sampling technique,” Journal of artificial intelligence research, 321-357, 2002.
-
-# +
-# oversample = SMOTE(random_state=SEED)
-# X_ov, y_ov = oversample.fit_resample(X_train, y_train)
-# oversample.get_params()
-
-# +
-# overwrite
-# X_train = X_ov
-# y_train = y_ov
-# -
-
 # #### Scaling
 
+# +
 # create preprocessor for numerical data
 # num_preprocessor = Pipeline(steps=[
 #     ('imputer', KNNImputer(n_neighbors=6)),
 #     ('scaler', StandardScaler())
 # ])
+
+# +
 scaler = StandardScaler()
+
 X_train[numerical_features] = scaler.fit_transform(X_train[numerical_features])
 X_test[numerical_features] = scaler.transform(X_test[numerical_features])
 
@@ -1480,6 +1459,9 @@ with open(str(OUTPUT_FOLDER / 'scaler.pkl'), 'wb') as handle:
 # +
 # with open(str(OUTPUT_FOLDER / 'imputer.pkl'), 'rb') as handle:
 #     scaler = pickle.load(handle)
+# 
+# X_train[numerical_features] = scaler.transform(X_train[numerical_features])
+# X_test[numerical_features] = scaler.transform(X_test[numerical_features])
 # -
 
 # ### Model selection
@@ -1549,11 +1531,8 @@ pipelines = {}
 for name, model in models.items():
     pipelines[name] = Pipeline(steps=[
         #('preprocessor', preprocessor),
-        #('sampling', SMOTE()),
         ('classifier', model['model'])
     ])
-
-pipelines['logistic_regression']
 
 # ### Cross-validation training and Hyperparameter tuning
 
