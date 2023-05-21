@@ -1021,9 +1021,11 @@ plt.show()
 
 get_outliers(df, 'high.sensitivity.troponin', threshold=3)
 
-get_outliers(df, 'prothrombin.time.ratio', threshold=8)
 df.loc[df['high.sensitivity.troponin'] > 7, 'high.sensitivity.troponin'] = np.nan
 
+get_outliers(df, 'prothrombin.time.ratio', threshold=6)
+
+df.loc[df['prothrombin.time.ratio'] > 7, 'prothrombin.time.ratio'] = np.nan
 
 get_outliers(df, 'sodium', threshold=8)
 
