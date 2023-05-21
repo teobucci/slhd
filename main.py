@@ -1369,7 +1369,7 @@ inspect_col = ['movement', 'verbal.response', 'eye.opening', 'GCS']
 plot_subcorrelation_matrix(corr_matrix=corr_matrix, inspect_col=inspect_col, threshold=0.4)
 
 
-# We are safe enough to do the following: write a function to discard variables correlated with others by more than a threshold we fix to 0.80.
+# We are safe enough to do the following: write a function to discard variables correlated with others by more than a threshold we fix to 0.85.
 
 def remove_highly_correlated(df, threshold=0.5):
     """
