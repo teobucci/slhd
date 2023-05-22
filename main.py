@@ -757,6 +757,8 @@ df_categorical = df.select_dtypes(include=['category', 'bool'])
 df_numerical = df.select_dtypes(include=['float64', 'int64'])
 
 
+df.shape
+
 # ### Data visualization
 
 # #### Histograms of numerical variables
@@ -1315,6 +1317,10 @@ df = remove_highly_correlated(df, threshold=0.85)
 # We removed this number of features:
 
 df_shape[1] - df.shape[1]
+
+# Final shape of the dataset
+
+df.shape
 
 # ## 3. Modeling
 
