@@ -1638,8 +1638,8 @@ j1 = np.argmax(m1) # maximum value of AUC in terms of mean over the CV folds
 
 plt.plot(axisX[j1], m1[j1], 'ro', markersize=12)
 plt.legend()
-plt.savefig(str(OUTPUT_FOLDER / 'crossvalidation_curve.pdf'), bbox_inches='tight')
 plt.title('Training curves for the Random Forest')
+plt.savefig(str(OUTPUT_FOLDER / 'crossvalidation_curve.pdf'), bbox_inches='tight')
 plt.show()
 
 print(res['params'][j1])
