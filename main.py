@@ -1766,7 +1766,8 @@ for name, pipeline in pipeline_cv.items():
     model = pipeline.best_estimator_.named_steps['classifier']
 
     # Make predictions on the testing set
-    y_pred = pipeline.predict(X_test)
+    #y_pred = pipeline.predict(X_test)
+    y_pred = (pipeline.predict_proba(X_test)[:,1] >= 0.45).astype(bool) # set threshold as 0.45
 
     # Calculate the accuracy score
     accuracy = accuracy_score(y_test, y_pred)
