@@ -643,7 +643,7 @@ print(f'Columns with % of NaNs between 50% and 60%:')
 print(missing_cols)
 
 
-def plot_clustered_correlation_matrix(dataframe):
+def plot_clustered_correlation_matrix(dataframe, name='clustered_correlation_matrix'):
     
     corr_matrix = dataframe.corr()
     
@@ -662,10 +662,11 @@ def plot_clustered_correlation_matrix(dataframe):
     plt.figure(figsize=(20, 15))
     sns.heatmap(corr_matrix, annot=True, cmap='coolwarm')
     plt.title('Correlation Heatmap')
+    plt.savefig(str(OUTPUT_FOLDER / str(name+'.pdf')), bbox_inches='tight')
     plt.show()
 
 
-plot_clustered_correlation_matrix(df_numerical[missing_cols])
+plot_clustered_correlation_matrix(df_numerical[missing_cols], name='clustered_correlation_matrix1')
 
 
 # Some blocks can be identified. To decide whether it is useful to keep some of these variables we check whether they are highly correlated with variables with a lower percentage of NaN, which would therefore be a better choice.
@@ -729,7 +730,7 @@ df_numerical = df.select_dtypes(include=['float64', 'int64'])
 numerical_missing = get_percentage_missing(df_numerical)
 missing_cols = numerical_missing[(numerical_missing>50) & (numerical_missing<60)].index.tolist()
 
-plot_clustered_correlation_matrix(df_numerical[missing_cols])
+plot_clustered_correlation_matrix(df_numerical[missing_cols], name='clustered_correlation_matrix2')
 
 # We see less variables and less blocks, one last thing is we can interal variables from the missing values, such as 2 out of the 3 in the upper-left block. Let us keep just `oxygen.saturation`
 
