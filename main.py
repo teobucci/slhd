@@ -1647,9 +1647,9 @@ classifier = pipeline_cv['logistic_regression'].best_estimator_.named_steps['cla
 fig, ax = plt.subplots(figsize=(8,8))
 coeff = pd.DataFrame()
 coeff['feature'] = X_train.columns
-coeff['w'] = classifier.coef_[0]
-coeff = coeff.sort_values(by=['w'])
-sns.barplot(data=coeff[abs(coeff.w) > 0.05], x='w', y='feature', color='c')
+coeff['beta'] = classifier.coef_[0]
+coeff = coeff.sort_values(by=['beta'])
+sns.barplot(data=coeff[abs(coeff.beta) > 0.05], x='beta', y='feature', color='c')
 plt.title('Feature Importance in Logistic Regression (unscaled)')
 plt.savefig(str(OUTPUT_FOLDER / 'feature_importance_weightsLogisticRegression.pdf'), bbox_inches='tight')
 plt.show()
