@@ -601,7 +601,7 @@ ax.set_ylabel('Column')
 ax.set_xlabel('Percentage Missing (%)')
 ax.axvline(x=50, color='k', linestyle='--')
 ax.axvline(x=60, color='k', linestyle='--')
-
+plt.savefig(str(OUTPUT_FOLDER / 'missing_values_percentages.pdf'), bbox_inches='tight')
 plt.show()
 # -
 
