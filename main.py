@@ -1210,6 +1210,7 @@ for idx, col_name in enumerate(col_inspect):
     plt.ylabel('')
 
 fig.tight_layout()
+plt.savefig(str(OUTPUT_FOLDER / 'distribution_wrt_target.pdf'), bbox_inches='tight')
 plt.show()
 # -
 
