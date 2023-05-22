@@ -1631,6 +1631,7 @@ j1 = np.argmax(m1) # maximum value of AUC in terms of mean over the CV folds
 plt.plot(axisX[j1], m1[j1], 'ro', markersize=12)
 plt.legend()
 plt.savefig(str(OUTPUT_FOLDER / 'crossvalidation_curve.pdf'), bbox_inches='tight')
+plt.title('Training curves for the Random Forest')
 plt.show()
 
 print(res['params'][j1])
@@ -1649,6 +1650,7 @@ coeff['feature'] = X_train.columns
 coeff['w'] = classifier.coef_[0]
 coeff = coeff.sort_values(by=['w'])
 sns.barplot(data=coeff[abs(coeff.w) > 0.05], x='w', y='feature', color='c')
+plt.title('Feature Importance in Logistic Regression (unscaled)')
 plt.savefig(str(OUTPUT_FOLDER / 'feature_importance_weightsLogisticRegression.pdf'), bbox_inches='tight')
 plt.show()
 
@@ -1671,7 +1673,7 @@ plt.xlabel('Recall')
 plt.ylabel('Precision')
 plt.axis([0, 1, 0, 1])
 #plt.grid()
-plt.title('Precision Recall curve')
+plt.title('Precision Recall curve in Logistic Regression')
 plt.legend()
 plt.show()
 # -
@@ -1708,7 +1710,7 @@ importance, sorted_indices = np.sort(classifier.feature_importances_), np.argsor
 importance, sorted_indices = importance[-10:], sorted_indices[-10:]
 importance, sorted_indices = importance[::-1], sorted_indices[::-1]
 sns.barplot(x=importance, y=X.columns[j], color='c')
-plt.title('Feature Importance in Decision Tree Classifier')
+plt.title('Feature Importance in Decision Tree')
 plt.xlabel('Mean decrease in impurity')
 plt.ylabel('Features')
 plt.savefig(str(OUTPUT_FOLDER / 'feature_importance_DecisionTreeClassifier.pdf'), bbox_inches='tight')
@@ -1726,7 +1728,7 @@ importance, sorted_indices = importance[::-1], sorted_indices[::-1]
 sns.barplot(x=importance, y=X.columns[sorted_indices], color='c')
 plt.xlabel('Mean decrease in impurity')
 plt.ylabel('Features')
-plt.title('Feature Importance in Random Forest Classifier')
+plt.title('Feature Importance in Random Forest')
 plt.savefig(str(OUTPUT_FOLDER / 'feature_importance_RandomForestClassifier.pdf'), bbox_inches='tight')
 plt.show()
 
