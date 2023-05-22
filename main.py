@@ -1655,6 +1655,22 @@ plt.savefig(str(OUTPUT_FOLDER / 'feature_importance_weightsLogisticRegression.pd
 plt.show()
 
 # +
+coeff_unscaled = []
+
+for var_scale, var_name in zip(scaler.scale_.tolist(), scaler.get_feature_names_out().tolist()):    
+    coeff_unscaled.append({
+        'feature': var_name,
+        'beta': coeff.loc[coeff.feature == var_name, 'beta'].values[0] / var_scale
+    })
+
+coeff_unscaled = pd.DataFrame(coeff_unscaled)
+coeff_unscaled = coeff_unscaled.sort_values(by=['beta'])
+sns.barplot(data=coeff_unscaled[abs(coeff_unscaled.beta) > 0.1], x='beta', y='feature', color='c')
+plt.title('Feature Importance in Logistic Regression (scaled)')
+plt.savefig(str(OUTPUT_FOLDER / 'feature_importance_weightsLogisticRegression_unscaled.pdf'), bbox_inches='tight')
+plt.show()
+
+# +
 y_pred = classifier.predict(X_test)
 precisions, recalls, thresholds = precision_recall_curve(y_test, y_pred)
 
