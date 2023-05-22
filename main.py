@@ -1709,7 +1709,7 @@ Image(filename = str(OUTPUT_FOLDER / 'decision_tree.png'))
 importance, sorted_indices = np.sort(classifier.feature_importances_), np.argsort(classifier.feature_importances_)
 importance, sorted_indices = importance[-10:], sorted_indices[-10:]
 importance, sorted_indices = importance[::-1], sorted_indices[::-1]
-sns.barplot(x=importance, y=X.columns[j], color='c')
+sns.barplot(x=importance, y=X_train.columns[sorted_indices], color='c')
 plt.title('Feature Importance in Decision Tree')
 plt.xlabel('Mean decrease in impurity')
 plt.ylabel('Features')
@@ -1725,7 +1725,7 @@ fig, ax = plt.subplots(figsize=(8,6))
 importance, sorted_indices = np.sort(classifier.feature_importances_), np.argsort(classifier.feature_importances_)
 importance, sorted_indices = importance[-30:], sorted_indices[-30:]
 importance, sorted_indices = importance[::-1], sorted_indices[::-1]
-sns.barplot(x=importance, y=X.columns[sorted_indices], color='c')
+sns.barplot(x=importance, y=X_train.columns[sorted_indices], color='c')
 plt.xlabel('Mean decrease in impurity')
 plt.ylabel('Features')
 plt.title('Feature Importance in Random Forest')
