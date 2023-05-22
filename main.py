@@ -1775,7 +1775,7 @@ for name, pipeline in pipeline_cv.items():
 
     # Make predictions on the testing set
     #y_pred = pipeline.predict(X_test)
-    y_pred = (pipeline.predict_proba(X_test)[:,1] >= 0.45).astype(bool) # set threshold as 0.45
+    y_pred = (pipeline.predict_proba(X_test)[:,1] >= 0.44).astype(bool) # set threshold as 0.44
 
     # Calculate the accuracy score
     accuracy = accuracy_score(y_test, y_pred)
