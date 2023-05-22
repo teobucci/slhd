@@ -1650,7 +1650,7 @@ coeff['feature'] = X_train.columns
 coeff['beta'] = classifier.coef_[0]
 coeff = coeff.sort_values(by=['beta'])
 sns.barplot(data=coeff[abs(coeff.beta) > 0.05], x='beta', y='feature', color='c')
-plt.title('Feature Importance in Logistic Regression (unscaled)')
+plt.title('Feature Importance in Logistic Regression')
 plt.savefig(str(OUTPUT_FOLDER / 'feature_importance_weightsLogisticRegression.pdf'), bbox_inches='tight')
 plt.show()
 
@@ -1666,8 +1666,8 @@ for var_scale, var_name in zip(scaler.scale_.tolist(), scaler.get_feature_names_
 coeff_unscaled = pd.DataFrame(coeff_unscaled)
 coeff_unscaled = coeff_unscaled.sort_values(by=['beta'])
 sns.barplot(data=coeff_unscaled[abs(coeff_unscaled.beta) > 0.1], x='beta', y='feature', color='c')
-plt.title('Feature Importance in Logistic Regression (scaled)')
-plt.savefig(str(OUTPUT_FOLDER / 'feature_importance_weightsLogisticRegression_unscaled.pdf'), bbox_inches='tight')
+plt.title('Feature Importance in Logistic Regression (re-scaled)')
+plt.savefig(str(OUTPUT_FOLDER / 'feature_importance_weightsLogisticRegression_rescaled.pdf'), bbox_inches='tight')
 plt.show()
 
 # +
