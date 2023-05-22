@@ -1821,6 +1821,33 @@ plt.savefig(str(OUTPUT_FOLDER / 'confusion_matrices.pdf'), bbox_inches='tight')
 plt.show()
 
 # +
+fig, ax = plt.subplots(figsize=(8,8))
+
+model = pipeline_cv['random_forest'].best_estimator_.named_steps['classifier']
+
+# Make predictions on the testing set
+#y_pred = pipeline.predict(X_test)
+y_pred = (pipeline_cv['random_forest'].predict_proba(X_test)[:,1] >= 0.44).astype(bool) # set threshold as 0.44
+
+# Calculate the accuracy score
+accuracy = accuracy_score(y_test, y_pred)
+
+# Calculate the confusion matrix
+cm = confusion_matrix(y_test, y_pred)
+#sns.heatmap(cm, annot=True, cmap='coolwarm', fmt='d', ax=axes[0,i])
+ax.set_title(model.__class__.__name__)
+plot_confusion_matrix(conf_mat=cm,
+                      show_absolute=True,
+                      show_normed=True,
+                      colorbar=True, figure=fig, axis=ax)
+
+ax.set_xlabel('Predicted label')
+ax.set_ylabel('True label')
+
+plt.savefig(str(OUTPUT_FOLDER / 'confusion_matrix_random_forest.pdf'), bbox_inches='tight')
+plt.show()
+
+# +
 # Plot the ROC curve
 fig, ax = plt.subplots(figsize=(8,8))
 
