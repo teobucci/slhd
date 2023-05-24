@@ -1615,23 +1615,23 @@ scoring = {"AUC": "roc_auc", "Accuracy": make_scorer(accuracy_score)}
 pipeline_cv = {}
 
 # +
-# %%time
-
-# perform grid search cross-validation for each model and output the test accuracy of the best model
-for name, pipeline in pipelines.items():
-    grid_search = GridSearchCV(
-        pipeline,
-        param_grid=models[name]['param_grid'],
-        cv=StratifiedKFold(n_splits=5, shuffle=True, random_state=SEED),
-        scoring=scoring,
-        refit="AUC",
-        return_train_score=True,
-        verbose=0
-    )
-    grid_search.fit(X_train, y_train)
-    pipeline_cv[name] = grid_search
-    print(f'{name:30}| train AUC = {grid_search.score(X_train, y_train):.3f} | test AUC = {grid_search.score(X_test, y_test):.3f}')
-    print('-'*80)
+# # %%time
+# 
+# # perform grid search cross-validation for each model and output the test accuracy of the best model
+# for name, pipeline in pipelines.items():
+#     grid_search = GridSearchCV(
+#         pipeline,
+#         param_grid=models[name]['param_grid'],
+#         cv=StratifiedKFold(n_splits=5, shuffle=True, random_state=SEED),
+#         scoring=scoring,
+#         refit="AUC",
+#         return_train_score=True,
+#         verbose=0
+#     )
+#     grid_search.fit(X_train, y_train)
+#     pipeline_cv[name] = grid_search
+#     print(f'{name:30}| train AUC = {grid_search.score(X_train, y_train):.3f} | test AUC = {grid_search.score(X_test, y_test):.3f}')
+#     print('-'*80)
 # -
 
 # Save for later
