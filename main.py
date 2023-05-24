@@ -1482,6 +1482,7 @@ with open(str(OUTPUT_FOLDER / 'imputer.pkl'), 'wb') as handle:
 
 print(f'Percentage of positives in the training set: {np.round((y_train == True).sum() / len(y_train), 3):.1%}')
 
+# Compute class weights as inversely proportional to the prevalence in the training set.
 
 class_weights = class_weight.compute_class_weight(class_weight='balanced',
                                                   classes=np.unique(y_train),
