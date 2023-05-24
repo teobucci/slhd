@@ -1696,7 +1696,7 @@ plt.savefig(str(OUTPUT_FOLDER / 'feature_importance_weightsLogisticRegression.pd
 plt.show()
 
 # +
-y_pred = classifier.predict(X_test)
+y_pred = classifier.predict_proba(X_test_sfs)[:,1]
 precisions, recalls, thresholds = precision_recall_curve(y_test, y_pred)
 
 # Compute the zero skill model line
