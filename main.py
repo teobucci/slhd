@@ -314,7 +314,7 @@ if INCLUDE_DRUGS:
 
 df.info(memory_usage='deep')
 
-# Currently we're using 4.0 MB.
+# Currently we're using 4.2 MB.
 
 # ### Setting the correct column type
 #
@@ -410,7 +410,7 @@ df = df.astype({
 
 df.info(memory_usage='deep')
 
-# We now use only 2.1 MB.
+# We now use only 2.0 MB.
 #
 # Here is a recap of the columns types.
 
