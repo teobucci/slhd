@@ -672,7 +672,7 @@ def plot_clustered_correlation_matrix(dataframe, name='clustered_correlation_mat
 
     # Create a correlation heatmap
     plt.figure(figsize=(20, 15))
-    sns.heatmap(corr_matrix, annot=True, cmap='coolwarm')
+    sns.heatmap(corr_matrix, annot=False, vmin=-1, vmax=1, cmap='RdBu_r') # 'bwr' 'coolwarm'
     plt.title('Correlation Heatmap')
     plt.savefig(str(OUTPUT_FOLDER / str(name+'.pdf')), bbox_inches='tight')
     plt.show()
