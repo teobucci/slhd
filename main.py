@@ -1173,6 +1173,27 @@ fig.tight_layout()
 plt.show()
 # -
 
+age_counts = df_categorical.ageCat.value_counts()
+age_5989 = age_counts['(59,69]']+age_counts['(69,79]']+age_counts['(79,89]']
+print(f"Total and percentage in the age range 59-89: {age_5989} {age_5989/len(df.index):.2%}")
+
+gender_counts = df_categorical.gender.value_counts()
+gender_Female = gender_counts['Female']
+print(f"{gender_Female/len(df.index):.2%} of females")
+print(f"{1-(gender_Female)/len(df.index):.2%} of males")
+
+hf_type_counts = df_categorical['type.of.heart.failure'].value_counts()
+hf_type_right = hf_type_counts['Right']
+hf_type_left = hf_type_counts['Left']
+hf_type_both = hf_type_counts['Both']
+print(f"{hf_type_right/len(df.index):.2%} with type Right")
+print(f"{hf_type_left/len(df.index):.2%} with type Left")
+print(f"{hf_type_both/len(df.index):.2%} with type Both")
+
+diabetes_counts = df_categorical.diabetes.value_counts()
+diabetes_true = diabetes_counts[True]
+print(f"{diabetes_true/len(df.index):.2%} with diabetes")
+
 # It's important to reduce dimensionality as much as possible, both for interpretability and model training. We can clearly see that some variables are meaningless because they belong essentially all to the same type, we can't use these variables for any kind of separation so we discard some of them.
 
 # +
