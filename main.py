@@ -1995,30 +1995,3 @@ ax.set_aspect('equal')
 ax.set_aspect('equal')
 plt.savefig(str(OUTPUT_FOLDER / 'roc_ensemble.pdf'), bbox_inches='tight')
 plt.show()
-# -
-
-# # Extras
-
-# ## `lazypredict`
-#
-# [`lazypredict`](https://github.com/shankarpandala/lazypredict) is a Python library that is able to quickly check through many models, without any specific fine-tuning, but is able to give an initial look at which could be the best performing models on the task.
-#
-# Let's begin by importing the `LazyClassifier` class.
-
-from lazypredict.Supervised import LazyClassifier
-
-# We now instantiate it with basic settings
-
-clf = LazyClassifier(verbose=0, ignore_warnings=True, custom_metric=None)
-
-# And then we fit it using our data
-
-models, predictions = clf.fit(X_train, X_test, y_train, y_test)
-
-# We can retrieve a dictionary of all the models trained
-
-models
-
-# And TODO
-
-model_dictionary = clf.provide_models(X_train,X_test,y_train,y_test)
