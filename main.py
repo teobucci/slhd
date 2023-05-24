@@ -421,6 +421,18 @@ df.info(verbose=True, show_counts=False)
 df_shape = df.shape
 df_shape
 
+# ### Removing outcome-related variables
+
+# Patients that were readmitted within 6 months.
+
+df.loc[df['re.admission.within.6.months'] == 1].shape[0]
+
+# Inconsistencies
+
+df.loc[((df['DestinationDischarge'] != 'Died') & (df['outcome.during.hospitalization'] == 'Dead'))]
+
+df.loc[((df['DestinationDischarge'] == 'Died') & (df['outcome.during.hospitalization'] != 'Dead')), 'death.within.6.months']
+
 # Since we're interested in predicting the re-admission at 6 months, it's important to have a look at the following features:
 # - `death.within.28.days`
 # - `re.admission.within.28.days`
