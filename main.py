@@ -1877,7 +1877,7 @@ df_performance.to_latex(
     index=False,
     formatters={"name": str.upper},
     float_format="{:.4f}".format,
-    caption="Comparison of performance of the different models",
+    caption="Comparison of performance.",
     label='tab:performance'
 )
 
