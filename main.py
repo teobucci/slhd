@@ -1480,9 +1480,8 @@ with open(str(OUTPUT_FOLDER / 'imputer.pkl'), 'wb') as handle:
 
 # #### Imbalance
 
-# Percentage of positive observations in the training set
+print(f'Percentage of positives in the training set: {np.round((y_train == True).sum() / len(y_train), 3):.1%}')
 
-np.round((y_train == True).sum() / len(y_train), 3)
 
 class_weights = class_weight.compute_class_weight(class_weight='balanced',
                                                   classes=np.unique(y_train),
