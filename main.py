@@ -453,58 +453,7 @@ df = df.drop(df[(df['DestinationDischarge'] != 'Died') & (df['outcome.during.hos
 # - `return.to.emergency.department.within.6.months`
 # - `time.to.emergency.department.within.6.months`
 #
-# Given that some patients died before the 6 months, such patients present a target of `0` since they haven't been re-admitted, not because they're healthy, but the exact opposite. Thus keeping them together with living healthy patients doesn't make sense.
-#
-# Obviously, since the death within 28 days implies the death within 3 months and the non-readmission after 6 months, we can expect these variables to be highly correlated. To further prove our intuition, we can consider the binary variables (i.e. excluding the non-`time` related ones in this set) and plot a matrix with the pairwise Cohen's kappa coefficient, as a measure to the concordance of them.
-
-# +
-cols_to_check = [
-    'death.within.28.days',
-    're.admission.within.28.days',
-    'death.within.3.months',
-    're.admission.within.3.months',
-    'death.within.6.months',
-    're.admission.within.6.months'
-]
-
-data = df[cols_to_check] # take only binary variables
-
-data = data.dropna()
-
-# Create an empty table to hold the Cohen scores
-score_table = pd.DataFrame(columns=data.columns, index=data.columns)
-
-# +
-# Loop over every pair of variables in the dataset
-for i in range(len(data.columns)):
-    for j in range(i+1, len(data.columns)):
-        # Calculate the Cohen score between the ith and jth variables
-        score = cohen_kappa_score(data.iloc[:,i], data.iloc[:,j])
-
-        # Add the score to the score table
-        score_table.iloc[i,j] = score
-        score_table.iloc[j,i] = score
-
-score_table = score_table.fillna(1)
-
-# +
-threshold = 0.3
-mask = np.triu(np.ones_like(score_table, dtype=bool), k=0) | (np.abs(score_table) <= threshold)
-
-# Print the score table
-fig, ax = plt.subplots(figsize=(4, 4))
-sns.heatmap(score_table,
-            annot=True, fmt='.2f',
-            mask=mask,
-            cmap='coolwarm', center=0, cbar=True,
-            linewidths=.5,
-            ax=ax)
-ax.set_aspect("equal")
-plt.title("Agreement matrix")
-plt.show()
-# -
-
-# The deaths are highly correlated for the aforementioned reason, so following the previous motivation, we remove the dead patients.
+# Given that some patients died before the 6 months, such patients present a target of `0` since they haven't been re-admitted, not because they're healthy, but the exact opposite. Thus keeping them together with living healthy patients doesn't make sense: we remove the dead patients.
 
 # +
 # specify the columns to check for True values
