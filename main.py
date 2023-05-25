@@ -1430,6 +1430,8 @@ X_train, X_test, y_train, y_test = train_test_split(X, y,
 
 # ### Preprocessing categorical data
 
+# The following code is setup as a [`sklearn.pipeline.Pipeline`](https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html) object for future work, however for the `SHAP` library to work we need to be able to access the unscaled version of the data, so the preprocessing is setup outside the pipeline, but can be easily implemented inside whenever a future deployment requires so.
+
 # +
 # create preprocessor for categorical data
 # cat_preprocessor = Pipeline(steps=[
@@ -1518,6 +1520,8 @@ with open(str(OUTPUT_FOLDER / 'scaler.pkl'), 'wb') as handle:
 
 # ### Model selection
 
+# As first step in providing the final model we test some models and do a very brief hyperparameter tuning.
+
 # define the models and their parameter grids for grid search
 models = {
     'logistic_regression': {
@@ -1588,8 +1592,6 @@ models = {
     }
 }
 
-# ### Creating model pipeline
-
 # +
 # combine the preprocessors into a column transformer
 # preprocessor = ColumnTransformer(
@@ -1606,8 +1608,6 @@ for name, model in models.items():
         #('preprocessor', preprocessor),
         ('classifier', model['model'])
     ])
-
-# ### Cross-validation training and Hyperparameter tuning
 
 # According to [the documentation](https://scikit-learn.org/stable/modules/cross_validation.html#stratified-k-fold) we choose to use the `StratifiedKFold` for doing cross-validation, choosing `n_splits=5` to have a validation set of `1/n_splits=0.20`, and `shuffle=True`.
 
@@ -1644,7 +1644,7 @@ pipeline_cv = {}
 with open(str(OUTPUT_FOLDER / 'pipeline_cv.pkl'), 'rb') as handle:
     pipeline_cv = pickle.load(handle)
 
-# ### Evaluating model performance
+# ### Training evolution
 
 # The `GridSearchCV` objects has the following useful attributes
 #
@@ -1674,107 +1674,9 @@ plt.legend()
 plt.title('Training curves for the Random Forest')
 plt.savefig(str(OUTPUT_FOLDER / 'crossvalidation_curve.pdf'), bbox_inches='tight')
 plt.show()
-
-print(res['params'][j1])
 # -
 
-# #### Logistic Regression
-
-# Extract the classifier
-classifier = pipeline_cv['logistic_regression'].best_estimator_.named_steps['classifier']
-
-# [This website](https://stats.oarc.ucla.edu/other/mult-pkg/faq/general/faq-how-do-i-interpret-odds-ratios-in-logistic-regression/) provides an insightful interpretation of the coefficients in a logistic regression model.
-
-fig, ax = plt.subplots(figsize=(8,8))
-coeff = pd.DataFrame()
-coeff['feature'] = X_train.columns
-coeff['beta'] = classifier.coef_[0]
-coeff = coeff.sort_values(by=['beta'])
-sns.barplot(data=coeff[abs(coeff.beta) > 0.05], x='beta', y='feature', color='c')
-plt.title('Feature Importance in Logistic Regression')
-plt.savefig(str(OUTPUT_FOLDER / 'feature_importance_weightsLogisticRegression.pdf'), bbox_inches='tight')
-plt.show()
-
-# +
-y_pred = classifier.predict_proba(X_test_sfs)[:,1]
-precisions, recalls, thresholds = precision_recall_curve(y_test, y_pred)
-
-# Compute the zero skill model line
-# It will depend on the fraction of observations belonging to the positive class
-zero_skill = len(y_test[y_test==1]) / len(y_test)
-
-# Compute the perfect model line
-perfect_precision = np.ones_like(recalls)
-perfect_recall = np.linspace(0, 1, num=len(perfect_precision))
-
-plt.plot(recalls, precisions, 'r-', label='Logistic')
-plt.plot([0, 1], [zero_skill, zero_skill], 'b--', label='Zero skill')
-plt.plot(perfect_recall, perfect_precision, 'g--', linewidth=2, label='Perfect model')
-plt.xlabel('Recall')
-plt.ylabel('Precision')
-plt.axis([0, 1, 0, 1])
-#plt.grid()
-plt.title('Precision Recall curve in Logistic Regression')
-plt.legend()
-plt.show()
-# -
-
-# #### DecisionTreeClassifier
-
-# Extract the classifier
-classifier = pipeline_cv['decision_tree_classifier'].best_estimator_.named_steps['classifier']
-
-from sklearn import tree
-text_representation = tree.export_text(classifier)
-with open('decistion_tree.log', 'w') as f:
-    f.write(text_representation)
-
-# The `plot_tree` returns annotations for the plot, to not show them in the notebook I assigned returned value to `_`
-
-fig = plt.figure(figsize=(25,20))
-_ = tree.plot_tree(classifier,
-                   feature_names=X_train.columns,
-                   class_names=['No','Yes'])
-
-# We can export as a figure but we must use `graphviz`
-
-export_graphviz(classifier,
-                out_file=str(OUTPUT_FOLDER / 'decision_tree.dot'),
-                feature_names = X_test.columns.tolist(),
-                class_names=['0','1'],
-                filled=True)
-
-# !dot -Tpng output/decision_tree.dot -o output/decision_tree.png -Gdpi=600
-Image(filename = str(OUTPUT_FOLDER / 'decision_tree.png'))
-
-importance, sorted_indices = np.sort(classifier.feature_importances_), np.argsort(classifier.feature_importances_)
-importance, sorted_indices = importance[-10:], sorted_indices[-10:]
-importance, sorted_indices = importance[::-1], sorted_indices[::-1]
-sns.barplot(x=importance, y=X_train.columns[sorted_indices], color='c')
-plt.title('Feature Importance in Decision Tree')
-plt.xlabel('Mean decrease in impurity')
-plt.ylabel('Features')
-plt.savefig(str(OUTPUT_FOLDER / 'feature_importance_DecisionTreeClassifier.pdf'), bbox_inches='tight')
-plt.show()
-
-# #### Random Forest
-
-classifier = pipeline_cv['random_forest'].best_estimator_.named_steps['classifier']
-
-fig, ax = plt.subplots(figsize=(8,6))
-# Feature Importance
-importance, sorted_indices = np.sort(classifier.feature_importances_), np.argsort(classifier.feature_importances_)
-importance, sorted_indices = importance[-30:], sorted_indices[-30:]
-importance, sorted_indices = importance[::-1], sorted_indices[::-1]
-sns.barplot(x=importance, y=X_train.columns[sorted_indices], color='c')
-plt.xlabel('Mean decrease in impurity')
-plt.ylabel('Features')
-plt.title('Feature Importance in Random Forest')
-plt.savefig(str(OUTPUT_FOLDER / 'feature_importance_RandomForestClassifier.pdf'), bbox_inches='tight')
-plt.show()
-
-oob_error = 1 - classifier.oob_score_
-oob_error
+res['params'][j1]
 
 # ### AUC and confusion matrices
 
@@ -1898,6 +1800,238 @@ df_performance.to_latex(
     label='tab:performance'
 )
 
+# ### Deep model analysis
+
+# #### Logistic Regression
+
+# Even though it's not the most performing model, we continue analyzing it for its simplicity and interpretability.
+#
+# Inspect the best configuration:
+
+best_pipeline_logistic = pipeline_cv['logistic_regression']
+
+best_pipeline_logistic.best_params_
+
+# Extract the classifier
+classifier = best_pipeline_logistic.best_estimator_.named_steps['classifier']
+
+# See if the penalty discarded any variable:
+
+len(classifier.coef_[0]) == len(X_train.columns)
+
+# Since it didn't, let us try to reduce the model with backward selection implemented by [`SequentialFeatureSelector`](https://rasbt.github.io/mlxtend/user_guide/feature_selection/SequentialFeatureSelector/) in `mlxtend`, and then perform a second final hyperparameter tuning.
+
+# +
+from mlxtend.feature_selection import SequentialFeatureSelector
+
+# Sequential Backward Selection
+sfs = SequentialFeatureSelector(
+    classifier,
+    k_features=6,
+    forward=False,
+    floating=False,
+    scoring='roc_auc',
+    verbose=1,
+    cv=5,
+    n_jobs=-1).fit(X_train, y_train)
+
+# +
+from mlxtend.plotting import plot_sequential_feature_selection as plot_sfs
+
+plot_sfs(sfs.get_metric_dict(), kind='std_dev',figsize=(10, 8))
+
+plt.title('Sequential Backward Selection')
+plt.xticks(np.arange(5, 138, 5.0))
+plt.grid()
+plt.savefig(str(OUTPUT_FOLDER / 'feature_selection_backward_logistic.pdf'), bbox_inches='tight')
+plt.show()
+# -
+
+# Train it again with 15 variables to be selected, as a good tradeoff between performance and number of features.
+
+sfs = SequentialFeatureSelector(
+    classifier,
+    k_features=15,
+    forward=False,
+    floating=False,
+    scoring='roc_auc',
+    verbose=2,
+    cv=5,
+    n_jobs=-1).fit(X_train, y_train)
+
+print('Selected features:')
+print(sfs.k_feature_names_)
+
+important_features_lr = set(sfs.k_feature_names_)
+
+# From 0.680109 AUC we went down to:
+
+print(f'AUC: {sfs.k_score_:.4f}')
+
+# Create a reduced version of the data.
+
+X_train_sfs = pd.DataFrame(sfs.transform(X_train), columns=sfs.k_feature_names_)
+X_test_sfs = pd.DataFrame(sfs.transform(X_test), columns=sfs.k_feature_names_)
+
+# Now train again the model, performing a deeper hyperparameter tuning
+
+# +
+model = LogisticRegression(max_iter=10000)
+
+param_grid =  {
+    'C': np.logspace(-3, 3, 30),
+    'random_state': [SEED],
+    'class_weight': [class_weights]
+}
+
+grid_search = GridSearchCV(
+     model,
+     param_grid=param_grid,
+     cv=StratifiedKFold(n_splits=5, shuffle=True, random_state=SEED),
+     scoring='roc_auc',
+     refit='AUC',
+     return_train_score=True,
+     verbose=0
+)
+
+grid_search.fit(X_train_sfs, y_train)
+# -
+
+grid_search.best_params_
+
+print(f'AUC: {grid_search.score(X_test_sfs, y_test):.4f}')
+
+# [This website](https://stats.oarc.ucla.edu/other/mult-pkg/faq/general/faq-how-do-i-interpret-odds-ratios-in-logistic-regression/) provides an insightful interpretation of the coefficients in a logistic regression model.
+
+classifier = grid_search.best_estimator_
+
+fig, ax = plt.subplots(figsize=(8,8))
+coeff = pd.DataFrame()
+coeff['feature'] = X_train_sfs.columns
+coeff['beta'] = classifier.coef_[0]
+coeff['exp_beta'] = np.exp(coeff['beta'])
+coeff = coeff.sort_values(by=['beta'])
+sns.barplot(data=coeff[abs(coeff.beta) > 0.05], x='beta', y='feature', color='c')
+plt.title('Coefficients in Logistic Regression')
+plt.savefig(str(OUTPUT_FOLDER / 'feature_importance_weightsLogisticRegression.pdf'), bbox_inches='tight')
+plt.show()
+
+var_name_scale = dict(zip(scaler.get_feature_names_out().tolist(), scaler.scale_.tolist()))
+var_name_scale
+
+coeff['unscaled_exp_beta'] = np.nan
+for index, row in coeff.iterrows():    
+    if row.feature in var_name_scale.keys():
+        coeff.at[index,'unscaled_exp_beta'] = np.exp(row.beta / var_name_scale[row.feature])    
+
+coeff
+
+# +
+y_pred = grid_search.predict_proba(X_test_sfs)[:,1]
+precisions, recalls, thresholds = precision_recall_curve(y_test, y_pred)
+
+# Compute the zero skill model line
+# It will depend on the fraction of observations belonging to the positive class
+zero_skill = len(y_test[y_test==1]) / len(y_test)
+
+# Compute the perfect model line
+perfect_precision = np.ones_like(recalls)
+perfect_recall = np.linspace(0, 1, num=len(perfect_precision))
+
+plt.plot(recalls, precisions, 'r-', label='Logistic')
+plt.plot([0, 1], [zero_skill, zero_skill], 'b--', label='Zero skill')
+plt.plot(perfect_recall, perfect_precision, 'g--', linewidth=2, label='Perfect model')
+plt.xlabel('Recall')
+plt.ylabel('Precision')
+plt.axis([0, 1, 0, 1])
+#plt.grid()
+plt.title('Precision Recall curve in Logistic Regression')
+plt.legend()
+plt.show()
+# -
+
+# #### DecisionTreeClassifier
+
+# Extract the classifier
+classifier = pipeline_cv['decision_tree_classifier'].best_estimator_.named_steps['classifier']
+
+from sklearn import tree
+text_representation = tree.export_text(classifier)
+with open('decistion_tree.log', 'w') as f:
+    f.write(text_representation)
+
+# The `plot_tree` returns annotations for the plot, to not show them in the notebook I assigned returned value to `_`
+
+fig = plt.figure(figsize=(25,20))
+_ = tree.plot_tree(classifier,
+                   feature_names=X_train.columns,
+                   class_names=['No','Yes'])
+
+# We can export as a figure but we must use `graphviz`
+
+export_graphviz(classifier,
+                out_file=str(OUTPUT_FOLDER / 'decision_tree.dot'),
+                feature_names = X_test.columns.tolist(),
+                class_names=['0','1'],
+                filled=True)
+
+# !dot -Tpng output/decision_tree.dot -o output/decision_tree.png -Gdpi=600
+Image(filename = str(OUTPUT_FOLDER / 'decision_tree.png'))
+
+importance, sorted_indices = np.sort(classifier.feature_importances_), np.argsort(classifier.feature_importances_)
+importance, sorted_indices = importance[-10:], sorted_indices[-10:]
+importance, sorted_indices = importance[::-1], sorted_indices[::-1]
+sns.barplot(x=importance, y=X_train.columns[sorted_indices], color='c')
+plt.title('Feature Importance in Decision Tree')
+plt.xlabel('Mean decrease in impurity')
+plt.ylabel('Features')
+plt.savefig(str(OUTPUT_FOLDER / 'feature_importance_DecisionTreeClassifier.pdf'), bbox_inches='tight')
+plt.show()
+
+# #### Random Forest
+
+classifier = pipeline_cv['random_forest'].best_estimator_.named_steps['classifier']
+
+fig, ax = plt.subplots(figsize=(8,6))
+# Feature Importance
+importance, sorted_indices = np.sort(classifier.feature_importances_), np.argsort(classifier.feature_importances_)
+importance, sorted_indices = importance[-30:], sorted_indices[-30:]
+importance, sorted_indices = importance[::-1], sorted_indices[::-1]
+sns.barplot(x=importance, y=X_train.columns[sorted_indices], color='c')
+plt.xlabel('Mean decrease in impurity')
+plt.ylabel('Features')
+plt.title('Feature Importance in Random Forest')
+plt.savefig(str(OUTPUT_FOLDER / 'feature_importance_RandomForestClassifier.pdf'), bbox_inches='tight')
+plt.show()
+
+df_importance = pd.DataFrame({
+    'name': X_train.columns,
+    'importance': classifier.feature_importances_
+})
+
+df_importance = df_importance.sort_values(by=['importance'], ascending=False)
+df_importance.head(10)
+
+df_importance.head(10).to_latex(
+    str(OUTPUT_FOLDER / 'importance_top10_rf.tex'),
+    index=False,
+    formatters={"name": str.upper},
+    float_format="{:.4f}".format,
+    caption="Top 10 feature importance.",
+    label='tab:importance-rf'
+)
+
+important_features_rf = set(df_importance.head(30).name)
+
+oob_error = 1 - classifier.oob_score_
+oob_error
+
+important_features_rf
+
+important_features_lr
+
+important_features_rf & important_features_lr
+
 # ### Explaining predictions with SHAP
 
 # +
@@ -1929,13 +2063,15 @@ exp = shap.Explanation(
     shap_values.data,
     display_data=new_data_unscaled,
     feature_names=new_data.columns)
-shap.plots.waterfall(exp[idx], max_display=20)
+shap.plots.waterfall(exp[idx], max_display=10, show=False)
+plt.savefig(str(OUTPUT_FOLDER / 'shap.pdf'), bbox_inches='tight')
+plt.show()
 # -
 
 pipeline_cv['random_forest'].best_estimator_.named_steps['classifier'].predict_proba(new_data)[0][1]
 
 # +
-# ensemble
+# ensemble TODO togliere
 
 predictions = []
 
