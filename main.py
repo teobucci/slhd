@@ -423,8 +423,7 @@ df.info(verbose=True, show_counts=False)
 
 # Check the shape of the dataset
 
-df_shape = df.shape
-df_shape
+df.shape
 
 # We have 2008 patients and 165 variables.
 
@@ -457,27 +456,27 @@ df = df.drop(df[(df['DestinationDischarge'] != 'Died') & (df['outcome.during.hos
 
 # +
 # specify the columns to check for True values
-cols_to_check = ['death.within.28.days', 'death.within.3.months', 'death.within.6.months']
+cols_to_check = [
+    'death.within.28.days',
+    'death.within.3.months',
+    'death.within.6.months'
+]
 
 # remove rows where at least one of the specified columns is True
 df = df.loc[~(df[cols_to_check] == True).any(axis=1)]
 # -
 
-# We have removed this number patients:
-
-df_shape[0] - df.shape[0]
-
-# Update df_shape
-df_shape = df.shape
-
 # Now those columns are meaninglesse as they all have the same value, and we can remove them.
 
+# +
 drop_cols = [
     'death.within.28.days',
     'death.within.3.months',
     'death.within.6.months'
 ]
+
 df = df.drop(drop_cols, axis=1)
+# -
 
 # It also makes sense that if we want to predict the re-admission at 6 months, we have no knowledge neither at 3 months nor 28 days. Therefore we can drop these features as well.
 
@@ -491,8 +490,7 @@ drop_cols = [
 ]
 df = df.drop(drop_cols, axis=1)
 
-# Update df_shape
-df_shape = df.shape
+df.shape
 
 # ### Checking for duplicates
 
