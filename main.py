@@ -2,9 +2,9 @@
 #
 # Project for the _Statistical Learning for Healthcare Data_ (056867) course held at Politecnico di Milano in the academic year 2022/2023 by Professor Manuela Ferrario and Professor Anna Maria Paganoni.
 #
-# **It is recommended to [view this notebook in nbviewer](https://nbviewer.org/) for the best viewing experience.**
+# It is recommended to [**view this notebook in nbviewer**](https://nbviewer.org/) for the best viewing experience.
 #
-# **You can also [execute the code in this notebook on Binder](https://mybinder.org/) - no local installation required.**
+# You can also [execute the code in this notebook on Binder](https://mybinder.org/) - no local installation required.
 #
 # Authors:
 #
@@ -16,7 +16,12 @@
 #
 # ### Explanation of the problem and objective
 #
-# The goal of this problem is to predict the readmission at 6 months from a dataset TODO scrivere bene la descrizione dell'obiettivo e in cosa consiste il dataset, cos'è ogni riga.
+#
+# Heart Failure (HF) is a prevalent condition with high readmission rates: the literature states that the number of HF cases worldwide almost doubled from 33.5 million in 1990 to 64.3 million in 2017.
+#
+# Studies also suggest that half of the patients diagnosed with HF will be re-admitted once within a year and 20% will be re-admitted twice or more.
+#
+# The focus of this analysis is on predicting the readmission within 6 months for HF patients.
 #
 # ### Data description
 #
@@ -240,18 +245,18 @@ from IPython.display import Image
 from mlxtend.plotting import plot_confusion_matrix
 # -
 
-# Fix the seed for later
+# Fix the seed for reproducibility later.
 
 SEED = 42
 
-# Use the `pipreqs` library to produce a better `requirements.txt`
+# Use the `pipreqs` library to produce a `requirements.txt`
 
 # +
 # #!pipreqsnb . --force
 # #!pipreqs . --force
 # -
 
-# Create an output folder for pickle files and figures
+# Create an output folder for pickle files and figures.
 
 OUTPUT_FOLDER = Path() / 'output'
 OUTPUT_FOLDER.mkdir(parents=True, exist_ok=True)
@@ -310,7 +315,7 @@ if INCLUDE_DRUGS:
 
 # ### Information about the memory usage
 #
-# We check the memory usage of the dataframe.
+# We check the memory usage of the `DataFrame`.
 
 df.info(memory_usage='deep')
 
@@ -421,18 +426,21 @@ df.info(verbose=True, show_counts=False)
 df_shape = df.shape
 df_shape
 
+# We have 2008 patients and 165 variables.
+
+# ### Removing inconsistencies
+
+# We check if there are inconsistencies by looking at two variables: `DestinationDischarge` and `outcome.during.hospitalization`, when the first is `Died` the second should be `Dead` and vice-versa, therefore we remove patients with this inconsistency.
+
+df[(df['DestinationDischarge'] == 'Died') & (df['outcome.during.hospitalization'] != 'Dead')]
+
+df[(df['DestinationDischarge'] != 'Died') & (df['outcome.during.hospitalization'] == 'Dead')]
+
+df = df.drop(df[(df['DestinationDischarge'] == 'Died') & (df['outcome.during.hospitalization'] != 'Dead')].index)
+df = df.drop(df[(df['DestinationDischarge'] != 'Died') & (df['outcome.during.hospitalization'] == 'Dead')].index)
+
 # ### Removing outcome-related variables
-
-# Patients that were readmitted within 6 months.
-
-df.loc[df['re.admission.within.6.months'] == 1].shape[0]
-
-# Inconsistencies
-
-df.loc[((df['DestinationDischarge'] != 'Died') & (df['outcome.during.hospitalization'] == 'Dead'))]
-
-df.loc[((df['DestinationDischarge'] == 'Died') & (df['outcome.during.hospitalization'] != 'Dead')), 'death.within.6.months']
-
+#
 # Since we're interested in predicting the re-admission at 6 months, it's important to have a look at the following features:
 # - `death.within.28.days`
 # - `re.admission.within.28.days`
@@ -446,7 +454,7 @@ df.loc[((df['DestinationDischarge'] == 'Died') & (df['outcome.during.hospitaliza
 # - `time.to.emergency.department.within.6.months`
 #
 # Given that some patients died before the 6 months, such patients present a target of `0` since they haven't been re-admitted, not because they're healthy, but the exact opposite. Thus keeping them together with living healthy patients doesn't make sense.
-
+#
 # Obviously, since the death within 28 days implies the death within 3 months and the non-readmission after 6 months, we can expect these variables to be highly correlated. To further prove our intuition, we can consider the binary variables (i.e. excluding the non-`time` related ones in this set) and plot a matrix with the pairwise Cohen's kappa coefficient, as a measure to the concordance of them.
 
 # +
