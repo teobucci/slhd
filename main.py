@@ -613,20 +613,6 @@ plt.savefig(str(OUTPUT_FOLDER / 'missing_values_percentages.pdf'), bbox_inches='
 plt.show()
 # -
 
-# The variable `body.temperature.blood.gas` has 51% missing values, but the non-missing ones are all `37`, we can remove it.
-
-
-
-print("Variable body.temperature.blood.gas")
-print("Missing percentage:", np.round(numerical_missing['body.temperature.blood.gas'], 2))
-print("Unique values:", df_numerical['body.temperature.blood.gas'].unique())
-
-# Drop column body.temperature.blood.gas
-df = df.drop('body.temperature.blood.gas', axis=1)
-# Update numerical df
-df_numerical = df.select_dtypes(include=['float64', 'int64'])
-numerical_missing = get_percentage_missing(df_numerical)
-
 # We delete variables with a missing percentage higher than 60% without hesitation.
 
 threshold = 0.60
