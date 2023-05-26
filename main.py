@@ -427,6 +427,17 @@ df.shape
 
 # We have 2008 patients and 165 variables.
 
+# ### Removing duplicates
+
+# Remove duplicates rows if there are any.
+
+n_duplicates = df.duplicated().sum()
+if not n_duplicates == 0:
+    print(f"Removing {n_duplicates} duplicate rows")
+    df = df.drop_duplicates()
+else:
+    print("No duplicate rows found. All good!")
+
 # ### Removing inconsistencies
 
 # We check if there are inconsistencies by looking at two variables: `DestinationDischarge` and `outcome.during.hospitalization`, when the first is `Died` the second should be `Dead` and vice-versa, therefore we remove patients with this inconsistency.
@@ -466,17 +477,7 @@ cols_to_check = [
 df = df.loc[~(df[cols_to_check] == True).any(axis=1)]
 # -
 
-# Now those columns are meaninglesse as they all have the same value, and we can remove them.
-
-# +
-drop_cols = [
-    'death.within.28.days',
-    'death.within.3.months',
-    'death.within.6.months'
-]
-
-df = df.drop(drop_cols, axis=1)
-# -
+# Now those columns are meaninglesse as they all have the same value, we'll remove them in the next section.
 
 # It also makes sense that if we want to predict the re-admission at 6 months, we have no knowledge neither at 3 months nor 28 days. Therefore we can drop these features as well.
 
@@ -495,21 +496,59 @@ df = df.drop(drop_cols, axis=1)
 
 df.shape
 
-# ### Removing duplicates
 
-# Remove duplicates rows if there are any.
+# Create an utility to quickly get the names of numerical and categorical features.
 
-if not df.duplicated().sum() == 0:
-    df = df.drop_duplicates()
+def get_num_cat(dataframe):
+    return dataframe.select_dtypes(include=['float64', 'int64']).columns, dataframe.select_dtypes(include=['category', 'bool']).columns
+
+
+# ### Removing low-variance variables
+
+cols_numerical, cols_categorical = get_num_cat(df)
+
+# Removing categorical variables with 95% dominance.
+
+# +
+frequencies = df[cols_categorical].apply(pd.Series.value_counts)
+
+dominant_categories = frequencies.idxmax()
+
+threshold = 0.95
+
+drop_cols = []
+for variable, dominant_category in dominant_categories.items():
+    dominant_frequency = frequencies.loc[dominant_category, variable] / df[cols_categorical].shape[0]
+    if dominant_frequency > threshold:
+        drop_cols.append(variable)
+
+drop_cols
+# -
+
+df = df.drop(drop_cols, axis=1)
+cols_numerical, cols_categorical = get_num_cat(df)
+
+# Removing numerical variables with 0 variance, i.e. constant variables.
+
+# +
+from sklearn.feature_selection import VarianceThreshold
+
+selector = VarianceThreshold(threshold=0)
+selector.fit(df[cols_numerical])
+
+const_col = [column for column in cols_numerical 
+          if column not in cols_numerical[selector.get_support()]]
+
+const_col
+# -
+
+df = df.drop(const_col, axis=1)
+cols_numerical, cols_categorical = get_num_cat(df)
 
 
 # ### Checking for missing values
 
 # Identify categorical and numerical variables
-
-df_categorical = df.select_dtypes(include=['category', 'bool'])
-df_numerical = df.select_dtypes(include=['float64', 'int64'])
-
 
 # +
 def get_percentage_missing(df):
@@ -519,11 +558,10 @@ def get_percentage_missing(df):
     list_vars = list_vars[list_vars != 0]
     return list_vars
 
-names = ['numerical', 'categorical']
-numerical_missing = get_percentage_missing(df_numerical)
-categorical_missing = get_percentage_missing(df_categorical)
+numerical_missing = get_percentage_missing(df[cols_numerical])
+categorical_missing = get_percentage_missing(df[cols_categorical])
 
-for name, features in zip(names, [numerical_missing, categorical_missing]):
+for name, features in zip(['numerical', 'categorical'], [numerical_missing, categorical_missing]):
     print(f"Among the {name} features, {len(features)} contain missing values")
 # -
 
@@ -542,9 +580,7 @@ df.occupation = imputer.fit_transform(df.occupation.values.reshape(-1,1))[:,0]
 
 df = df.astype({'occupation': 'category'})
 
-# Update categorical and numerical dataframes
-df_categorical = df.select_dtypes(include=['category', 'bool'])
-df_numerical = df.select_dtypes(include=['float64', 'int64'])
+cols_numerical, cols_categorical = get_num_cat(df)
 
 
 # #### Numerical
@@ -578,6 +614,8 @@ plt.show()
 # -
 
 # The variable `body.temperature.blood.gas` has 51% missing values, but the non-missing ones are all `37`, we can remove it.
+
+
 
 print("Variable body.temperature.blood.gas")
 print("Missing percentage:", np.round(numerical_missing['body.temperature.blood.gas'], 2))
@@ -1153,25 +1191,6 @@ print(f"{hf_type_both/len(df.index):.2%} with type Both")
 diabetes_counts = df_categorical.diabetes.value_counts()
 diabetes_true = diabetes_counts[True]
 print(f"{diabetes_true/len(df.index):.2%} with diabetes")
-
-# It's important to reduce dimensionality as much as possible, both for interpretability and model training. We can clearly see that some variables are meaningless because they belong essentially all to the same type, we can't use these variables for any kind of separation so we discard some of them.
-
-# +
-drop_cols = [
-    'connective.tissue.disease',
-    'hemiplegia',
-    'malignant.lymphoma',
-    'AIDS',
-    'consciousness',
-    'respiratory.support.',
-    'acute.renal.failure',
-    'outcome.during.hospitalization'
-]
-
-df = df.drop(drop_cols, axis=1)
-
-df_categorical = df.select_dtypes(include=['category', 'bool'])
-# -
 
 # As final step, plot some numerical features distribution separately with the respect to the target to see if we have some hints in features that separate well.
 
