@@ -197,7 +197,7 @@
 # | 166 | ageCat                                                        | ageCat:the age is categorized in decades                                                                                                                                                                                                                                                                            |
 #
 
-# ## 2. Data Exploration and Cleaning
+# ## 2. Materials and Methods
 #
 # ### Importing necessary libraries and dataset
 #
@@ -480,6 +480,7 @@ df = df.drop(drop_cols, axis=1)
 
 # It also makes sense that if we want to predict the re-admission at 6 months, we have no knowledge neither at 3 months nor 28 days. Therefore we can drop these features as well.
 
+# +
 drop_cols = [
     're.admission.within.28.days',
     're.admission.within.3.months',
@@ -488,15 +489,19 @@ drop_cols = [
     'return.to.emergency.department.within.6.months',
     'time.to.emergency.department.within.6.months',
 ]
+
 df = df.drop(drop_cols, axis=1)
+# -
 
 df.shape
 
-# ### Checking for duplicates
+# ### Removing duplicates
 
-# Check if there are duplicate rows.
+# Remove duplicates rows if there are any.
 
-assert df.duplicated().sum() == 0
+if not df.duplicated().sum() == 0:
+    df = df.drop_duplicates()
+
 
 # ### Checking for missing values
 
