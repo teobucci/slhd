@@ -679,20 +679,17 @@ df_correlation_analysis = analyze_correlation(df[cols_numerical], cols_numerical
 df_correlation_analysis
 
 # Extract columns with a correlation above a threshold
-columns_to_drop = df_correlation_analysis[df_correlation_analysis['most_correlated_column'].notnull()].index.tolist()
-columns_to_drop
-df = df.drop(columns=columns_to_drop)
+drop_cols = df_correlation_analysis[df_correlation_analysis['most_correlated_column'].notnull()].index.tolist()
+drop_cols
 
-# Update numerical df
-df_numerical = df.select_dtypes(include=['float64', 'int64'])
-# -
+df = df.drop(drop_cols, axis=1)
+cols_numerical, cols_categorical = get_num_cat(df)
+numerical_missing = get_percentage_missing(df[cols_numerical])
+cols_numerical_missing = numerical_missing[(numerical_missing>50) & (numerical_missing<60)].index.tolist()
 
-# Let's see how much we reduced the missing columns
 
-numerical_missing = get_percentage_missing(df_numerical)
-missing_cols = numerical_missing[(numerical_missing>50) & (numerical_missing<60)].index.tolist()
+# Let's see the correlation withing the 50%-60% group.
 
-plot_clustered_correlation_matrix(df_numerical[missing_cols], name='clustered_correlation_matrix2')
 def plot_clustered_correlation_matrix(dataframe, name='clustered_correlation_matrix'):
     
     corr_matrix = dataframe.corr()
@@ -700,22 +697,14 @@ def plot_clustered_correlation_matrix(dataframe, name='clustered_correlation_mat
     # Use correlation matrix as distance
     pdist = spc.distance.pdist(abs(corr_matrix.values))
 
-# We see less variables and less blocks, one last thing is we can interal variables from the missing values, such as 2 out of the 3 in the upper-left block. Let us keep just `oxygen.saturation`
     linkage = spc.linkage(pdist, method='complete')
     idx = spc.fcluster(linkage, 0.5 * pdist.max(), 'distance')
 
-# +
-# Drop columns
-df = df.drop(columns=['oxyhemoglobin', 'reduced.hemoglobin'])
     columns = [dataframe.columns.tolist()[i] for i in list((np.argsort(idx)))]
     dataframe = dataframe.reindex(columns, axis=1)
 
-# Update numerical df
-df_numerical = df.select_dtypes(include=['float64', 'int64'])
-# -
     corr_matrix = dataframe.corr()
 
-# ### Checking for mono-value columns
     # Create a correlation heatmap
     plt.figure(figsize=(20, 15))
     sns.heatmap(corr_matrix, annot=False, vmin=-1, vmax=1, cmap='RdBu_r') # 'bwr' 'coolwarm'
@@ -723,18 +712,21 @@ df_numerical = df.select_dtypes(include=['float64', 'int64'])
     plt.savefig(str(OUTPUT_FOLDER / str(name+'.pdf')), bbox_inches='tight')
     plt.show()
 
-# And check for columns with all the same value, which are then not significant.
 
-same_cols = df.columns[df.apply(lambda x: len(x.unique()) == 1)].tolist()
-print('Columns with all the same value:', same_cols)
-df = df.drop(same_cols, axis=1)
+plot_clustered_correlation_matrix(df[cols_numerical_missing], name='clustered_correlation_matrix1')
 
-# Update the categorical and numerical versions of the dataframe
+# Since we can see a very correlated block of 4 variables in the upper-left corner, mostly related to oxygen level, let's just keep `oxygen.saturation`.
 
-# Update numerical and categorical df
-df_categorical = df.select_dtypes(include=['category', 'bool'])
-df_numerical = df.select_dtypes(include=['float64', 'int64'])
+# +
+drop_cols = [
+    'oxyhemoglobin',
+    'reduced.hemoglobin',
+    'partial.oxygen.pressure'
+]
 
+df = df.drop(drop_cols, axis=1)
+cols_numerical, cols_categorical = get_num_cat(df)
+# -
 
 df.shape
 
