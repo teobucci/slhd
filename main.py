@@ -621,16 +621,9 @@ missing_cols = numerical_missing[numerical_missing>(threshold*100)].index.tolist
 print(f'Columns with % of NaNs greater than {threshold:.0%}:')
 print(missing_cols)
 
-# +
-limitPer = len(df.index) * (1-threshold)
-
-# Drop rows (keep only rows with at least `thresh` non-NA
-df = df.dropna(thresh=limitPer, axis=1)
-
-# Update numerical df
-df_numerical = df.select_dtypes(include=['float64', 'int64'])
-numerical_missing = get_percentage_missing(df_numerical)
-# -
+df = df.drop(missing_cols, axis=1)
+cols_numerical, cols_categorical = get_num_cat(df)
+numerical_missing = get_percentage_missing(df[cols_numerical])
 
 # Variables with missingness between 50%-60% deserve a closer look, because they are many and we don't want to discard too much information. Let us plot their correlation matrix, clustered using hierarchical clustering to see a better block structure.
 
