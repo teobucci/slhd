@@ -744,9 +744,9 @@ df.shape
 
 # Let us plot them in a big grid to have an understanding of the distribution of numerical variables.
 
-len(df_numerical.columns)
+len(cols_numerical)
 
-df_numerical.hist(layout=(24,4), figsize=(15,80))
+df[cols_numerical].hist(layout=(24,4), figsize=(15,80))
 plt.show()
 
 # #### Outlier detection
@@ -796,7 +796,7 @@ col_inspect = [
     'dischargeDay'
 ]
 
-df_numerical[col_inspect].boxplot()
+df[col_inspect].boxplot()
 plt.title('Boxplot of a subset of Numerical Features')
 plt.tick_params(axis='x', labelrotation=90)
 plt.show()
@@ -1074,7 +1074,7 @@ df.loc[df['triglyceride'] > 10, 'triglyceride'] = np.nan
 
 get_outliers(df, 'dischargeDay', threshold=8)
 
-df_numerical = df.select_dtypes(include=['float64', 'int64'])
+cols_numerical, cols_categorical = get_num_cat(df)
 
 
 # #### More in-depth study for some numerical features
@@ -1100,20 +1100,20 @@ def check_histogram_bins(data, numerical_features,threshold=0.9):
     return selected_features
 
 
-inspect_columns = check_histogram_bins(df_numerical,df_numerical.columns)
+col_inspect = check_histogram_bins(df[cols_numerical], cols_numerical)
 
-# visit.times, eye.opening, verabal.response, movement and GCS are discerete numerical variable and it's therefore reasonable that a lot of patients are characterised by the same value.
+# `visit.times`, `eye.opening`, `verbal.response`, `movement` and `GCS` are discerete numerical variable and it's therefore reasonable that a lot of patients are characterised by the same value.
 # Discard them from the suspicious columns.
 
-inspect_columns.remove('visit.times')
-inspect_columns.remove('eye.opening')
-inspect_columns.remove('verbal.response')
-inspect_columns.remove('movement')
-inspect_columns.remove('GCS')
+col_inspect.remove('visit.times')
+col_inspect.remove('eye.opening')
+col_inspect.remove('verbal.response')
+col_inspect.remove('movement')
+col_inspect.remove('GCS')
 
 # Plot with more bins
 
-df_numerical[inspect_columns].hist(layout=(3,3), figsize=(10,10), bins=20)
+df[col_inspect].hist(layout=(3,3), figsize=(10,10), bins=20)
 plt.show()
 
 # The problem with these variables is not trivial: it's likely that part of them was inserted in a different unit of measure, however they are marked in the top important variables in many models. We decide to just keep them as is, but this range it's really likely it will affect scaling.
