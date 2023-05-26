@@ -632,7 +632,7 @@ print(f'Columns with % of NaNs between 50% and 60%:')
 print(missing_cols)
 
 
-
+# To decide whether it is useful to keep some of these variables we check whether they are highly correlated with variables with a lower percentage of NaN, which would therefore be a better choice.
 
 def analyze_correlation(df, columns, threshold=0.8):
 
@@ -674,14 +674,12 @@ def analyze_correlation(df, columns, threshold=0.8):
 
 
 df_correlation_analysis = analyze_correlation(df_numerical,missing_cols) 
+# For each of the variables with 50%-60% missingness, we have the column in the sub-50% to which it's most correlated, and with which value (and a threshold).
 df_correlation_analysis
 
 # Extract columns with a correlation above a threshold
 columns_to_drop = df_correlation_analysis[df_correlation_analysis['most_correlated_column'].notnull()].index.tolist()
 columns_to_drop
-
-# +
-# Drop columns
 df = df.drop(columns=columns_to_drop)
 
 # Update numerical df
