@@ -1146,16 +1146,35 @@ plt.ylabel('')
 plt.title(target_var)
 plt.show()
 
-age_counts = df_categorical.ageCat.value_counts()
-age_5989 = age_counts['(59,69]']+age_counts['(69,79]']+age_counts['(79,89]']
+n_pos = df.loc[df['re.admission.within.6.months'] == 1].shape[0]
+n_neg = df.loc[df['re.admission.within.6.months'] == 0].shape[0]
+print(f'Number of patients that were readmitted within 6 months: {n_pos}, i.e. {n_pos/len(df.index):.2%}')
+print(f'Number of patients that were not readmitted within 6 months: {n_neg}, i.e. {n_neg/len(df.index):.2%}')
+
+age_counts = df.ageCat.value_counts()
+age_5989 = age_counts['(59,69]'] + age_counts['(69,79]'] + age_counts['(79,89]']
 print(f"Total and percentage in the age range 59-89: {age_5989} {age_5989/len(df.index):.2%}")
 
-gender_counts = df_categorical.gender.value_counts()
+# `ageCat` is actually a numerical variable divided into bins, but it's ordinal. So before moving forward, we encoded into a scale of numbers and make it `int64`.
+
+df['ageCat'] = df['ageCat'].map({
+    '(21,29]': 0,
+    '(29,39]': 1,
+    '(39,49]': 2,
+    '(49,59]': 3,
+    '(59,69]': 4,
+    '(69,79]': 5,
+    '(79,89]': 6,
+    '(89,110]': 7
+})
+df = df.astype({'ageCat': 'int64'})
+
+gender_counts = df.gender.value_counts()
 gender_Female = gender_counts['Female']
 print(f"{gender_Female/len(df.index):.2%} of females")
 print(f"{1-(gender_Female)/len(df.index):.2%} of males")
 
-hf_type_counts = df_categorical['type.of.heart.failure'].value_counts()
+hf_type_counts = df['type.of.heart.failure'].value_counts()
 hf_type_right = hf_type_counts['Right']
 hf_type_left = hf_type_counts['Left']
 hf_type_both = hf_type_counts['Both']
@@ -1163,14 +1182,13 @@ print(f"{hf_type_right/len(df.index):.2%} with type Right")
 print(f"{hf_type_left/len(df.index):.2%} with type Left")
 print(f"{hf_type_both/len(df.index):.2%} with type Both")
 
-diabetes_counts = df_categorical.diabetes.value_counts()
+diabetes_counts = df.diabetes.value_counts()
 diabetes_true = diabetes_counts[True]
 print(f"{diabetes_true/len(df.index):.2%} with diabetes")
 
 # As final step, plot some numerical features distribution separately with the respect to the target to see if we have some hints in features that separate well.
 
 # +
-#col_inspect = df_numerical.columns[:32]
 col_inspect = [
     'direct.bilirubin',
     'prothrombin.activity',
