@@ -273,7 +273,115 @@ df = df.drop(columns=df.columns[0], axis=1)
 df_drugs = pd.read_csv((DATA_FOLDER / "dat_md.csv"), index_col=1)
 df_drugs = df_drugs.drop(columns=df_drugs.columns[0], axis=1)
 
-df_drugs.head()
+df_drugs['Drug_name'].unique()
+
+# To reduce the number of drugs (now they are 18) we researched their active ingredients and functionalities to capture some similarities. Keeping in mind that only the effects concerning the treatment of heart failure are of interest to us, we divided the medicines into 4 categories:
+#
+# - #### Diuretics
+#     
+#     Furosemide tablet
+#     
+#     Furosemide injection
+#     
+#     Torasemide tablet
+#     
+#     Hydrochlorothiazide tablet
+#     
+#     Spironolactone tablet
+#     
+# - #### Vasodilatory
+#
+#     Meglumine Adenosine Cyclophosphate
+#
+#     Milrinone injection
+#
+#     Deslanoside injection
+#
+#     Nitroglycerin injection
+#
+#     Isoprenaline Hydrochloride injection
+#     
+#     Shenfu injection
+#     
+#     Isosorbide Mononitrate Sustained Release tablet
+#     
+#     sulfotanshinone sodium injection (*)
+#     
+# - #### Inhibitor
+#
+#     Benazepril hydrochloride tablet
+#     
+#     Atorvastatin calcium tablet
+#     
+#     Valsartan Dispersible tablet
+#
+# - #### Increse force of heart contraction
+#
+#     Digoxin tablet
+#     
+#     Dobutamine hydrochloride injection
+#     
+# (*) Sulfotanshinone sodium injection is a compound derived from traditional Chinese medicine, commonly found in the plant Salvia miltiorrhiza.
+# Salvia miltiorrhiza and its constituents, including sulfotanshinone, have been studied for their potential cardiovascular effects. They are reported to possess antioxidant, anti-inflammatory, and vasodilatory properties. Vasodilation refers to the widening or relaxation of blood vessels, leading to increased blood flow and potentially lowering blood pressure.
+#
+#
+
+# +
+# Create a DataFrame with drug-group mappings
+group_mapping = pd.DataFrame({
+    'Drug_name': [
+        'sulfotanshinone sodium injection',
+        'Furosemide tablet',
+        'Meglumine Adenosine Cyclophosphate for injection',
+        'Furosemide injection',
+        'Milrinone injection',
+        'Deslanoside injection',
+        'Torasemide tablet',
+        'Benazepril hydrochloride tablet',
+        'Atorvastatin calcium tablet',
+        'Digoxin tablet',
+        'Hydrochlorothiazide tablet',
+        'Spironolactone tablet',
+        'Valsartan Dispersible tablet',
+        'Dobutamine hydrochloride injection',
+        'Isoprenaline Hydrochloride injection',
+        'Nitroglycerin injection',
+        'Shenfu injection',
+        'Isosorbide Mononitrate Sustained Release tablet'
+    ],
+    'Group_name': [
+        'Vasodilatory',
+        'Diuretics',
+        'Vasodilatory',
+        'Diuretics',
+        'Vasodilatory',
+        'Vasodilatory',
+        'Diuretics',
+        'Inhibitor',
+        'Inhibitor',
+        'Increse force of heart contraction',
+        'Diuretics',
+        'Diuretics',
+        'Inhibitor',
+        'Increse force of heart contraction',
+        'Vasodilatory',
+        'Vasodilatory',
+        'Vasodilatory',
+        'Inhibitor'
+    ]
+})
+
+
+# Perform a left join to map drug names to group names
+df_drugs = df_drugs.merge(group_mapping, on='Drug_name', how='left')
+
+# Replace missing group names with the original drug names
+#df_drugs['Drug_group'].fillna(df['Drug_name'], inplace=True)
+
+# Print the updated DataFrame
+df_drugs
+
+# -
 
 # Check which patients are missing from the drugs dataframe
 missing_patients = ~df.index.isin(df_drugs.index)
