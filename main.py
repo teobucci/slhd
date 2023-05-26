@@ -273,7 +273,7 @@ df = df.drop(columns=df.columns[0], axis=1)
 df_drugs = pd.read_csv((DATA_FOLDER / "dat_md.csv"), index_col=1)
 df_drugs = df_drugs.drop(columns=df_drugs.columns[0], axis=1)
 
-df_drugs['Drug_name'].unique()
+pd.DataFrame(df_drugs['Drug_name'].unique(), columns=['name'])
 
 # To reduce the number of drugs (now they are 18) we researched their active ingredients and functionalities to capture some similarities. Keeping in mind that only the effects concerning the treatment of heart failure are of interest to us, we divided the medicines into 4 categories:
 #
@@ -373,7 +373,9 @@ group_mapping = pd.DataFrame({
 
 
 # Perform a left join to map drug names to group names
+df_drugs.reset_index(inplace=True)
 df_drugs = df_drugs.merge(group_mapping, on='Drug_name', how='left')
+df_drugs.set_index('inpatient.number', inplace=True)
 
 # Replace missing group names with the original drug names
 #df_drugs['Drug_group'].fillna(df['Drug_name'], inplace=True)
@@ -382,6 +384,8 @@ df_drugs = df_drugs.merge(group_mapping, on='Drug_name', how='left')
 df_drugs
 
 # -
+
+# Check if for each patient in the data set is recorded one or more drugs, check also if there is a record of a drug for a patient that is not present in the data set.
 
 # Check which patients are missing from the drugs dataframe
 missing_patients = ~df.index.isin(df_drugs.index)
@@ -393,15 +397,19 @@ missing_drugs = ~df_drugs.index.isin(df.index)
 print('Missing patients from the patients dataframe:')
 print(df_drugs[missing_drugs].index)
 
-# More drugs were given to the same patient.
+# The following things have emerged from the analysis so far:
 #
-# Let's see the unique drugs.
+# 1. Some patient recevied more than one drugs
+# 2. Some patient doesn't recevived a drug (or it is not recorded)
+#
+# We aggregate this data using a pivot table, that allows us to analyze the occurrence of drugs for each patient.
 
-pd.DataFrame(df_drugs['Drug_name'].unique(), columns=['name'])
-
+# +
 # Create a pivot table of drugs, with patients as rows and drugs as columns
-drug_pivot = df_drugs.pivot_table(index='inpatient.number', columns='Drug_name', fill_value=0, aggfunc=lambda x: 1)
+
+drug_pivot = df_drugs.drop(columns='Drug_name').pivot_table(index='inpatient.number', columns='Group_name', fill_value=0, aggfunc=lambda x: 1)
 drug_pivot.head()
+# -
 
 # Merge the patient dataframe with the drug pivot table
 merged_df = pd.merge(df, drug_pivot, on='inpatient.number', how='left')
