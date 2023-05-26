@@ -632,33 +632,7 @@ print(f'Columns with % of NaNs between 50% and 60%:')
 print(missing_cols)
 
 
-def plot_clustered_correlation_matrix(dataframe, name='clustered_correlation_matrix'):
-    
-    corr_matrix = dataframe.corr()
-    
-    # Use correlation matrix as distance
-    pdist = spc.distance.pdist(abs(corr_matrix.values))
 
-    linkage = spc.linkage(pdist, method='complete')
-    idx = spc.fcluster(linkage, 0.5 * pdist.max(), 'distance')
-
-    columns = [dataframe.columns.tolist()[i] for i in list((np.argsort(idx)))]
-    dataframe = dataframe.reindex(columns, axis=1)
-
-    corr_matrix = dataframe.corr()
-
-    # Create a correlation heatmap
-    plt.figure(figsize=(20, 15))
-    sns.heatmap(corr_matrix, annot=False, vmin=-1, vmax=1, cmap='RdBu_r') # 'bwr' 'coolwarm'
-    plt.title('Correlation Heatmap')
-    plt.savefig(str(OUTPUT_FOLDER / str(name+'.pdf')), bbox_inches='tight')
-    plt.show()
-
-
-plot_clustered_correlation_matrix(df_numerical[missing_cols], name='clustered_correlation_matrix1')
-
-
-# Some blocks can be identified. To decide whether it is useful to keep some of these variables we check whether they are highly correlated with variables with a lower percentage of NaN, which would therefore be a better choice.
 
 def analyze_correlation(df, columns, threshold=0.8):
 
@@ -720,18 +694,35 @@ numerical_missing = get_percentage_missing(df_numerical)
 missing_cols = numerical_missing[(numerical_missing>50) & (numerical_missing<60)].index.tolist()
 
 plot_clustered_correlation_matrix(df_numerical[missing_cols], name='clustered_correlation_matrix2')
+def plot_clustered_correlation_matrix(dataframe, name='clustered_correlation_matrix'):
+    
+    corr_matrix = dataframe.corr()
+    
+    # Use correlation matrix as distance
+    pdist = spc.distance.pdist(abs(corr_matrix.values))
 
 # We see less variables and less blocks, one last thing is we can interal variables from the missing values, such as 2 out of the 3 in the upper-left block. Let us keep just `oxygen.saturation`
+    linkage = spc.linkage(pdist, method='complete')
+    idx = spc.fcluster(linkage, 0.5 * pdist.max(), 'distance')
 
 # +
 # Drop columns
 df = df.drop(columns=['oxyhemoglobin', 'reduced.hemoglobin'])
+    columns = [dataframe.columns.tolist()[i] for i in list((np.argsort(idx)))]
+    dataframe = dataframe.reindex(columns, axis=1)
 
 # Update numerical df
 df_numerical = df.select_dtypes(include=['float64', 'int64'])
 # -
+    corr_matrix = dataframe.corr()
 
 # ### Checking for mono-value columns
+    # Create a correlation heatmap
+    plt.figure(figsize=(20, 15))
+    sns.heatmap(corr_matrix, annot=False, vmin=-1, vmax=1, cmap='RdBu_r') # 'bwr' 'coolwarm'
+    plt.title('Correlation Heatmap')
+    plt.savefig(str(OUTPUT_FOLDER / str(name+'.pdf')), bbox_inches='tight')
+    plt.show()
 
 # And check for columns with all the same value, which are then not significant.
 
