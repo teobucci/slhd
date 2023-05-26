@@ -359,11 +359,11 @@ group_mapping = pd.DataFrame({
         'Diuretics',
         'Inhibitor',
         'Inhibitor',
-        'Increase.force.of.heart.contraction',
+        'IFHC',
         'Diuretics',
         'Diuretics',
         'Inhibitor',
-        'Increase.force.of.heart.contraction',
+        'IFHC',
         'Vasodilatory',
         'Vasodilatory',
         'Vasodilatory',
@@ -382,7 +382,6 @@ df_drugs.set_index('inpatient.number', inplace=True)
 
 # Print the updated DataFrame
 df_drugs
-
 # -
 
 # Check if for each patient in the data set is recorded one or more drugs, check also if there is a record of a drug for a patient that is not present in the data set.
@@ -404,12 +403,9 @@ print(df_drugs[missing_drugs].index)
 #
 # We aggregate this data using a pivot table, that allows us to analyze the occurrence of drugs for each patient.
 
-# +
 # Create a pivot table of drugs, with patients as rows and drugs as columns
-
 drug_pivot = df_drugs.drop(columns='Drug_name').pivot_table(index='inpatient.number', columns='Group_name', fill_value=0, aggfunc=lambda x: 1)
 drug_pivot.head()
-# -
 
 # Merge the patient dataframe with the drug pivot table
 merged_df = pd.merge(df, drug_pivot, on='inpatient.number', how='left')
@@ -419,26 +415,70 @@ merged_df.head()
 for drug_name in drug_pivot.columns:
     merged_df[drug_name] = merged_df[drug_name].fillna(value=0)
 
+# Understand how frequently each drugs is used and if they are used in combination with others
+
+# +
+# Count the frequency of each drug
+drug_counts = merged_df[['Diuretics','IFHC','Inhibitor','Vasodilatory']].sum()
+
+# Plotting the frequencies
+plt.figure(figsize=(8, 6))
+sns.barplot(x=drug_counts.index, y=drug_counts.values)
+plt.title('Frequency of Drugs')
+plt.xlabel('Drugs')
+plt.ylabel('Frequency')
+plt.xticks(rotation=45)
+plt.show()
+# -
+
+# Inhibitor and drugs that increase force of heart contraction are the two categories with less variables, is therefore reasonable that counting the frequency of the group their bar is lower.
+# This doesn't imply that they are less used.
+
+# +
+drug_columns = ['Diuretics','IFHC','Inhibitor','Vasodilatory']
+combination_frequency = merged_df[drug_columns].apply(lambda row: '_'.join([col for col, val in zip(drug_columns, row) if val]), axis=1).value_counts()
+combination_frequency = combination_frequency.reset_index()
+
+# Rename the columns for clarity
+combination_frequency.columns = ['DrugCombination', 'Frequency']
+
+# Sort the combinations by frequency in descending order
+combination_frequency = combination_frequency.sort_values('Frequency', ascending=False)
+
+# Create the bar plot
+plt.figure(figsize=(10, 6))
+plt.bar(combination_frequency['DrugCombination'], combination_frequency['Frequency'])
+plt.xlabel('Drug Combination')
+plt.ylabel('Frequency')
+plt.title('Frequency of Drug Combinations')
+plt.xticks(rotation=90)
+plt.tight_layout()
+plt.show()
+# -
+
 # We start with a simple model in which we include medication and demographic data
 # TODO Spiegare meglio la scelta
 
 SIMPLE_MODEL_WITH_DRUGS = True
 
 if SIMPLE_MODEL_WITH_DRUGS:
-    df0 = merged_df[['occupation','gender','BMI','ageCat','Diuretics','Increase.force.of.heart.contraction','Inhibitor','Vasodilatory','re.admission.within.6.months']]
+    df0 = merged_df[['occupation','gender','BMI','ageCat','Diuretics','IFHC','Inhibitor','Vasodilatory','re.admission.within.6.months']]
     # Set the correct type
     df0 = df0.astype({
     'occupation': 'category',
     'gender': 'category',
     'ageCat' : 'category',
     'Diuretics' : 'bool',
-    'Increase.force.of.heart.contraction' : 'bool',
+    'IFHC' : 'bool',
     'Inhibitor' : 'bool',
     'Vasodilatory' : 'bool',
     're.admission.within.6.months': 'bool'})
     
 
-INCLUDE_DRUGS = False
+# Result summary:
+# Increase.force.of.heart.contraction potrebbe essere che ha qualche info
+
+INCLUDE_DRUGS = True
 
 if INCLUDE_DRUGS:
     df = merged_df
@@ -500,6 +540,7 @@ for col, dtype in dtypes.items():
 
 # Now that we know what to correct, let's perform the changes
 
+if 
 df = df.astype({
     'DestinationDischarge': 'category',
     'admission.ward': 'category',
