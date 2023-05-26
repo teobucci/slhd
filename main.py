@@ -1112,25 +1112,39 @@ plt.show()
 
 # #### Barplot of categorical variables
 
+target_var = 're.admission.within.6.months'
+
+# Plot the categorical variables, except the target.
+
 # +
-col_inspect = df_categorical.columns
+col_inspect = cols_categorical.values.tolist()
+col_inspect.remove(target_var)
 #col_inspect = ['Killip.grade', 'ageCat']
 
 # Adjust subplots and figsize
-fig, axes = plt.subplots(7, 5,figsize=[15,20])
+fig, axes = plt.subplots(4, 5,figsize=[15,15])
 axes = axes.flatten()
 
 for idx, col_name in enumerate(col_inspect):
     plt.sca(axes[idx]) # set the current Axes
     #plt.hist(df_categorical[x],density=True)
-    sns.countplot(x = col_name, data = df_categorical, palette = 'magma')
-    plt.xticks(fontsize=8, rotation = 45) # Rotates X-Axis Ticks by 45-degrees
+    sns.countplot(x=col_name, data=df, palette='magma')
+    plt.xticks(fontsize=8, rotation=45) # Rotates X-Axis Ticks by 45-degrees
     plt.ylabel('')
     plt.title(col_name)
 
 fig.tight_layout()
 plt.show()
 # -
+
+# Plot the target.
+
+fig, axes = plt.subplots(figsize=[4,4])
+sns.countplot(x=target_var, data=df, palette='magma')
+plt.xticks(fontsize=8, rotation=45) # Rotates X-Axis Ticks by 45-degrees
+plt.ylabel('')
+plt.title(target_var)
+plt.show()
 
 age_counts = df_categorical.ageCat.value_counts()
 age_5989 = age_counts['(59,69]']+age_counts['(69,79]']+age_counts['(79,89]']
@@ -1154,8 +1168,6 @@ diabetes_true = diabetes_counts[True]
 print(f"{diabetes_true/len(df.index):.2%} with diabetes")
 
 # As final step, plot some numerical features distribution separately with the respect to the target to see if we have some hints in features that separate well.
-
-target_var = 're.admission.within.6.months'
 
 # +
 #col_inspect = df_numerical.columns[:32]
