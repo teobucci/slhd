@@ -275,56 +275,57 @@ df_drugs = df_drugs.drop(columns=df_drugs.columns[0], axis=1)
 
 pd.DataFrame(df_drugs['Drug_name'].unique(), columns=['name'])
 
-# To reduce the number of drugs (now they are 18) we researched their active ingredients and functionalities to capture some similarities. Keeping in mind that only the effects concerning the treatment of heart failure are of interest to us, we divided the medicines into 4 categories:
-#
-# - #### Diuretics
-#     
-#     Furosemide tablet
-#     
-#     Furosemide injection
-#     
-#     Torasemide tablet
-#     
-#     Hydrochlorothiazide tablet
-#     
-#     Spironolactone tablet
-#     
-# - #### Vasodilatory
-#
-#     Meglumine Adenosine Cyclophosphate
-#
-#     Milrinone injection
-#
-#     Deslanoside injection
-#
-#     Nitroglycerin injection
-#
-#     Isoprenaline Hydrochloride injection
-#     
-#     Shenfu injection
-#     
-#     Isosorbide Mononitrate Sustained Release tablet
-#     
-#     sulfotanshinone sodium injection (*)
-#     
-# - #### Inhibitor
-#
-#     Benazepril hydrochloride tablet
-#     
-#     Atorvastatin calcium tablet
-#     
-#     Valsartan Dispersible tablet
-#
-# - #### Increse force of heart contraction
-#
-#     Digoxin tablet
-#     
-#     Dobutamine hydrochloride injection
-#     
-# (*) Sulfotanshinone sodium injection is a compound derived from traditional Chinese medicine, commonly found in the plant Salvia miltiorrhiza.
-# Salvia miltiorrhiza and its constituents, including sulfotanshinone, have been studied for their potential cardiovascular effects. They are reported to possess antioxidant, anti-inflammatory, and vasodilatory properties. Vasodilation refers to the widening or relaxation of blood vessels, leading to increased blood flow and potentially lowering blood pressure.
-#
-#
+# +
+To reduce the number of drugs (now they are 18) we researched their active ingredients and functionalities to capture some similarities. Keeping in mind that only the effects concerning the treatment of heart failure are of interest to us, we divided the medicines into 4 categories:
+
+**Diuretics**
+    
+    Furosemide tablet
+    
+    Furosemide injection
+    
+    Torasemide tablet
+    
+    Hydrochlorothiazide tablet
+    
+    Spironolactone tablet
+    
+**Vasodilatory**
+
+    Meglumine Adenosine Cyclophosphate
+
+    Milrinone injection
+
+    Deslanoside injection
+
+    Nitroglycerin injection
+
+    Isoprenaline Hydrochloride injection
+    
+    Shenfu injection
+    
+    Isosorbide Mononitrate Sustained Release tablet
+    
+    sulfotanshinone sodium injection (*)
+    
+**Inhibitor**
+
+    Benazepril hydrochloride tablet
+    
+    Atorvastatin calcium tablet
+    
+    Valsartan Dispersible tablet
+
+**Increse force of heart contraction**
+
+    Digoxin tablet
+    
+    Dobutamine hydrochloride injection
+    
+(*) Sulfotanshinone sodium injection is a compound derived from traditional Chinese medicine, commonly found in the plant Salvia miltiorrhiza.
+Salvia miltiorrhiza and its constituents, including sulfotanshinone, have been studied for their potential cardiovascular effects. They are reported to possess antioxidant, anti-inflammatory, and vasodilatory properties. Vasodilation refers to the widening or relaxation of blood vessels, leading to increased blood flow and potentially lowering blood pressure.
+
+
 
 # +
 # Create a DataFrame with drug-group mappings
@@ -473,7 +474,7 @@ if SIMPLE_MODEL_WITH_DRUGS:
     'Inhibitor' : 'bool',
     'Vasodilatory' : 'bool',
     're.admission.within.6.months': 'bool'})
-    
+
 
 # Result summary:
 # Increase.force.of.heart.contraction potrebbe essere che ha qualche info
