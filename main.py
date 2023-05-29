@@ -1673,9 +1673,41 @@ with open(str(OUTPUT_FOLDER / 'models.pkl'), 'wb') as handle:
 
 with open(str(OUTPUT_FOLDER / 'models.pkl'), 'rb') as handle:
     models = pickle.load(handle)
+
+
 # -
 
 # ## 3. Results
+
+# ### Cross-validation inspection
+
+# Let us analyze the evolution of the `LogisticRegression`
+
+# +
+def plot_cv_results(res, title=''):
+
+    m1 = res['mean_test_score']
+    s1 = res['std_test_score']
+    m2 = res['mean_train_score']
+    s2 = res['std_train_score']
+    
+    j1 = np.argmax(m1) # maximum value of AUC in terms of mean over the CV folds
+    
+    axisX = list(range(len(m1)))
+    plt.errorbar(axisX, m2, s2, label=f'train (AUC = {m2[j1]:.4f} ± {s2[j1]:.4f})')
+    plt.errorbar(axisX, m1, s1, label=f'validation (AUC = {m1[j1]:.4f} ± {s1[j1]:.4f})')
+
+    plt.plot(axisX[j1], m1[j1], 'ro', markersize=12)
+    plt.legend(loc='lower right')
+    plt.title(f'{title}')
+    
+
+fig, ax = plt.subplots(1, 1, figsize=(6,6))
+#plt.sca(ax[0])
+plot_cv_results(models['logistic_regression'].cv_results_, 'Training curves for the LR')
+plt.savefig(str(OUTPUT_FOLDER / 'crossvalidation_curve.pdf'), bbox_inches='tight')
+plt.show()
+# -
 
 # ### Model analysis
 
@@ -1692,23 +1724,26 @@ models['logistic_regression'].best_params_
 # = \beta_0 + \beta_1 X_1 + \cdots + \beta_p X_p
 # $$
 
-betas = models['logistic_regression'].best_estimator_.coef_[0]
-betas
+# +
+coeff = pd.DataFrame()
+coeff['feature'] = X_test_unscaled[final_features].columns
+coeff['beta'] = models['logistic_regression'].best_estimator_.coef_[0]
+coeff['exp_beta'] = np.exp(coeff['beta'])
+coeff = coeff.sort_values(by=['beta'])
+
+coeff
+# -
 
 # [This website](https://stats.oarc.ucla.edu/other/mult-pkg/faq/general/faq-how-do-i-interpret-odds-ratios-in-logistic-regression/) provides an insightful interpretation of the coefficients in a logistic regression model.
 
-fig, ax = plt.subplots(figsize=(8,8))
-coeff = pd.DataFrame()
-coeff['feature'] = X_test_unscaled[final_features].columns
-coeff['beta'] = betas
-coeff['exp_beta'] = np.exp(coeff['beta'])
-coeff = coeff.sort_values(by=['beta'])
+# +
+fig, ax = plt.subplots(figsize=(6,4))
+
 sns.barplot(data=coeff[abs(coeff.beta) > 0.00], x='beta', y='feature', color='c')
 plt.title('Coefficients in Logistic Regression')
-#plt.savefig(str(OUTPUT_FOLDER / 'feature_importance_weightsLogisticRegression.pdf'), bbox_inches='tight')
+plt.savefig(str(OUTPUT_FOLDER / 'feature_importance_weightsLogisticRegression.pdf'), bbox_inches='tight')
 plt.show()
-
-coeff
+# -
 
 # ### Classification performance
 
@@ -1770,52 +1805,9 @@ plt.axis([0, 1, 0, 1])
 plt.title('Precision Recall curve in Logistic Regression')
 plt.legend()
 plt.show()
-
-
 # -
 
-# ---
-
-# ### Training evolution
-
-# The `GridSearchCV` objects has the following useful attributes
-#
-# - `.cv_results_` which contains things such as `mean_test_AUC`, `std_test_AUC`, `std_train_AUC`, `mean_train_AUC`. List all of them with `pd.DataFrame(GridSearchCV.cv_results_.keys())`
-# - `.best_estimator_`
-# - `.best_params_`
-# - `.best_score_`
-#
-# For example let us analyze the evolution of one of the models
-
-# +
-def plot_cv_results(res, title=''):
-
-    m1 = res['mean_test_score']
-    s1 = res['std_test_score']
-    m2 = res['mean_train_score']
-    s2 = res['std_train_score']
-
-    axisX = list(range(len(m1)))
-    plt.errorbar(axisX, m1, s1, label='validation')
-    plt.errorbar(axisX, m2, s2, label='train')
-
-    j1 = np.argmax(m1) # maximum value of AUC in terms of mean over the CV folds
-
-    plt.plot(axisX[j1], m1[j1], 'ro', markersize=12)
-    plt.legend()
-    plt.title(f'{title}\nTrain: {m2[j1]:.4f} ± {s2[j1]:.4f}\nTest: {m1[j1]:.4f} ± {s1[j1]:.4f}')
-    
-
-fig, ax = plt.subplots(1, 2, figsize=(12,6))
-plt.sca(ax[0])
-plot_cv_results(models['logistic_regression'].cv_results_, 'Training curves for the LR')
-plt.sca(ax[1])
-plot_cv_results(models['random_forest'].cv_results_, 'Training curves for the RF')
-#plt.savefig(str(OUTPUT_FOLDER / 'crossvalidation_curve.pdf'), bbox_inches='tight')
-plt.show()
-# -
-
-# ### AUC and confusion matrices
+# ### Model comparison
 
 models['logistic_regression'].best_estimator_.__class__.__name__
 
