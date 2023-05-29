@@ -598,6 +598,11 @@ df = df.loc[~(df[cols_to_check] == True).any(axis=1)]
 # Now those columns are meaninglesse as they all have the same value, we'll remove them in the next section.
 
 # It also makes sense that if we want to predict the re-admission at 6 months, we have no knowledge neither at 3 months nor 28 days. Therefore we can drop these features as well.
+#
+# Before we do that, we save the re-admission withing 28 days and 3 months for a further development of this work.
+
+y_28d = df['re.admission.within.28.days']
+y_3m = df['re.admission.within.3.months']
 
 # +
 drop_cols = [
