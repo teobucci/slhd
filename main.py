@@ -1506,9 +1506,6 @@ test_encoded = pd.DataFrame(encoder.transform(X_test[cols_categorical]), columns
 # Concatenate the encoded features with the original numerical columns
 X_train = pd.concat([X_train.drop(cols_categorical, axis=1).reset_index(drop=True), train_encoded.reset_index(drop=True)], axis=1)
 X_test = pd.concat([X_test.drop(cols_categorical, axis=1).reset_index(drop=True), test_encoded.reset_index(drop=True)], axis=1)
-
-#with open(str(OUTPUT_FOLDER / 'encoder.pkl'), 'wb') as handle:
-#    pickle.dump(encoder, handle, protocol=pickle.HIGHEST_PROTOCOL)
 # -
 
 # ### Preprocessing numerical data
@@ -1555,16 +1552,6 @@ scaler = StandardScaler()
 
 X_train[cols_numerical] = scaler.fit_transform(X_train[cols_numerical])
 X_test[cols_numerical] = scaler.transform(X_test[cols_numerical])
-
-with open(str(OUTPUT_FOLDER / 'scaler.pkl'), 'wb') as handle:
-    pickle.dump(scaler, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
-# +
-# with open(str(OUTPUT_FOLDER / 'imputer.pkl'), 'rb') as handle:
-#     scaler = pickle.load(handle)
-# 
-# X_train[numerical_features] = scaler.transform(X_train[numerical_features])
-# X_test[numerical_features] = scaler.transform(X_test[numerical_features])
 # -
 
 # ### Imbalance
@@ -2125,7 +2112,8 @@ X = pd.concat([X.drop(cols_categorical, axis=1).reset_index(drop=True), X_encode
 #    pickle.dump(encoder, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
-
+# with open(str(OUTPUT_FOLDER / 'imputer.pkl'), 'rb') as handle:
+#     scaler = pickle.load(handle)
 
     
 # -
@@ -2133,11 +2121,7 @@ X = pd.concat([X.drop(cols_categorical, axis=1).reset_index(drop=True), X_encode
 final_model = LogisticRegression(max_iter=1000, penalty='l2', C=9, class_weight=class_weights)
 final_model.fit(X, y)
 
-#y_pred = (grid_search.predict_proba(X_test_unscaled[list(sfs.k_feature_names_)])[:,1] >= 0.5).astype(bool) # set threshold as 0.44
 y_score = final_model.predict_proba(X)[:,1]
-fpr, tpr, _ = roc_curve(y, y_score)
-roc_auc = auc(fpr, tpr)
-roc_auc
 
 # +
 #with open(str(OUTPUT_FOLDER / 'categorical_features.pkl'), 'wb') as handle:
