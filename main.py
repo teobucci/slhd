@@ -1713,6 +1713,18 @@ plt.savefig(str(OUTPUT_FOLDER / 'feature_selection_backward_logistic.pdf'), bbox
 plt.show()
 # -
 
+feature_idxs = [list(sfs_backward.subsets_[step]['feature_idx']) for step in sfs_backward.subsets_.keys()]
+feature_idxs.append([]) # append empty set
+added = []
+for idx in range(len(feature_idxs)-1):
+    added.append(np.setdiff1d(feature_idxs[idx], feature_idxs[idx+1])[0])
+added = np.flip(added)
+
+# Here are the features ordered by the one that was always kept to the one that was first removed (a sort of feature importance).
+
+removed_features = [selected_features[i] for i in added]
+removed_features
+
 # #### Forward selection
 
 sfs_forward = SequentialFeatureSelector(
