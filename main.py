@@ -431,8 +431,6 @@ if INCLUDE_DRUGS:
 
 df.info(memory_usage='deep')
 
-# Currently we're using 4.2 MB.
-
 # ### Setting the correct column type
 #
 # To reduce the memory usage and facilitate the overall performance, let's set properly the column types, starting by investigating which types Pandas has assigned to the columns.
@@ -537,8 +535,6 @@ if INCLUDE_DRUGS:
 
 df.info(memory_usage='deep')
 
-# We now use only 2.0 MB.
-#
 # Here is a recap of the columns types.
 
 df.info(verbose=True, show_counts=False)
