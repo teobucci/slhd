@@ -10,7 +10,6 @@ Project for the _Statistical Learning for Healthcare Data_ course held at Polite
   - [Prerequisites](#prerequisites)
   - [Cloning the Repository](#cloning-the-repository)
   - [Installing the Libraries](#installing-the-libraries)
-- [Folder Structure](#folder-structure)
 - [Usage](#usage)
 - [Final results](#final-results)
 - [Authors](#authors)
@@ -61,9 +60,11 @@ conda activate slhd
 conda install --file requirements.txt
 ```
 
-# Folder Structure
-
 # Usage
+
+The file TODO contains all the analysis.
+
+The final web app is [available here](https://teobucci-slhd-app-3iahgf.streamlit.app/).
 
 # Final results
 
