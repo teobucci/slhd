@@ -2054,8 +2054,6 @@ df_performance.to_latex(
 
 # Having assessed the performance of the model, refit on the entire dataset and export for the webapp
 
-final_features
-
 final_features_webapp = [
     'prothrombin.activity',
     'type.of.heart.failure',
@@ -2073,25 +2071,73 @@ final_features_webapp = [
     'dischargeDay'
 ]
 
+df = df.astype({
+    'DestinationDischarge': 'category',
+    'admission.ward': 'category',
+    'admission.way': 'category',
+    'occupation': 'category',
+    'discharge.department': 'category',
+    'type.of.heart.failure': 'category',
+    'NYHA.cardiac.function.classification': 'category',
+    'Killip.grade': 'category',
+    'type.II.respiratory.failure': 'category',
+    'oxygen.inhalation': 'category'
+})
+
 # +
 cols_numerical, cols_categorical = get_num_cat(df)
 cols_numerical = cols_numerical.tolist()
 cols_categorical = cols_categorical.tolist()
 cols_categorical.remove(target_var)
 
+X = df.drop([target_var], axis=1)
+y = df[target_var]
+
 imputer = KNNImputer(n_neighbors=5)
 X = pd.concat([pd.DataFrame(imputer.fit_transform(X[cols_numerical]), columns=cols_numerical).reset_index(), X[cols_categorical].reset_index()], axis=1)
+# -
 
 
+X = X[final_features_webapp]
+
+# Now I save all the information for the web app
+
+# +
+cols_numerical, cols_categorical = get_num_cat(X)
+
+with open(str(OUTPUT_FOLDER / 'cols_numerical.pkl'), 'wb') as handle:
+    pickle.dump(cols_numerical, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+with open(str(OUTPUT_FOLDER / 'cols_categorical.pkl'), 'wb') as handle:
+    pickle.dump(cols_categorical, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 # +
-X = X[final_features]
+def generate_column_info(dataframe):
+    column_info = {}
+    for column in dataframe.columns:
+        column_type = dataframe[column].dtype
+        if column_type == 'object' or pd.api.types.is_categorical_dtype(column_type):
+            unique_values = dataframe[column].unique().tolist()
+            column_info[column] = {"type": "category", "value": unique_values}
+        elif pd.api.types.is_bool_dtype(column_type):
+            unique_values = dataframe[column].unique().tolist()
+            column_info[column] = {"type": "binary", "value": unique_values}
+        elif pd.api.types.is_numeric_dtype(column_type):
+            min_value = dataframe[column].min()
+            max_value = dataframe[column].max()
+            if pd.api.types.is_integer_dtype(column_type):
+                column_info[column] = {"type": "integer", "value": [min_value, max_value]}
+            else:
+                column_info[column] = {"type": "continuous", "value": [min_value, max_value]}
+    return column_info
 
-# qui salva tutto
-# -
+# Generate column information dictionary
+column_info = generate_column_info(X)
 
-cols_numerical, cols_categorical = get_num_cat(X)
+# Dump into file
+with open(str(OUTPUT_FOLDER / 'column_info.pkl'), 'wb') as handle:
+    pickle.dump(column_info, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 # +
 # Initialize the OneHotEncoder
@@ -2106,51 +2152,14 @@ X_encoded = pd.DataFrame(encoder.transform(X[cols_categorical]), columns=encoder
 # Concatenate the encoded features with the original numerical columns
 X = pd.concat([X.drop(cols_categorical, axis=1).reset_index(drop=True), X_encoded.reset_index(drop=True)], axis=1)
 
-
-#with open(str(OUTPUT_FOLDER / 'encoder.pkl'), 'wb') as handle:
-#    pickle.dump(encoder, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
-
-# with open(str(OUTPUT_FOLDER / 'imputer.pkl'), 'rb') as handle:
-#     scaler = pickle.load(handle)
-
-    
+with open(str(OUTPUT_FOLDER / 'encoder.pkl'), 'wb') as handle:
+    pickle.dump(encoder, handle, protocol=pickle.HIGHEST_PROTOCOL)
 # -
 
-final_model = LogisticRegression(max_iter=1000, penalty='l2', C=9, class_weight=class_weights)
+# Fit using the entire dataset.
+
+final_model = LogisticRegression(max_iter=10000, penalty='l2', C=9, class_weight=class_weights)
 final_model.fit(X, y)
 
-y_score = final_model.predict_proba(X)[:,1]
-
-# +
-#with open(str(OUTPUT_FOLDER / 'categorical_features.pkl'), 'wb') as handle:
-#    pickle.dump(categorical_features, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
-#with open(str(OUTPUT_FOLDER / 'numerical_features.pkl'), 'wb') as handle:
-#    pickle.dump(numerical_features, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
-# def generate_column_info(dataframe):
-#     column_info = {}
-#     for column in dataframe.drop([target_var], axis=1).columns:
-#         column_type = dataframe[column].dtype
-#         if column_type == 'object' or pd.api.types.is_categorical_dtype(column_type):
-#             unique_values = dataframe[column].unique().tolist()
-#             column_info[column] = {"type": "category", "value": unique_values}
-#         elif pd.api.types.is_bool_dtype(column_type):
-#             unique_values = dataframe[column].unique().tolist()
-#             column_info[column] = {"type": "binary", "value": unique_values}
-#         elif pd.api.types.is_numeric_dtype(column_type):
-#             min_value = dataframe[column].min()
-#             max_value = dataframe[column].max()
-#             if pd.api.types.is_integer_dtype(column_type):
-#                 column_info[column] = {"type": "integer", "value": [min_value, max_value]}
-#             else:
-#                 column_info[column] = {"type": "continuous", "value": [min_value, max_value]}
-#     return column_info
-# 
-# # Generate column information dictionary
-# column_info = generate_column_info(df)
-# 
-# # Dump into file
-# with open(str(OUTPUT_FOLDER / 'column_info.pkl'), 'wb') as handle:
-#     pickle.dump(column_info, handle, protocol=pickle.HIGHEST_PROTOCOL)
+with open(str(OUTPUT_FOLDER / 'final_model.pkl'), 'wb') as handle:
+    pickle.dump(final_model, handle, protocol=pickle.HIGHEST_PROTOCOL)

@@ -1,40 +1,29 @@
 import pickle
 import streamlit as st
 import pandas as pd
-import shap
-import matplotlib.pyplot as plt
 import numpy as np
 
+classification_threshold = 0.5
+
 # Read the model using pickle
-with open('./output/pipeline_cv.pkl', 'rb') as f:
-    pipeline = pickle.load(f)
+with open('./output/final_model.pkl', 'rb') as f:
+    final_model = pickle.load(f)
 
 # Read encoder
 with open('./output/encoder.pkl', 'rb') as f:
     encoder = pickle.load(f)
-
-# Read imputer
-with open('./output/imputer.pkl', 'rb') as f:
-    imputer = pickle.load(f)
-
-# Read scaler
-with open('./output/scaler.pkl', 'rb') as f:
-    scaler = pickle.load(f)
 
 # Read file ccolumn_info with pkl
 with open('./output/column_info.pkl', 'rb') as f:
     column_info = pickle.load(f)
 
 # Read categorical features
-with open('./output/categorical_features.pkl', 'rb') as f:
-    categorical_features = pickle.load(f)
+with open('./output/cols_categorical.pkl', 'rb') as f:
+    cols_categorical = pickle.load(f)
 
 # Read numerical features
-with open('./output/numerical_features.pkl', 'rb') as f:
-    numerical_features = pickle.load(f)
-
-# Load the SHAP explainer
-explainer = shap.TreeExplainer(pipeline['random_forest'].best_estimator_.named_steps['classifier'])
+with open('./output/cols_numerical.pkl', 'rb') as f:
+    cols_numerical = pickle.load(f)
 
 input_data = {}
 
@@ -83,56 +72,29 @@ def main():
         new_data = pd.DataFrame(input_data, index=['user_input'])
 
         # Encode
-        new_data_encoded = pd.DataFrame(encoder.transform(new_data[categorical_features]), columns=encoder.get_feature_names_out(categorical_features))
-        new_data = pd.concat([new_data.drop(categorical_features, axis=1).reset_index(drop=True), new_data_encoded.reset_index(drop=True)], axis=1)
-
-        # Impute
-        new_data = pd.DataFrame(imputer.transform(new_data), columns = new_data.columns)
-
-        # Copy the data before scaling
-        new_data_unscaled = new_data.copy()
-
-        # Scale
-        new_data[numerical_features] = scaler.transform(new_data[numerical_features])
+        new_data_encoded = pd.DataFrame(encoder.transform(new_data[cols_categorical]), columns=encoder.get_feature_names_out(cols_categorical))
+        new_data = pd.concat([new_data.drop(cols_categorical, axis=1).reset_index(drop=True), new_data_encoded.reset_index(drop=True)], axis=1)
 
         # Predict class and probabilities
-        prediction = pipeline['random_forest'].best_estimator_.named_steps['classifier'].predict(new_data)
-        probabilities = pipeline['random_forest'].best_estimator_.named_steps['classifier'].predict_proba(new_data)[0][1]
+        y_score = final_model.predict_proba(new_data)[0][1]
+        y_pred = (y_score >= classification_threshold).astype(bool)
 
         # Display the prediction
         st.write("### Prediction")
-        st.write("The patient will be readmitted within 6 months: ", prediction[0])
+        st.write("The patient will be readmitted within 6 months: ", y_pred)
 
         # Display the prediction probabilities
         st.write("### Prediction probabilities")
 
         # Assign a string of risk based on the probability
-        if probabilities < 0.3:
+        if y_score < 0.3:
             output_string = "Low"
-        elif probabilities < 0.7:
+        elif y_score < 0.7:
             output_string = "Medium"
         else:
             output_string = "High"
         
-        st.write(f"Risk that the patient will be readmitted within 6 months: {output_string} ({np.round(probabilities, 2)}/1)")
-
-        # Display the SHAP explanations
-        st.write("### SHAP Explanations")
-
-        # Generate SHAP explanations
-        shap_values = explainer(new_data)
-
-        idx = 0
-        exp = shap.Explanation(
-            shap_values.values[:,:,1],
-            shap_values.base_values[:,1],
-            shap_values.data,
-            display_data=new_data_unscaled,
-            feature_names=new_data.columns)
-
-        fig = plt.figure()
-        shap.plots.waterfall(exp[idx], max_display=30)
-        st.pyplot(fig)
+        st.write(f"Risk that the patient will be readmitted within 6 months: {output_string} ({np.round(y_score, 2)}/1)")
 
 if __name__ == "__main__":
     main()
