@@ -274,8 +274,14 @@ target_var = 're.admission.within.6.months'
 
 # ### Drugs integration
 
+# We also have a dataset containing which drugs each patient took.
+
 df_drugs = pd.read_csv((DATA_FOLDER / "dat_md.csv"), index_col=1)
 df_drugs = df_drugs.drop(columns=df_drugs.columns[0], axis=1)
+
+df_drugs.head()
+
+# Inspect the unique drugs:
 
 pd.DataFrame(df_drugs['Drug_name'].unique(), columns=['name'])
 
@@ -306,7 +312,7 @@ pd.DataFrame(df_drugs['Drug_name'].unique(), columns=['name'])
 # - Atorvastatin calcium tablet
 # - Valsartan Dispersible tablet
 #
-# **Increse force of heart contraction**
+# **Increase force of heart contraction (IFHC)**
 #
 # - Digoxin tablet
 # - Dobutamine hydrochloride injection
@@ -316,74 +322,40 @@ pd.DataFrame(df_drugs['Drug_name'].unique(), columns=['name'])
 #
 
 
-# +
-# Create a DataFrame with drug-group mappings
-group_mapping = pd.DataFrame({
-    'Drug_name': [
-        'sulfotanshinone sodium injection',
-        'Furosemide tablet',
-        'Meglumine Adenosine Cyclophosphate for injection',
-        'Furosemide injection',
-        'Milrinone injection',
-        'Deslanoside injection',
-        'Torasemide tablet',
-        'Benazepril hydrochloride tablet',
-        'Atorvastatin calcium tablet',
-        'Digoxin tablet',
-        'Hydrochlorothiazide tablet',
-        'Spironolactone tablet',
-        'Valsartan Dispersible tablet',
-        'Dobutamine hydrochloride injection',
-        'Isoprenaline Hydrochloride injection',
-        'Nitroglycerin injection',
-        'Shenfu injection',
-        'Isosorbide Mononitrate Sustained Release tablet'
-    ],
-    'Group_name': [
-        'Vasodilatory',
-        'Diuretics',
-        'Vasodilatory',
-        'Diuretics',
-        'Vasodilatory',
-        'Vasodilatory',
-        'Diuretics',
-        'Inhibitor',
-        'Inhibitor',
-        'IFHC',
-        'Diuretics',
-        'Diuretics',
-        'Inhibitor',
-        'IFHC',
-        'Vasodilatory',
-        'Vasodilatory',
-        'Vasodilatory',
-        'Inhibitor'
-    ]
+df_drugs['Group_name'] = df_drugs['Drug_name'].map({
+    'sulfotanshinone sodium injection': 'Vasodilatory',
+    'Furosemide tablet': 'Diuretics',
+    'Meglumine Adenosine Cyclophosphate for injection': 'Vasodilatory',
+    'Furosemide injection': 'Diuretics',
+    'Milrinone injection': 'Vasodilatory',
+    'Deslanoside injection': 'Vasodilatory',
+    'Torasemide tablet': 'Diuretics',
+    'Benazepril hydrochloride tablet': 'Inhibitor',
+    'Atorvastatin calcium tablet': 'Inhibitor',
+    'Digoxin tablet': 'IFHC',
+    'Hydrochlorothiazide tablet': 'Diuretics',
+    'Spironolactone tablet': 'Diuretics',
+    'Valsartan Dispersible tablet': 'Inhibitor',
+    'Dobutamine hydrochloride injection': 'IFHC',
+    'Isoprenaline Hydrochloride injection': 'Vasodilatory',
+    'Nitroglycerin injection': 'Vasodilatory',
+    'Shenfu injection': 'Vasodilatory',
+    'Isosorbide Mononitrate Sustained Release tablet': 'Inhibitor'
 })
+df_drugs = df_drugs.astype({'Group_name': 'category'})
 
-
-# Perform a left join to map drug names to group names
-df_drugs.reset_index(inplace=True)
-df_drugs = df_drugs.merge(group_mapping, on='Drug_name', how='left')
-df_drugs.set_index('inpatient.number', inplace=True)
-
-# Replace missing group names with the original drug names
-#df_drugs['Drug_group'].fillna(df['Drug_name'], inplace=True)
-
-# Print the updated DataFrame
-df_drugs
-# -
+df_drugs.head()
 
 # Check if for each patient in the data set is recorded one or more drugs, check also if there is a record of a drug for a patient that is not present in the data set.
 
 # Check which patients are missing from the drugs dataframe
 missing_patients = ~df.index.isin(df_drugs.index)
-print('Missing patients from the drugs dataframe:')
+print('These patients did not take any drugs:')
 print(df[missing_patients].index)
 
 # Check the contrary (i.e. if there are entries in the drug dataframe that don't correspond to any patient in the main df)
 missing_drugs = ~df_drugs.index.isin(df.index)
-print('Missing patients from the patients dataframe:')
+print('These patients in the drugs dataframe are not in the original dataframe:')
 print(df_drugs[missing_drugs].index)
 
 # The following things have emerged from the analysis so far:
@@ -394,25 +366,26 @@ print(df_drugs[missing_drugs].index)
 # We aggregate this data using a pivot table, that allows us to analyze the occurrence of drugs for each patient.
 
 # Create a pivot table of drugs, with patients as rows and drugs as columns
-drug_pivot = df_drugs.drop(columns='Drug_name').pivot_table(index='inpatient.number', columns='Group_name', fill_value=0, aggfunc=lambda x: 1)
-drug_pivot.head()
+drugs_pivot = df_drugs.drop(columns='Drug_name').pivot_table(index='inpatient.number', columns='Group_name', fill_value=0, aggfunc=lambda x: 1).add_prefix('Drugs_')
+drugs_columns = drugs_pivot.columns
+drugs_pivot.head()
 
 # Merge the patient dataframe with the drug pivot table
-merged_df = pd.merge(df, drug_pivot, on='inpatient.number', how='left')
+merged_df = pd.merge(df, drugs_pivot, on='inpatient.number', how='left')
 merged_df.head()
 
 # Fill patients without any drug with No
-for drug_name in drug_pivot.columns:
+for drug_name in drugs_columns:
     merged_df[drug_name] = merged_df[drug_name].fillna(value=0)
 
 # Understand how frequently each drugs is used and if they are used in combination with others
 
 # +
 # Count the frequency of each drug
-drug_counts = merged_df[['Diuretics','IFHC','Inhibitor','Vasodilatory']].sum()
+drug_counts = merged_df[drugs_columns].sum()
 
 # Plotting the frequencies
-plt.figure(figsize=(8, 6))
+fig, ax = plt.subplots(figsize=(8, 6))
 sns.barplot(x=drug_counts.index, y=drug_counts.values)
 plt.title('Frequency of Drugs')
 plt.xlabel('Drugs')
@@ -425,8 +398,7 @@ plt.show()
 # This doesn't imply that they are less used.
 
 # +
-drug_columns = ['Diuretics','IFHC','Inhibitor','Vasodilatory']
-combination_frequency = merged_df[drug_columns].apply(lambda row: '_'.join([col for col, val in zip(drug_columns, row) if val]), axis=1).value_counts()
+combination_frequency = merged_df[drugs_columns].apply(lambda row: '_'.join([col for col, val in zip(drugs_columns, row) if val]), axis=1).value_counts()
 combination_frequency = combination_frequency.reset_index()
 
 # Rename the columns for clarity
@@ -446,27 +418,7 @@ plt.tight_layout()
 plt.show()
 # -
 
-# We start with a simple model in which we include medication and demographic data
-# TODO Spiegare meglio la scelta
-
-SIMPLE_MODEL_WITH_DRUGS = True
-
-if SIMPLE_MODEL_WITH_DRUGS:
-    df0 = merged_df[['occupation','gender','BMI','ageCat','Diuretics','IFHC','Inhibitor','Vasodilatory','re.admission.within.6.months']]
-    # Set the correct type
-    df0 = df0.astype({
-    'occupation': 'category',
-    'gender': 'category',
-    'ageCat' : 'category',
-    'Diuretics' : 'bool',
-    'IFHC' : 'bool',
-    'Inhibitor' : 'bool',
-    'Vasodilatory' : 'bool',
-    're.admission.within.6.months': 'bool'})
-
-
-# Result summary:
-# Increase.force.of.heart.contraction potrebbe essere che ha qualche info
+# To assess the importance of drugs, we proceed with our analysis using the merged dataframe, and since we'll implement feature selection methods, we'll be able to state the importance of this information.
 
 INCLUDE_DRUGS = True
 
@@ -531,94 +483,54 @@ for col, dtype in dtypes.items():
 # Now that we know what to correct, let's perform the changes
 
 # +
-if INCLUDE_DRUGS != True:
-    df = df.astype({
-        'DestinationDischarge': 'category',
-        'admission.ward': 'category',
-        'admission.way': 'category',
-        'occupation': 'category',
-        'discharge.department': 'category',
-        'gender': 'category',
-        'type.of.heart.failure': 'category',
-        'NYHA.cardiac.function.classification': 'category',
-        'Killip.grade': 'category',
-        'type.II.respiratory.failure': 'category',
-        'consciousness': 'category',
-        'respiratory.support.': 'category',
-        'oxygen.inhalation': 'category',
-        'outcome.during.hospitalization': 'category',
-        'ageCat': 'category',
-        'myocardial.infarction': 'bool',
-        'congestive.heart.failure': 'bool',
-        'peripheral.vascular.disease': 'bool',
-        'cerebrovascular.disease': 'bool',
-        'dementia': 'bool',
-        'Chronic.obstructive.pulmonary.disease': 'bool',
-        'connective.tissue.disease': 'bool',
-        'diabetes': 'bool',
-        'hemiplegia': 'bool',
-        'leukemia': 'bool',
-        'malignant.lymphoma': 'bool',
-        'solid.tumor': 'bool',
-        'AIDS': 'bool',
-        'acute.renal.failure': 'bool',
-        'death.within.28.days': 'bool',
-        're.admission.within.28.days': 'bool',
-        'death.within.3.months': 'bool',
-        're.admission.within.3.months': 'bool',
-        'death.within.6.months': 'bool',
-        're.admission.within.6.months': 'bool',
-        'moderate.to.severe.chronic.kidney.disease': 'bool',
-        'peptic.ulcer.disease': 'bool',
-        'liver.disease': 'bool'
-    })
+df = df.astype({
+    'DestinationDischarge': 'category',
+    'admission.ward': 'category',
+    'admission.way': 'category',
+    'occupation': 'category',
+    'discharge.department': 'category',
+    'gender': 'category',
+    'type.of.heart.failure': 'category',
+    'NYHA.cardiac.function.classification': 'category',
+    'Killip.grade': 'category',
+    'type.II.respiratory.failure': 'category',
+    'consciousness': 'category',
+    'respiratory.support.': 'category',
+    'oxygen.inhalation': 'category',
+    'outcome.during.hospitalization': 'category',
+    'ageCat': 'category',
+    'myocardial.infarction': 'bool',
+    'congestive.heart.failure': 'bool',
+    'peripheral.vascular.disease': 'bool',
+    'cerebrovascular.disease': 'bool',
+    'dementia': 'bool',
+    'Chronic.obstructive.pulmonary.disease': 'bool',
+    'connective.tissue.disease': 'bool',
+    'diabetes': 'bool',
+    'hemiplegia': 'bool',
+    'leukemia': 'bool',
+    'malignant.lymphoma': 'bool',
+    'solid.tumor': 'bool',
+    'AIDS': 'bool',
+    'acute.renal.failure': 'bool',
+    'death.within.28.days': 'bool',
+    're.admission.within.28.days': 'bool',
+    'death.within.3.months': 'bool',
+    're.admission.within.3.months': 'bool',
+    'death.within.6.months': 'bool',
+    're.admission.within.6.months': 'bool',
+    'moderate.to.severe.chronic.kidney.disease': 'bool',
+    'peptic.ulcer.disease': 'bool',
+    'liver.disease': 'bool'
+})
 
 if INCLUDE_DRUGS:
      df = df.astype({
-        'DestinationDischarge': 'category',
-        'admission.ward': 'category',
-        'admission.way': 'category',
-        'occupation': 'category',
-        'discharge.department': 'category',
-        'gender': 'category',
-        'type.of.heart.failure': 'category',
-        'NYHA.cardiac.function.classification': 'category',
-        'Killip.grade': 'category',
-        'type.II.respiratory.failure': 'category',
-        'consciousness': 'category',
-        'respiratory.support.': 'category',
-        'oxygen.inhalation': 'category',
-        'outcome.during.hospitalization': 'category',
-        'ageCat': 'category',
-        'myocardial.infarction': 'bool',
-        'congestive.heart.failure': 'bool',
-        'peripheral.vascular.disease': 'bool',
-        'cerebrovascular.disease': 'bool',
-        'dementia': 'bool',
-        'Chronic.obstructive.pulmonary.disease': 'bool',
-        'connective.tissue.disease': 'bool',
-        'diabetes': 'bool',
-        'hemiplegia': 'bool',
-        'leukemia': 'bool',
-        'malignant.lymphoma': 'bool',
-        'solid.tumor': 'bool',
-        'AIDS': 'bool',
-        'acute.renal.failure': 'bool',
-        'death.within.28.days': 'bool',
-        're.admission.within.28.days': 'bool',
-        'death.within.3.months': 'bool',
-        're.admission.within.3.months': 'bool',
-        'death.within.6.months': 'bool',
-        're.admission.within.6.months': 'bool',
-        'moderate.to.severe.chronic.kidney.disease': 'bool',
-        'peptic.ulcer.disease': 'bool',
-        'liver.disease': 'bool',
-         'Diuretics' : 'bool',
-        'IFHC' : 'bool',
-        'Inhibitor' : 'bool',
-        'Vasodilatory' : 'bool',
+        'Drugs_Diuretics': 'bool',
+        'Drugs_IFHC': 'bool',
+        'Drugs_Inhibitor': 'bool',
+        'Drugs_Vasodilatory': 'bool'
     })
-    
 # -
 
 # and see if there has been a memory reduce
@@ -635,7 +547,7 @@ df.info(verbose=True, show_counts=False)
 
 df.shape
 
-# We have 2008 patients and 165 variables.
+# We have 2008 patients and 165 variables + 4 drugs groups.
 
 # ### Removing duplicates
 
