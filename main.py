@@ -1667,6 +1667,16 @@ for name, model in models_config.items():
     print('-'*80)
 # -
 
+# Save for later
+
+# +
+# with open(str(OUTPUT_FOLDER / 'models.pkl'), 'wb') as handle:
+#     pickle.dump(models, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+with open(str(OUTPUT_FOLDER / 'models.pkl'), 'rb') as handle:
+    models = pickle.load(handle)
+# -
+
 # ## 3. Results
 
 # ### Model analysis
@@ -1767,17 +1777,6 @@ plt.show()
 # -
 
 # ---
-
-# Save for later
-
-# +
-# with open(str(OUTPUT_FOLDER / 'pipeline_cv.pkl'), 'wb') as handle:
-#     pickle.dump(pipeline_cv, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
-# +
-#with open(str(OUTPUT_FOLDER / 'pipeline_cv.pkl'), 'rb') as handle:
-#    pipeline_cv = pickle.load(handle)
-# -
 
 # ### Training evolution
 
