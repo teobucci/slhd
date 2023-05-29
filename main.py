@@ -1921,17 +1921,23 @@ shap_values = explainer(new_data)
 
 # Having assessed the performance of the model, refit on the entire dataset and export for the webapp
 
-final_features = [
-    'monocyte.count',
-    'creatinine.enzymatic.method',
-    'basophil.count',
-    'international.normalized.ratio',
-    'lactate',
-    'D.dimer',
-    'occupation',
+final_features
+
+final_features_webapp = [
+    'prothrombin.activity',
     'type.of.heart.failure',
-    'dischargeDay',
-    'diabetes'
+    'basophil.ratio',
+    'NYHA.cardiac.function.classification',
+    'basophil.count',
+    'partial.pressure.of.carbon.dioxide',
+    'D.dimer',
+    'international.normalized.ratio',
+    'monocyte.count',
+    'sodium',
+    'occupation',
+    'creatinine.enzymatic.method',
+    'diabetes',
+    'dischargeDay'
 ]
 
 # +
