@@ -1809,10 +1809,8 @@ plt.show()
 
 # ### Model comparison
 
-models['logistic_regression'].best_estimator_.__class__.__name__
-
 # +
-fig, axes = plt.subplots(nrows=2, ncols=4, figsize=(16,7))#, height_ratios = [1,3])
+fig, axes = plt.subplots(nrows=2, ncols=3, figsize=(12,7))#, height_ratios = [1,3])
 axes = axes.flatten()
 
 rows = []
@@ -1822,8 +1820,8 @@ roc_details = {}
 for name, model in models.items():
 
     # Make predictions on the testing set
-    #y_pred = pipeline.predict(X_test)
-    y_pred = (model.predict_proba(X_test_sfs)[:,1] >= 0.5).astype(bool) # set threshold as 0.44
+    y_score = model.predict_proba(X_test_unscaled[final_features])[:,1]
+    y_pred = (y_score >= classification_threshold).astype(bool)
 
     # Calculate the confusion matrix
     cm = confusion_matrix(y_test, y_pred)
@@ -1838,12 +1836,11 @@ for name, model in models.items():
     axes[i].set_ylabel('True label')
 
     # Calculate the ROC curve
-    y_score = model.predict_proba(X_test_sfs)[:,1]
     fpr, tpr, _ = roc_curve(y_test, y_score)
     roc_auc = auc(fpr, tpr)
 
     # Save for later
-    roc_details[model.__class__.__name__] = {
+    roc_details[model.best_estimator_.__class__.__name__] = {
         'fpr': fpr,
         'tpr': tpr,
         'roc_auc': roc_auc
@@ -1851,8 +1848,8 @@ for name, model in models.items():
 
     # Save for later
     row = {
-        'Model': model.__class__.__name__,
-        'ROC AUC': roc_auc,
+        'Model': model.best_estimator_.__class__.__name__,
+        'AUC': roc_auc,
     }
 
     # Append the row to the list
@@ -1886,7 +1883,7 @@ plt.show()
 # -
 
 df_performance = pd.DataFrame(rows)
-df_performance = df_performance.sort_values('ROC AUC', ascending=False)
+df_performance = df_performance.sort_values('AUC', ascending=False)
 df_performance
 
 df_performance.to_latex(
