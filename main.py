@@ -1465,9 +1465,6 @@ df.shape
 
 # ### Modeling
 
-if SIMPLE_MODEL_WITH_DRUGS:
-    df = df0
-
 cols_numerical, cols_categorical = get_num_cat(df)
 
 # Make sure the values of categorical don't contain strange characters, because after encoding this might break XGBoost, specifically the `ageCat` variable.
@@ -1688,6 +1685,8 @@ if not 'diabetes_True' in selected_features:
 selected_features
 # -
 
+len(selected_features)
+
 # #### Backward selection
 
 # Let's perform backward selection on another `LogisticRegression`
@@ -1708,7 +1707,7 @@ sfs_backward = SequentialFeatureSelector(
 plot_sfs(sfs_backward.get_metric_dict(), kind='std_dev',figsize=(10, 8))
 
 plt.title('Sequential Backward Selection')
-plt.xticks(np.arange(0, 70, 5))
+plt.xticks(np.arange(0, 75, 5))
 plt.grid()
 plt.savefig(str(OUTPUT_FOLDER / 'feature_selection_backward_logistic.pdf'), bbox_inches='tight')
 plt.show()
