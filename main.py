@@ -2,9 +2,9 @@
 #
 # Project for the _Statistical Learning for Healthcare Data_ (056867) course held at Politecnico di Milano in the academic year 2022/2023 by Professor Manuela Ferrario and Professor Anna Maria Paganoni.
 #
-# **It is recommended to [view this notebook in nbviewer](https://nbviewer.org/) for the best viewing experience.**
+# It is recommended to [**view this notebook in nbviewer**](https://nbviewer.org/) for the best viewing experience.
 #
-# **You can also [execute the code in this notebook on Binder](https://mybinder.org/) - no local installation required.**
+# You can also [execute the code in this notebook on Binder](https://mybinder.org/) - no local installation required.
 #
 # Authors:
 #
@@ -16,7 +16,12 @@
 #
 # ### Explanation of the problem and objective
 #
-# The goal of this problem is to predict the readmission at 6 months from a dataset TODO scrivere bene la descrizione dell'obiettivo e in cosa consiste il dataset, cos'è ogni riga.
+#
+# Heart Failure (HF) is a prevalent condition with high readmission rates: the literature states that the number of HF cases worldwide almost doubled from 33.5 million in 1990 to 64.3 million in 2017.
+#
+# Studies also suggest that half of the patients diagnosed with HF will be re-admitted once within a year and 20% will be re-admitted twice or more.
+#
+# The focus of this analysis is on predicting the readmission within 6 months for HF patients.
 #
 # ### Data description
 #
@@ -192,7 +197,7 @@
 # | 166 | ageCat                                                        | ageCat:the age is categorized in decades                                                                                                                                                                                                                                                                            |
 #
 
-# ## 2. Data Exploration and Cleaning
+# ## 2. Materials and Methods
 #
 # ### Importing necessary libraries and dataset
 #
@@ -210,6 +215,7 @@ import matplotlib.pyplot as plt
 # %matplotlib inline
 # %config InlineBackend.figure_format='retina'
 
+from sklearn.feature_selection import SelectFromModel
 from sklearn.model_selection import train_test_split, GridSearchCV, StratifiedKFold
 # from sklearn.model_selection import cross_val_score, cross_val_predict
 # from sklearn.experimental import enable_iterative_imputer
@@ -221,7 +227,7 @@ from sklearn.tree import DecisionTreeClassifier, export_graphviz
 from sklearn.ensemble import RandomForestClassifier, BaggingClassifier, AdaBoostClassifier
 # from sklearn.svm import SVC, LinearSVC
 from sklearn.metrics import confusion_matrix, roc_curve, auc, precision_recall_curve
-from sklearn.metrics import accuracy_score, make_scorer, cohen_kappa_score
+from sklearn.metrics import accuracy_score, make_scorer, cohen_kappa_score, classification_report
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
@@ -240,18 +246,18 @@ from IPython.display import Image
 from mlxtend.plotting import plot_confusion_matrix
 # -
 
-# Fix the seed for later
+# Fix the seed for reproducibility later.
 
 SEED = 42
 
-# Use the `pipreqs` library to produce a better `requirements.txt`
+# Use the `pipreqs` library to produce a `requirements.txt`
 
 # +
 # #!pipreqsnb . --force
 # #!pipreqs . --force
 # -
 
-# Create an output folder for pickle files and figures
+# Create an output folder for pickle files and figures.
 
 OUTPUT_FOLDER = Path() / 'output'
 OUTPUT_FOLDER.mkdir(parents=True, exist_ok=True)
@@ -485,7 +491,7 @@ if INCLUDE_DRUGS:
 
 # ### Information about the memory usage
 #
-# We check the memory usage of the dataframe.
+# We check the memory usage of the `DataFrame`.
 
 df.info(memory_usage='deep')
 
@@ -643,21 +649,34 @@ df.info(verbose=True, show_counts=False)
 
 # Check the shape of the dataset
 
-df_shape = df.shape
-df_shape
+df.shape
+
+# We have 2008 patients and 165 variables.
+
+# ### Removing duplicates
+
+# Remove duplicates rows if there are any.
+
+n_duplicates = df.duplicated().sum()
+if not n_duplicates == 0:
+    print(f"Removing {n_duplicates} duplicate rows")
+    df = df.drop_duplicates()
+else:
+    print("No duplicate rows found. All good!")
+
+# ### Removing inconsistencies
+
+# We check if there are inconsistencies by looking at two variables: `DestinationDischarge` and `outcome.during.hospitalization`, when the first is `Died` the second should be `Dead` and vice-versa, therefore we remove patients with this inconsistency.
+
+df[(df['DestinationDischarge'] == 'Died') & (df['outcome.during.hospitalization'] != 'Dead')]
+
+df[(df['DestinationDischarge'] != 'Died') & (df['outcome.during.hospitalization'] == 'Dead')]
+
+df = df.drop(df[(df['DestinationDischarge'] == 'Died') & (df['outcome.during.hospitalization'] != 'Dead')].index)
+df = df.drop(df[(df['DestinationDischarge'] != 'Died') & (df['outcome.during.hospitalization'] == 'Dead')].index)
 
 # ### Removing outcome-related variables
-
-# Patients that were readmitted within 6 months.
-
-df.loc[df['re.admission.within.6.months'] == 1].shape[0]
-
-# Inconsistencies
-
-df.loc[((df['DestinationDischarge'] != 'Died') & (df['outcome.during.hospitalization'] == 'Dead'))]
-
-df.loc[((df['DestinationDischarge'] == 'Died') & (df['outcome.during.hospitalization'] != 'Dead')), 'death.within.6.months']
-
+#
 # Since we're interested in predicting the re-admission at 6 months, it's important to have a look at the following features:
 # - `death.within.28.days`
 # - `re.admission.within.28.days`
@@ -670,85 +689,25 @@ df.loc[((df['DestinationDischarge'] == 'Died') & (df['outcome.during.hospitaliza
 # - `return.to.emergency.department.within.6.months`
 # - `time.to.emergency.department.within.6.months`
 #
-# Given that some patients died before the 6 months, such patients present a target of `0` since they haven't been re-admitted, not because they're healthy, but the exact opposite. Thus keeping them together with living healthy patients doesn't make sense.
-
-# Obviously, since the death within 28 days implies the death within 3 months and the non-readmission after 6 months, we can expect these variables to be highly correlated. To further prove our intuition, we can consider the binary variables (i.e. excluding the non-`time` related ones in this set) and plot a matrix with the pairwise Cohen's kappa coefficient, as a measure to the concordance of them.
-
-# +
-cols_to_check = [
-    'death.within.28.days',
-    're.admission.within.28.days',
-    'death.within.3.months',
-    're.admission.within.3.months',
-    'death.within.6.months',
-    're.admission.within.6.months'
-]
-
-data = df[cols_to_check] # take only binary variables
-
-data = data.dropna()
-
-# Create an empty table to hold the Cohen scores
-score_table = pd.DataFrame(columns=data.columns, index=data.columns)
-
-# +
-# Loop over every pair of variables in the dataset
-for i in range(len(data.columns)):
-    for j in range(i+1, len(data.columns)):
-        # Calculate the Cohen score between the ith and jth variables
-        score = cohen_kappa_score(data.iloc[:,i], data.iloc[:,j])
-
-        # Add the score to the score table
-        score_table.iloc[i,j] = score
-        score_table.iloc[j,i] = score
-
-score_table = score_table.fillna(1)
-
-# +
-threshold = 0.3
-mask = np.triu(np.ones_like(score_table, dtype=bool), k=0) | (np.abs(score_table) <= threshold)
-
-# Print the score table
-fig, ax = plt.subplots(figsize=(4, 4))
-sns.heatmap(score_table,
-            annot=True, fmt='.2f',
-            mask=mask,
-            cmap='coolwarm', center=0, cbar=True,
-            linewidths=.5,
-            ax=ax)
-ax.set_aspect("equal")
-plt.title("Agreement matrix")
-plt.show()
-# -
-
-# The deaths are highly correlated for the aforementioned reason, so following the previous motivation, we remove the dead patients.
+# Given that some patients died before the 6 months, such patients present a target of `0` since they haven't been re-admitted, not because they're healthy, but the exact opposite. Thus keeping them together with living healthy patients doesn't make sense: we remove the dead patients.
 
 # +
 # specify the columns to check for True values
-cols_to_check = ['death.within.28.days', 'death.within.3.months', 'death.within.6.months']
+cols_to_check = [
+    'death.within.28.days',
+    'death.within.3.months',
+    'death.within.6.months'
+]
 
 # remove rows where at least one of the specified columns is True
 df = df.loc[~(df[cols_to_check] == True).any(axis=1)]
 # -
 
-# We have removed this number patients:
-
-df_shape[0] - df.shape[0]
-
-# Update df_shape
-df_shape = df.shape
-
-# Now those columns are meaninglesse as they all have the same value, and we can remove them.
-
-drop_cols = [
-    'death.within.28.days',
-    'death.within.3.months',
-    'death.within.6.months'
-]
-df = df.drop(drop_cols, axis=1)
+# Now those columns are meaninglesse as they all have the same value, we'll remove them in the next section.
 
 # It also makes sense that if we want to predict the re-admission at 6 months, we have no knowledge neither at 3 months nor 28 days. Therefore we can drop these features as well.
 
+# +
 drop_cols = [
     're.admission.within.28.days',
     're.admission.within.3.months',
@@ -757,24 +716,65 @@ drop_cols = [
     'return.to.emergency.department.within.6.months',
     'time.to.emergency.department.within.6.months',
 ]
+
 df = df.drop(drop_cols, axis=1)
+# -
 
-# Update df_shape
-df_shape = df.shape
+df.shape
 
-# ### Checking for duplicates
 
-# Check if there are duplicate rows.
+# Create an utility to quickly get the names of numerical and categorical features.
 
-assert df.duplicated().sum() == 0
+def get_num_cat(dataframe):
+    return dataframe.select_dtypes(include=['float64', 'int64']).columns, dataframe.select_dtypes(include=['category', 'bool']).columns
+
+
+# ### Removing low-variance variables
+
+cols_numerical, cols_categorical = get_num_cat(df)
+
+# Removing categorical variables with 95% dominance.
+
+# +
+frequencies = df[cols_categorical].apply(pd.Series.value_counts)
+
+dominant_categories = frequencies.idxmax()
+
+threshold = 0.95
+
+drop_cols = []
+for variable, dominant_category in dominant_categories.items():
+    dominant_frequency = frequencies.loc[dominant_category, variable] / df[cols_categorical].shape[0]
+    if dominant_frequency > threshold:
+        drop_cols.append(variable)
+
+drop_cols
+# -
+
+df = df.drop(drop_cols, axis=1)
+cols_numerical, cols_categorical = get_num_cat(df)
+
+# Removing numerical variables with 0 variance, i.e. constant variables.
+
+# +
+from sklearn.feature_selection import VarianceThreshold
+
+selector = VarianceThreshold(threshold=0)
+selector.fit(df[cols_numerical])
+
+const_col = [column for column in cols_numerical 
+          if column not in cols_numerical[selector.get_support()]]
+
+const_col
+# -
+
+df = df.drop(const_col, axis=1)
+cols_numerical, cols_categorical = get_num_cat(df)
+
 
 # ### Checking for missing values
 
 # Identify categorical and numerical variables
-
-df_categorical = df.select_dtypes(include=['category', 'bool'])
-df_numerical = df.select_dtypes(include=['float64', 'int64'])
-
 
 # +
 def get_percentage_missing(df):
@@ -784,11 +784,10 @@ def get_percentage_missing(df):
     list_vars = list_vars[list_vars != 0]
     return list_vars
 
-names = ['numerical', 'categorical']
-numerical_missing = get_percentage_missing(df_numerical)
-categorical_missing = get_percentage_missing(df_categorical)
+numerical_missing = get_percentage_missing(df[cols_numerical])
+categorical_missing = get_percentage_missing(df[cols_categorical])
 
-for name, features in zip(names, [numerical_missing, categorical_missing]):
+for name, features in zip(['numerical', 'categorical'], [numerical_missing, categorical_missing]):
     print(f"Among the {name} features, {len(features)} contain missing values")
 # -
 
@@ -807,9 +806,7 @@ df.occupation = imputer.fit_transform(df.occupation.values.reshape(-1,1))[:,0]
 
 df = df.astype({'occupation': 'category'})
 
-# Update categorical and numerical dataframes
-df_categorical = df.select_dtypes(include=['category', 'bool'])
-df_numerical = df.select_dtypes(include=['float64', 'int64'])
+cols_numerical, cols_categorical = get_num_cat(df)
 
 
 # #### Numerical
@@ -842,71 +839,26 @@ plt.savefig(str(OUTPUT_FOLDER / 'missing_values_percentages.pdf'), bbox_inches='
 plt.show()
 # -
 
-# The variable `body.temperature.blood.gas` has 51% missing values, but the non-missing ones are all `37`, we can remove it.
-
-print("Variable body.temperature.blood.gas")
-print("Missing percentage:", np.round(numerical_missing['body.temperature.blood.gas'], 2))
-print("Unique values:", df_numerical['body.temperature.blood.gas'].unique())
-
-# Drop column body.temperature.blood.gas
-df = df.drop('body.temperature.blood.gas', axis=1)
-# Update numerical df
-df_numerical = df.select_dtypes(include=['float64', 'int64'])
-numerical_missing = get_percentage_missing(df_numerical)
-
 # We delete variables with a missing percentage higher than 60% without hesitation.
 
 threshold = 0.60
 
 missing_cols = numerical_missing[numerical_missing>(threshold*100)].index.tolist()
 print(f'Columns with % of NaNs greater than {threshold:.0%}:')
-print(missing_cols)
+missing_cols
 
-# +
-limitPer = len(df.index) * (1-threshold)
-
-# Drop rows (keep only rows with at least `thresh` non-NA
-df = df.dropna(thresh=limitPer, axis=1)
-
-# Update numerical df
-df_numerical = df.select_dtypes(include=['float64', 'int64'])
-numerical_missing = get_percentage_missing(df_numerical)
-# -
+df = df.drop(missing_cols, axis=1)
+cols_numerical, cols_categorical = get_num_cat(df)
+numerical_missing = get_percentage_missing(df[cols_numerical])
 
 # Variables with missingness between 50%-60% deserve a closer look, because they are many and we don't want to discard too much information. Let us plot their correlation matrix, clustered using hierarchical clustering to see a better block structure.
 
-missing_cols = numerical_missing[(numerical_missing>50) & (numerical_missing<60)].index.tolist()
+cols_numerical_missing = numerical_missing[(numerical_missing>50) & (numerical_missing<60)].index.tolist()
 print(f'Columns with % of NaNs between 50% and 60%:')
-print(missing_cols)
+cols_numerical_missing
 
 
-def plot_clustered_correlation_matrix(dataframe, name='clustered_correlation_matrix'):
-    
-    corr_matrix = dataframe.corr()
-    
-    # Use correlation matrix as distance
-    pdist = spc.distance.pdist(abs(corr_matrix.values))
-
-    linkage = spc.linkage(pdist, method='complete')
-    idx = spc.fcluster(linkage, 0.5 * pdist.max(), 'distance')
-
-    columns = [dataframe.columns.tolist()[i] for i in list((np.argsort(idx)))]
-    dataframe = dataframe.reindex(columns, axis=1)
-
-    corr_matrix = dataframe.corr()
-
-    # Create a correlation heatmap
-    plt.figure(figsize=(20, 15))
-    sns.heatmap(corr_matrix, annot=False, vmin=-1, vmax=1, cmap='RdBu_r') # 'bwr' 'coolwarm'
-    plt.title('Correlation Heatmap')
-    plt.savefig(str(OUTPUT_FOLDER / str(name+'.pdf')), bbox_inches='tight')
-    plt.show()
-
-
-plot_clustered_correlation_matrix(df_numerical[missing_cols], name='clustered_correlation_matrix1')
-
-
-# Some blocks can be identified. To decide whether it is useful to keep some of these variables we check whether they are highly correlated with variables with a lower percentage of NaN, which would therefore be a better choice.
+# To decide whether it is useful to keep some of these variables we check whether they are highly correlated with variables with a lower percentage of NaN, which would therefore be a better choice.
 
 def analyze_correlation(df, columns, threshold=0.8):
 
@@ -947,52 +899,60 @@ def analyze_correlation(df, columns, threshold=0.8):
     return output
 
 
-df_correlation_analysis = analyze_correlation(df_numerical,missing_cols) 
+# For each of the variables with 50%-60% missingness, we have the column in the sub-50% to which it's most correlated, and with which value (and a threshold).
+
+df_correlation_analysis = analyze_correlation(df[cols_numerical], cols_numerical_missing) 
 df_correlation_analysis
 
 # Extract columns with a correlation above a threshold
-columns_to_drop = df_correlation_analysis[df_correlation_analysis['most_correlated_column'].notnull()].index.tolist()
-columns_to_drop
+drop_cols = df_correlation_analysis[df_correlation_analysis['most_correlated_column'].notnull()].index.tolist()
+drop_cols
+
+df = df.drop(drop_cols, axis=1)
+cols_numerical, cols_categorical = get_num_cat(df)
+numerical_missing = get_percentage_missing(df[cols_numerical])
+cols_numerical_missing = numerical_missing[(numerical_missing>50) & (numerical_missing<60)].index.tolist()
+
+
+# Let's see the correlation withing the 50%-60% group.
+
+def plot_clustered_correlation_matrix(dataframe, name='clustered_correlation_matrix'):
+    
+    corr_matrix = dataframe.corr()
+    
+    # Use correlation matrix as distance
+    pdist = spc.distance.pdist(abs(corr_matrix.values))
+
+    linkage = spc.linkage(pdist, method='complete')
+    idx = spc.fcluster(linkage, 0.5 * pdist.max(), 'distance')
+
+    columns = [dataframe.columns.tolist()[i] for i in list((np.argsort(idx)))]
+    dataframe = dataframe.reindex(columns, axis=1)
+
+    corr_matrix = dataframe.corr()
+
+    # Create a correlation heatmap
+    plt.figure(figsize=(20, 15))
+    sns.heatmap(corr_matrix, annot=False, vmin=-1, vmax=1, cmap='RdBu_r') # 'bwr' 'coolwarm'
+    plt.title('Correlation Heatmap')
+    plt.savefig(str(OUTPUT_FOLDER / str(name+'.pdf')), bbox_inches='tight')
+    plt.show()
+
+
+plot_clustered_correlation_matrix(df[cols_numerical_missing], name='clustered_correlation_matrix1')
+
+# Since we can see a very correlated block of 4 variables in the upper-left corner, mostly related to oxygen level, let's just keep `oxygen.saturation`.
 
 # +
-# Drop columns
-df = df.drop(columns=columns_to_drop)
+drop_cols = [
+    'oxyhemoglobin',
+    'reduced.hemoglobin',
+    'partial.oxygen.pressure'
+]
 
-# Update numerical df
-df_numerical = df.select_dtypes(include=['float64', 'int64'])
+df = df.drop(drop_cols, axis=1)
+cols_numerical, cols_categorical = get_num_cat(df)
 # -
-
-# Let's see how much we reduced the missing columns
-
-numerical_missing = get_percentage_missing(df_numerical)
-missing_cols = numerical_missing[(numerical_missing>50) & (numerical_missing<60)].index.tolist()
-
-plot_clustered_correlation_matrix(df_numerical[missing_cols], name='clustered_correlation_matrix2')
-
-# We see less variables and less blocks, one last thing is we can interal variables from the missing values, such as 2 out of the 3 in the upper-left block. Let us keep just `oxygen.saturation`
-
-# +
-# Drop columns
-df = df.drop(columns=['oxyhemoglobin', 'reduced.hemoglobin'])
-
-# Update numerical df
-df_numerical = df.select_dtypes(include=['float64', 'int64'])
-# -
-
-# ### Checking for mono-value columns
-
-# And check for columns with all the same value, which are then not significant.
-
-same_cols = df.columns[df.apply(lambda x: len(x.unique()) == 1)].tolist()
-print('Columns with all the same value:', same_cols)
-df = df.drop(same_cols, axis=1)
-
-# Update the categorical and numerical versions of the dataframe
-
-# Update numerical and categorical df
-df_categorical = df.select_dtypes(include=['category', 'bool'])
-df_numerical = df.select_dtypes(include=['float64', 'int64'])
-
 
 df.shape
 
@@ -1002,9 +962,9 @@ df.shape
 
 # Let us plot them in a big grid to have an understanding of the distribution of numerical variables.
 
-len(df_numerical.columns)
+len(cols_numerical)
 
-df_numerical.hist(layout=(24,4), figsize=(15,80))
+df[cols_numerical].hist(layout=(24,4), figsize=(15,80))
 plt.show()
 
 # #### Outlier detection
@@ -1054,7 +1014,7 @@ col_inspect = [
     'dischargeDay'
 ]
 
-df_numerical[col_inspect].boxplot()
+df[col_inspect].boxplot()
 plt.title('Boxplot of a subset of Numerical Features')
 plt.tick_params(axis='x', labelrotation=90)
 plt.show()
@@ -1354,7 +1314,7 @@ df.loc[df['triglyceride'] > 10, 'triglyceride'] = np.nan
 
 get_outliers(df, 'dischargeDay', threshold=8)
 
-df_numerical = df.select_dtypes(include=['float64', 'int64'])
+cols_numerical, cols_categorical = get_num_cat(df)
 
 
 # #### More in-depth study for some numerical features
@@ -1380,39 +1340,44 @@ def check_histogram_bins(data, numerical_features,threshold=0.9):
     return selected_features
 
 
-inspect_columns = check_histogram_bins(df_numerical,df_numerical.columns)
+col_inspect = check_histogram_bins(df[cols_numerical], cols_numerical)
 
-# visit.times, eye.opening, verabal.response, movement and GCS are discerete numerical variable and it's therefore reasonable that a lot of patients are characterised by the same value.
+# `visit.times`, `eye.opening`, `verbal.response`, `movement` and `GCS` are discerete numerical variable and it's therefore reasonable that a lot of patients are characterised by the same value.
 # Discard them from the suspicious columns.
 
-inspect_columns.remove('visit.times')
-inspect_columns.remove('eye.opening')
-inspect_columns.remove('verbal.response')
-inspect_columns.remove('movement')
-inspect_columns.remove('GCS')
+col_inspect.remove('visit.times')
+col_inspect.remove('eye.opening')
+col_inspect.remove('verbal.response')
+col_inspect.remove('movement')
+col_inspect.remove('GCS')
 
 # Plot with more bins
 
-df_numerical[inspect_columns].hist(layout=(3,3), figsize=(10,10), bins=20)
+df[col_inspect].hist(layout=(3,3), figsize=(10,10), bins=20)
 plt.show()
 
 # The problem with these variables is not trivial: it's likely that part of them was inserted in a different unit of measure, however they are marked in the top important variables in many models. We decide to just keep them as is, but this range it's really likely it will affect scaling.
 
 # #### Barplot of categorical variables
 
+target_var = 're.admission.within.6.months'
+
+# Plot the categorical variables, except the target.
+
 # +
-col_inspect = df_categorical.columns
+col_inspect = cols_categorical.values.tolist()
+col_inspect.remove(target_var)
 #col_inspect = ['Killip.grade', 'ageCat']
 
 # Adjust subplots and figsize
-fig, axes = plt.subplots(7, 5,figsize=[15,20])
+fig, axes = plt.subplots(4, 5,figsize=[15,15])
 axes = axes.flatten()
 
 for idx, col_name in enumerate(col_inspect):
     plt.sca(axes[idx]) # set the current Axes
     #plt.hist(df_categorical[x],density=True)
-    sns.countplot(x = col_name, data = df_categorical, palette = 'magma')
-    plt.xticks(fontsize=8, rotation = 45) # Rotates X-Axis Ticks by 45-degrees
+    sns.countplot(x=col_name, data=df, palette='magma')
+    plt.xticks(fontsize=8, rotation=45) # Rotates X-Axis Ticks by 45-degrees
     plt.ylabel('')
     plt.title(col_name)
 
@@ -1420,16 +1385,44 @@ fig.tight_layout()
 plt.show()
 # -
 
-age_counts = df_categorical.ageCat.value_counts()
-age_5989 = age_counts['(59,69]']+age_counts['(69,79]']+age_counts['(79,89]']
+# Plot the target.
+
+fig, axes = plt.subplots(figsize=[4,4])
+sns.countplot(x=target_var, data=df, palette='magma')
+plt.xticks(fontsize=8, rotation=45) # Rotates X-Axis Ticks by 45-degrees
+plt.ylabel('')
+plt.title(target_var)
+plt.show()
+
+n_pos = df.loc[df['re.admission.within.6.months'] == 1].shape[0]
+n_neg = df.loc[df['re.admission.within.6.months'] == 0].shape[0]
+print(f'Number of patients that were readmitted within 6 months: {n_pos}, i.e. {n_pos/len(df.index):.2%}')
+print(f'Number of patients that were not readmitted within 6 months: {n_neg}, i.e. {n_neg/len(df.index):.2%}')
+
+age_counts = df.ageCat.value_counts()
+age_5989 = age_counts['(59,69]'] + age_counts['(69,79]'] + age_counts['(79,89]']
 print(f"Total and percentage in the age range 59-89: {age_5989} {age_5989/len(df.index):.2%}")
 
-gender_counts = df_categorical.gender.value_counts()
+# `ageCat` is actually a numerical variable divided into bins, but it's ordinal. So before moving forward, we encoded into a scale of numbers and make it `int64`.
+
+df['ageCat'] = df['ageCat'].map({
+    '(21,29]': 0,
+    '(29,39]': 1,
+    '(39,49]': 2,
+    '(49,59]': 3,
+    '(59,69]': 4,
+    '(69,79]': 5,
+    '(79,89]': 6,
+    '(89,110]': 7
+})
+df = df.astype({'ageCat': 'int64'})
+
+gender_counts = df.gender.value_counts()
 gender_Female = gender_counts['Female']
 print(f"{gender_Female/len(df.index):.2%} of females")
 print(f"{1-(gender_Female)/len(df.index):.2%} of males")
 
-hf_type_counts = df_categorical['type.of.heart.failure'].value_counts()
+hf_type_counts = df['type.of.heart.failure'].value_counts()
 hf_type_right = hf_type_counts['Right']
 hf_type_left = hf_type_counts['Left']
 hf_type_both = hf_type_counts['Both']
@@ -1437,35 +1430,13 @@ print(f"{hf_type_right/len(df.index):.2%} with type Right")
 print(f"{hf_type_left/len(df.index):.2%} with type Left")
 print(f"{hf_type_both/len(df.index):.2%} with type Both")
 
-diabetes_counts = df_categorical.diabetes.value_counts()
+diabetes_counts = df.diabetes.value_counts()
 diabetes_true = diabetes_counts[True]
 print(f"{diabetes_true/len(df.index):.2%} with diabetes")
 
-# It's important to reduce dimensionality as much as possible, both for interpretability and model training. We can clearly see that some variables are meaningless because they belong essentially all to the same type, we can't use these variables for any kind of separation so we discard some of them.
-
-# +
-drop_cols = [
-    'connective.tissue.disease',
-    'hemiplegia',
-    'malignant.lymphoma',
-    'AIDS',
-    'consciousness',
-    'respiratory.support.',
-    'acute.renal.failure',
-    'outcome.during.hospitalization'
-]
-
-df = df.drop(drop_cols, axis=1)
-
-df_categorical = df.select_dtypes(include=['category', 'bool'])
-# -
-
 # As final step, plot some numerical features distribution separately with the respect to the target to see if we have some hints in features that separate well.
 
-target_var = 're.admission.within.6.months'
-
 # +
-#col_inspect = df_numerical.columns[:32]
 col_inspect = [
     'direct.bilirubin',
     'prothrombin.activity',
@@ -1500,7 +1471,7 @@ plt.show()
 
 # Using clinical knowledge, we inspect some groups of variables we think could be quite correlated.
 
-corr_matrix = df_numerical.corr()
+corr_matrix = df.corr(numeric_only=True)
 
 
 def plot_subcorrelation_matrix(corr_matrix, inspect_col, threshold=0.4):
@@ -1524,7 +1495,7 @@ def plot_subcorrelation_matrix(corr_matrix, inspect_col, threshold=0.4):
         sns.heatmap(sub_corr_matrix,
                     annot=True, fmt='.2f',
                     mask=mask,
-                    cmap='coolwarm', center=0, cbar=True,
+                    cmap='RdBu_r', vmin=-1, vmax=1, cbar=True,
                     linewidths=.5,
                     ax=ax)
         ax.set_aspect("equal")
@@ -1583,85 +1554,29 @@ def remove_highly_correlated(df, threshold=0.5):
     to_drop = [column for column in upper.columns if any(upper[column] > threshold)]
     
     # Print dropped columns
-    print("Dropping the following columns")
+    print(f"Dropping {len(to_drop)} columns:")
     print(to_drop)
 
     # Return with dropped features
     return df.drop(to_drop, axis=1)
 
 
-df_shape = df.shape
-
 df = remove_highly_correlated(df, threshold=0.85)
-
-# We removed this number of features:
-
-df_shape[1] - df.shape[1]
 
 # Final shape of the dataset
 
 df.shape
 
-# ## 3. Modeling
-
-# ### Feature engineering
-
-# +
-# feature engineering
-#df_numerical['logduration']=df_numerical['duration'].apply(lambda x: math.log(x+1))
-# -
+# ### Modeling
 
 if SIMPLE_MODEL_WITH_DRUGS:
     df = df0
-    target_var = 're.admission.within.6.months'
 
-# separate categorical and numerical features
-categorical_features = df.select_dtypes(include=['category']).columns.tolist()
-numerical_features = df.select_dtypes(include=[np.number]).columns.tolist()
-
-# +
-with open(str(OUTPUT_FOLDER / 'categorical_features.pkl'), 'wb') as handle:
-    pickle.dump(categorical_features, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
-with open(str(OUTPUT_FOLDER / 'numerical_features.pkl'), 'wb') as handle:
-    pickle.dump(numerical_features, handle, protocol=pickle.HIGHEST_PROTOCOL)
-# -
+cols_numerical, cols_categorical = get_num_cat(df)
 
 # Make sure the values of categorical don't contain strange characters, because after encoding this might break XGBoost, specifically the `ageCat` variable.
-
-df[categorical_features] = df[categorical_features].applymap(lambda x: re.sub(r'[\[\]<\(\)]', '', str(x)) if isinstance(x, str) else x)
-df[categorical_features] = df[categorical_features].applymap(lambda x: re.sub(r',', '_', str(x)) if isinstance(x, str) else x)
-
-
-# The following cell is needed to generate the input fields in the web app.
-
-# +
-def generate_column_info(dataframe):
-    column_info = {}
-    for column in dataframe.drop([target_var], axis=1).columns:
-        column_type = dataframe[column].dtype
-        if column_type == 'object' or pd.api.types.is_categorical_dtype(column_type):
-            unique_values = dataframe[column].unique().tolist()
-            column_info[column] = {"type": "category", "value": unique_values}
-        elif pd.api.types.is_bool_dtype(column_type):
-            unique_values = dataframe[column].unique().tolist()
-            column_info[column] = {"type": "binary", "value": unique_values}
-        elif pd.api.types.is_numeric_dtype(column_type):
-            min_value = dataframe[column].min()
-            max_value = dataframe[column].max()
-            if pd.api.types.is_integer_dtype(column_type):
-                column_info[column] = {"type": "integer", "value": [min_value, max_value]}
-            else:
-                column_info[column] = {"type": "continuous", "value": [min_value, max_value]}
-    return column_info
-
-# Generate column information dictionary
-column_info = generate_column_info(df)
-
-# Dump into file
-with open(str(OUTPUT_FOLDER / 'column_info.pkl'), 'wb') as handle:
-    pickle.dump(column_info, handle, protocol=pickle.HIGHEST_PROTOCOL)
-# -
+df[cols_categorical] = df[cols_categorical].applymap(lambda x: re.sub(r'[\[\]<\(\)]', '', str(x)) if isinstance(x, str) else x)
+df[cols_categorical] = df[cols_categorical].applymap(lambda x: re.sub(r',', '_', str(x)) if isinstance(x, str) else x)
 
 # ### Splitting data into training and testing sets
 #
@@ -1681,31 +1596,26 @@ X_train, X_test, y_train, y_test = train_test_split(X, y,
 
 # ### Preprocessing categorical data
 
-# The following code is setup as a [`sklearn.pipeline.Pipeline`](https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html) object for future work, however for the `SHAP` library to work we need to be able to access the unscaled version of the data, so the preprocessing is setup outside the pipeline, but can be easily implemented inside whenever a future deployment requires so.
-
-# +
-# create preprocessor for categorical data
-# cat_preprocessor = Pipeline(steps=[
-#     ('onehot', OneHotEncoder(sparse_output=False, handle_unknown='ignore', drop='if_binary'))
-# ])
+cols_categorical = cols_categorical.tolist()
+cols_categorical.remove(target_var)
 
 # +
 # Initialize the OneHotEncoder
-encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore', drop=None)#drop='if_binary')
+encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore', drop='if_binary')
 
 # Fit the encoder on the training data
-encoder.fit(X_train[categorical_features])
+encoder.fit(X_train[cols_categorical])
 
 # Transform the categorical columns in both train and test data
-train_encoded = pd.DataFrame(encoder.transform(X_train[categorical_features]), columns=encoder.get_feature_names_out(categorical_features))
-test_encoded = pd.DataFrame(encoder.transform(X_test[categorical_features]), columns=encoder.get_feature_names_out(categorical_features))
+train_encoded = pd.DataFrame(encoder.transform(X_train[cols_categorical]), columns=encoder.get_feature_names_out(cols_categorical))
+test_encoded = pd.DataFrame(encoder.transform(X_test[cols_categorical]), columns=encoder.get_feature_names_out(cols_categorical))
 
 # Concatenate the encoded features with the original numerical columns
-X_train = pd.concat([X_train.drop(categorical_features, axis=1).reset_index(drop=True), train_encoded.reset_index(drop=True)], axis=1)
-X_test = pd.concat([X_test.drop(categorical_features, axis=1).reset_index(drop=True), test_encoded.reset_index(drop=True)], axis=1)
+X_train = pd.concat([X_train.drop(cols_categorical, axis=1).reset_index(drop=True), train_encoded.reset_index(drop=True)], axis=1)
+X_test = pd.concat([X_test.drop(cols_categorical, axis=1).reset_index(drop=True), test_encoded.reset_index(drop=True)], axis=1)
 
-with open(str(OUTPUT_FOLDER / 'encoder.pkl'), 'wb') as handle:
-    pickle.dump(encoder, handle, protocol=pickle.HIGHEST_PROTOCOL)
+#with open(str(OUTPUT_FOLDER / 'encoder.pkl'), 'wb') as handle:
+#    pickle.dump(encoder, handle, protocol=pickle.HIGHEST_PROTOCOL)
 # -
 
 # ### Preprocessing numerical data
@@ -1713,50 +1623,38 @@ with open(str(OUTPUT_FOLDER / 'encoder.pkl'), 'wb') as handle:
 # #### Imputation
 
 # +
-# %%time
 #imputer = IterativeImputer(max_iter=10, random_state=0, verbose=2) # Doesn't improve much but takes 10 min to run
 imputer = KNNImputer(n_neighbors=5)
 
 X_train = pd.DataFrame(imputer.fit_transform(X_train), columns = X_train.columns)
 X_test = pd.DataFrame(imputer.transform(X_test), columns = X_test.columns)
-
-with open(str(OUTPUT_FOLDER / 'imputer.pkl'), 'wb') as handle:
-    pickle.dump(imputer, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
-# +
-# with open(str(OUTPUT_FOLDER / 'imputer.pkl'), 'rb') as handle:
-#     imputer = pickle.load(handle)
-# 
-# X_train[numerical_features] = imputer.transform(X_train[numerical_features])
-# X_test[numerical_features] = imputer.transform(X_test[numerical_features])
 # -
 
-# #### Imbalance
+# #### Feature engineering
 
-print(f'Percentage of positives in the training set: {np.round((y_train == True).sum() / len(y_train), 3):.1%}')
+# +
+pca = PCA(n_components=5)  # Specify the number of principal components you want
+pca.fit(X_train[cols_numerical])
 
-# Compute class weights as inversely proportional to the prevalence in the training set.
+train_pca = pd.DataFrame(data=pca.transform(X_train[cols_numerical]), columns=['PC1', 'PC2', 'PC3', 'PC4', 'PC5'])
+test_pca = pd.DataFrame(data=pca.transform(X_test[cols_numerical]), columns=['PC1', 'PC2', 'PC3', 'PC4', 'PC5'])
 
-class_weights = class_weight.compute_class_weight(class_weight='balanced',
-                                                  classes=np.unique(y_train),
-                                                  y=y_train)
-class_weights = dict(zip(np.unique(y_train), class_weights))
-class_weights
+X_train = pd.concat([X_train, train_pca], axis=1)
+X_test = pd.concat([X_test, test_pca], axis=1)
+# -
+
+cols_numerical, cols_categorical = get_num_cat(df)
+
+X_train_unscaled = X_train.copy()
+X_test_unscaled = X_test.copy()
 
 # #### Scaling
 
 # +
-# create preprocessor for numerical data
-# num_preprocessor = Pipeline(steps=[
-#     ('imputer', KNNImputer(n_neighbors=6)),
-#     ('scaler', StandardScaler())
-# ])
-
-# +
 scaler = StandardScaler()
 
-X_train[numerical_features] = scaler.fit_transform(X_train[numerical_features])
-X_test[numerical_features] = scaler.transform(X_test[numerical_features])
+X_train[cols_numerical] = scaler.fit_transform(X_train[cols_numerical])
+X_test[cols_numerical] = scaler.transform(X_test[cols_numerical])
 
 with open(str(OUTPUT_FOLDER / 'scaler.pkl'), 'wb') as handle:
     pickle.dump(scaler, handle, protocol=pickle.HIGHEST_PROTOCOL)
@@ -1769,191 +1667,420 @@ with open(str(OUTPUT_FOLDER / 'scaler.pkl'), 'wb') as handle:
 # X_test[numerical_features] = scaler.transform(X_test[numerical_features])
 # -
 
+# ### Imbalance
+
+# Compute class weights as inversely proportional to the prevalence in the training set.
+
+class_weights = class_weight.compute_class_weight(class_weight='balanced',
+                                                  classes=np.unique(y_train),
+                                                  y=y_train)
+class_weights = dict(zip(np.unique(y_train), class_weights))
+class_weights
+
+# ### Feature selection
+
+# Ideally we want to perform some kind of backward selection. However, since the initial number of features is 127, the process is very computationally intensive (after a quick pilot run, about 20 seconds per feature to be removed). So to speed up the process we develop the following method to discard some features, trying to retain as much information as possible. We employ a `LogisticRegression` and a `RandomForestClassifier`, which are both suited for feature selection. Trying to take advantage of both worlds, we perform the following steps:
+#
+# - Train a `LogisticRegression` with strong $L^1$ penalty to select a set $S_\text{lr}$ of features.
+# - Train a `RandomForestClassifier` and create an $S_\text{rf}$ set of features made by the top 30 features by impurity decrease importance.
+# - Create a set $S_\text{reduced} = S_\text{lr} \cup S_\text{rf}$
+#
+# We can now perform a backward selection based on this $S_\text{reduced}$ set of features, and inspecting the evolution of our performance index (the AUC) we select a suitable number of features $S^\star_1$, similarly to an elbow rule. Then, since the results are often different, we perform a forward selection from 0 to 10 features on the same model to get the set $S^\star_2$, and finally we take the union of the two as our final features set $S^\star = S^\star_1 \cup S^\star_2$.
+#
+# This will be later fed to a model selection part where can try many models, since the feature set is now very small.
+
+print(f'Initial number of features: {X_train.shape[1]}')
+
+# #### Selection with LogisticRegression
+
+# +
+logistic_selector = SelectFromModel(
+    LogisticRegression(
+        C=0.05,
+        penalty='l1',
+        solver='liblinear',
+        max_iter=1000,
+        random_state=SEED,
+        class_weight=class_weights
+    )
+)
+
+logistic_selector.fit(X_train, y_train)
+selected_feature_indices_lr = logistic_selector.get_support(indices=True)
+selected_feature_names_lr = [X_train.columns[index] for index in selected_feature_indices_lr]
+
+print(f'Selected {len(selected_feature_names_lr)} features:')
+selected_feature_names_lr
+# -
+
+# #### Selection with RandomForestClassifier
+
+# +
+rf_selector = SelectFromModel(
+    RandomForestClassifier(
+        criterion='entropy',
+        max_depth=10,
+        n_estimators=250,
+        random_state=SEED,
+        class_weight=class_weights
+    ),
+    max_features=50
+)
+
+rf_selector.fit(X_train, y_train)
+selected_feature_indices_rf = rf_selector.get_support(indices=True)
+selected_feature_names_rf = [X_train.columns[index] for index in selected_feature_indices_rf]
+
+print(f'Selected {len(selected_feature_names_rf)} features:')
+selected_feature_names_rf
+
+# +
+df_importance = pd.DataFrame({
+    'feature': X_train.columns,
+    'importance': rf_selector.estimator_.feature_importances_
+})
+
+df_importance = df_importance.sort_values(by=['importance'], ascending=False).iloc[:10]
+df_importance
+# -
+
+df_importance.head(10).to_latex(
+    str(OUTPUT_FOLDER / 'importance_top10_rf.tex'),
+    index=False,
+    formatters={"name": str.upper},
+    float_format="{:.4f}".format,
+    caption="Top 10 feature importance.",
+    label='tab:importance-rf'
+)
+
+# +
+fig, ax = plt.subplots(figsize=(6,4))
+
+sns.barplot(x='importance', y='feature', data=df_importance, color='c')
+plt.xlabel('Mean decrease in impurity')
+plt.ylabel('Features')
+plt.title('Feature Importance in Random Forest')
+plt.savefig(str(OUTPUT_FOLDER / 'feature_importance_RandomForestClassifier.pdf'), bbox_inches='tight')
+plt.show()
+# -
+
+# Let's see the intersections.
+
+set(selected_feature_names_rf) & set(selected_feature_names_lr)
+
+# #### Adding extra variables
+
+# We see that neither of the methods selected the presence of diabetes, while we think it could be meaninfgul. So we take the union and add `diabetes_True`.
+
+# +
+selected_features = list(set(selected_feature_names_rf+selected_feature_names_lr))
+if not 'diabetes_True' in selected_features:
+    selected_features.append('diabetes_True')
+
+selected_features
+# -
+
+# #### Backward selection
+
+# Let's perform backward selection on another `LogisticRegression`
+
+classifier = LogisticRegression(C=0.1, max_iter=10000, random_state=SEED, class_weight=class_weights)
+
+# +
+from mlxtend.feature_selection import SequentialFeatureSelector
+
+# Sequential Backward Selection
+sfs_backward = SequentialFeatureSelector(
+    classifier,
+    k_features=1,
+    forward=False,
+    floating=False,
+    scoring='roc_auc',
+    verbose=2,
+    cv=StratifiedKFold(n_splits=5, shuffle=True, random_state=SEED),
+    n_jobs=-1).fit(X_train[selected_features], y_train)
+
+# +
+from mlxtend.plotting import plot_sequential_feature_selection as plot_sfs
+
+plot_sfs(sfs_backward.get_metric_dict(), kind='std_dev',figsize=(10, 8))
+
+plt.title('Sequential Backward Selection')
+plt.xticks(np.arange(0, 70, 5))
+plt.grid()
+plt.savefig(str(OUTPUT_FOLDER / 'feature_selection_backward_logistic.pdf'), bbox_inches='tight')
+plt.show()
+# -
+
+# #### Forward selection
+
+sfs_forward = SequentialFeatureSelector(
+    classifier,
+    k_features=30,
+    forward=True,
+    floating=False,
+    scoring='roc_auc',
+    verbose=2,
+    cv=StratifiedKFold(n_splits=5, shuffle=True, random_state=SEED),
+    n_jobs=-1).fit(X_train[selected_features], y_train)
+
+# Inspect the 10 features selected backward:
+
+sfs_backward.subsets_[10]['feature_names']
+
+# Inspect the 10 features selected forward:
+
+sfs_forward.subsets_[10]['feature_names']
+
+# As we expected, they don't perfectly match. Take the union as final set of features:
+
+final_features = list(set(sfs_backward.subsets_[10]['feature_names']) | set(sfs_forward.subsets_[10]['feature_names']))
+final_features
+
 # ### Model selection
 
-# As first step in providing the final model we test some models and do a very brief hyperparameter tuning.
+# Define the models and their parameter grids for grid search.
 
-# define the models and their parameter grids for grid search
-models = {
+models_config = {
     'logistic_regression': {
         'model': LogisticRegression(max_iter=10000),
-        'param_grid': {
-            'classifier__C': np.logspace(-3, 3, 7),
-            'classifier__random_state': [SEED],
-            'classifier__class_weight': [class_weights]
-        }
-    },
-    'ada_boost': {
-        'model': AdaBoostClassifier(),
-        'param_grid': {
-            'classifier__n_estimators': [10, 50, 100, 500],
-            'classifier__random_state': [SEED],
-            'classifier__learning_rate': [0.0001, 0.001, 0.01, 0.1, 1.0]
+        'param_grid': {            
+            'penalty': ['l1', 'l2'],
+            'solver': ['saga'],
+            'C': np.logspace(-3, 2, 20),
+            'random_state': [SEED],
+            'class_weight': [class_weights]
         }
     },
     'random_forest': {
         'model': RandomForestClassifier(),
         'param_grid': {
-            'classifier__n_estimators': [100, 250, 450, 600],
-            'classifier__max_depth': [5, 10, 15, 20],
-            'classifier__max_features': ['sqrt', 'log2'],
-            'classifier__criterion' :['entropy'],
-            'classifier__oob_score': [True],
-            'classifier__random_state': [SEED],
-            'classifier__class_weight': [class_weights]
+            'n_estimators': [100, 250, 450, 600],
+            'max_depth': [5, 10, 15, 20],
+            'criterion' : ['entropy'],
+            'oob_score': [True],
+            'random_state': [SEED],
+            'class_weight': [class_weights]
         }
     },
     'knn': {
         'model': KNeighborsClassifier(),
         'param_grid': {
-            'classifier__n_neighbors': np.arange(5,80,10)
+            'n_neighbors': np.arange(5,80,10)
         }
     },
     'decision_tree_classifier': {
         'model': DecisionTreeClassifier(),
         'param_grid': {
-            'classifier__criterion': ['entropy','gini'],
-            'classifier__max_depth': [5,10],
-            'classifier__min_samples_split': [5,10,20],
-            'classifier__min_samples_leaf': [5,10],
-            'classifier__random_state': [SEED]
+            'criterion': ['entropy','gini'],
+            'max_depth': [5,10],
+            'min_samples_split': [5,10,20],
+            'min_samples_leaf': [5,10],
+            'random_state': [SEED]
         }
     },
     'mlp': {
         'model': MLPClassifier(),
         'param_grid': {
-            'classifier__hidden_layer_sizes': [(10, 5),(100,20,5)],
-            'classifier__max_iter': [2000],
-            'classifier__alpha': [0.01],
-            'classifier__random_state': [SEED]
+            'hidden_layer_sizes': [(10, 5),(100,20,5)],
+            'max_iter': [2000],
+            'alpha': [0.01],
+            'random_state': [SEED]
         }
     },
     'naive_bayes': {
         'model': GaussianNB(),
         'param_grid': {}
-    },
-    'xgboost': {
-        'model': xgb.XGBClassifier(),
-        'param_grid': {
-            'classifier__max_depth': [3, 6, 9],
-            'classifier__learning_rate': [0.1, 0.01, 0.001],
-            'classifier__n_estimators': [100, 500, 1000],
-            'classifier__random_state': [SEED]
-        }
     }
 }
 
-# +
-# combine the preprocessors into a column transformer
-# preprocessor = ColumnTransformer(
-#     transformers=[
-#         ('cat', cat_preprocessor, categorical_features),
-#         ('num', num_preprocessor, numerical_features)
-#     ])
-# -
+models = {}
 
-# create the pipelines for each model
-pipelines = {}
-for name, model in models.items():
-    pipelines[name] = Pipeline(steps=[
-        #('preprocessor', preprocessor),
-        ('classifier', model['model'])
-    ])
-
-# According to [the documentation](https://scikit-learn.org/stable/modules/cross_validation.html#stratified-k-fold) we choose to use the `StratifiedKFold` for doing cross-validation, choosing `n_splits=5` to have a validation set of `1/n_splits=0.20`, and `shuffle=True`.
-
-scoring = {"AUC": "roc_auc", "Accuracy": make_scorer(accuracy_score)}
-pipeline_cv = {}
+# Perform grid search cross-validation for each model and output the test AUC.
+#
+# We do so on the `X_train_unscaled` version of the dataset, which we saw gives a better performance and doesn't require to unscale the coefficients for interpreting the ODDS ratio.
 
 # +
 # %%time
- 
-# perform grid search cross-validation for each model and output the test accuracy of the best model
-for name, pipeline in pipelines.items():
+
+for name, model in models_config.items():
     grid_search = GridSearchCV(
-        pipeline,
-        param_grid=models[name]['param_grid'],
+        models_config[name]['model'],
+        param_grid=models_config[name]['param_grid'],
         cv=StratifiedKFold(n_splits=5, shuffle=True, random_state=SEED),
-        scoring=scoring,
+        scoring="roc_auc",
         refit="AUC",
         return_train_score=True,
         verbose=0
     )
-    grid_search.fit(X_train, y_train)
-    pipeline_cv[name] = grid_search
-    print(f'{name:30}| train AUC = {grid_search.score(X_train, y_train):.3f} | test AUC = {grid_search.score(X_test, y_test):.3f}')
+    grid_search.fit(X_train_unscaled[final_features], y_train)
+    models[name] = grid_search
+    print(f'{name:30}| train AUC = {grid_search.score(X_train_unscaled[final_features], y_train):.4f} | test AUC = {grid_search.score(X_test_unscaled[final_features], y_test):.4f}')
     print('-'*80)
 # -
 
 # Save for later
 
 # +
-# with open(str(OUTPUT_FOLDER / 'pipeline_cv.pkl'), 'wb') as handle:
-#     pickle.dump(pipeline_cv, handle, protocol=pickle.HIGHEST_PROTOCOL)
+with open(str(OUTPUT_FOLDER / 'models.pkl'), 'wb') as handle:
+    pickle.dump(models, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+with open(str(OUTPUT_FOLDER / 'models.pkl'), 'rb') as handle:
+    models = pickle.load(handle)
+
+
 # -
 
-with open(str(OUTPUT_FOLDER / 'pipeline_cv.pkl'), 'rb') as handle:
-    pipeline_cv = pickle.load(handle)
+# ## 3. Results
 
-# ### Training evolution
+# ### Cross-validation inspection
 
-# The `GridSearchCV` objects has the following useful attributes
-#
-# - `.cv_results_` which contains things such as `mean_test_AUC`, `std_test_AUC`, `std_train_AUC`, `mean_train_AUC`. List all of them with `pd.DataFrame(GridSearchCV.cv_results_.keys())`
-# - `.best_estimator_`
-# - `.best_params_`
-# - `.best_score_`
-#
-# For example let us analyze the evolution of one of the models
-
-res = pipeline_cv['random_forest'].cv_results_
+# Let us analyze the evolution of the `LogisticRegression`
 
 # +
-m1 = res['mean_test_AUC']
-s1 = res['std_test_AUC']
-m2 = res['mean_train_AUC']
-s2 = res['std_train_AUC']
+def plot_cv_results(res, title=''):
 
-axisX = list(range(len(m1)))
-plt.errorbar(axisX, m1, s1, label='validation')
-plt.errorbar(axisX, m2, s2, label='train')
+    m1 = res['mean_test_score']
+    s1 = res['std_test_score']
+    m2 = res['mean_train_score']
+    s2 = res['std_train_score']
+    
+    j1 = np.argmax(m1) # maximum value of AUC in terms of mean over the CV folds
+    
+    axisX = list(range(len(m1)))
+    plt.errorbar(axisX, m2, s2, label=f'train (AUC = {m2[j1]:.4f} ± {s2[j1]:.4f})')
+    plt.errorbar(axisX, m1, s1, label=f'validation (AUC = {m1[j1]:.4f} ± {s1[j1]:.4f})')
 
-j1 = np.argmax(m1) # maximum value of AUC in terms of mean over the CV folds
+    plt.plot(axisX[j1], m1[j1], 'ro', markersize=12)
+    plt.legend(loc='lower right')
+    plt.title(f'{title}')
+    
 
-plt.plot(axisX[j1], m1[j1], 'ro', markersize=12)
-plt.legend()
-plt.title('Training curves for the Random Forest')
+fig, ax = plt.subplots(1, 1, figsize=(6,6))
+#plt.sca(ax[0])
+plot_cv_results(models['logistic_regression'].cv_results_, 'Training curves for the LR')
 plt.savefig(str(OUTPUT_FOLDER / 'crossvalidation_curve.pdf'), bbox_inches='tight')
 plt.show()
 # -
 
-res['params'][j1]
+# ### Model analysis
 
-# ### AUC and confusion matrices
+# Inspect the best configuration.
+
+models['logistic_regression'].best_params_
+
+# Inspect the $\beta_i$ coefficients of the model:
+#
+# $$
+# \operatorname{logit}(p(\boldsymbol{X}))
+# = \log (\operatorname{odds}(p(\boldsymbol{X})))
+# = \log \left( \frac{p(\boldsymbol{X})}{1-p(\boldsymbol{X})} \right) 
+# = \beta_0 + \beta_1 X_1 + \cdots + \beta_p X_p
+# $$
 
 # +
-fig, axes = plt.subplots(nrows=2, ncols=4, figsize=(16,7))#, height_ratios = [1,3])
+coeff = pd.DataFrame()
+coeff['feature'] = X_test_unscaled[final_features].columns
+coeff['beta'] = models['logistic_regression'].best_estimator_.coef_[0]
+coeff['exp_beta'] = np.exp(coeff['beta'])
+coeff = coeff.sort_values(by=['beta'])
+
+coeff
+# -
+
+# [This website](https://stats.oarc.ucla.edu/other/mult-pkg/faq/general/faq-how-do-i-interpret-odds-ratios-in-logistic-regression/) provides an insightful interpretation of the coefficients in a logistic regression model.
+
+# +
+fig, ax = plt.subplots(figsize=(6,4))
+
+sns.barplot(data=coeff[abs(coeff.beta) > 0.00], x='beta', y='feature', color='c')
+plt.title('Coefficients in Logistic Regression')
+plt.savefig(str(OUTPUT_FOLDER / 'feature_importance_weightsLogisticRegression.pdf'), bbox_inches='tight')
+plt.show()
+# -
+
+# ### Classification performance
+
+# Print the AUC
+
+AUC = models['logistic_regression'].score(X_test_unscaled[final_features], y_test)
+print(f'AUC: {AUC:.4f}')
+
+# Set a threshold for the score and print the classification metrics.
+
+classification_threshold = 0.50
+y_score = models['logistic_regression'].predict_proba(X_test_unscaled[final_features])[:,1]
+y_pred = (y_score >= classification_threshold).astype(bool)
+
+report = classification_report(y_test, y_pred, output_dict=True)
+pd.DataFrame(report).transpose()
+
+# Print the confusion matrix
+
+# +
+fig, ax = plt.subplots(figsize=(8,8))
+
+# Calculate the accuracy score
+accuracy = accuracy_score(y_test, y_pred)
+
+# Calculate the confusion matrix
+cm = confusion_matrix(y_test, y_pred)
+#sns.heatmap(cm, annot=True, cmap='coolwarm', fmt='d', ax=axes[0,i])
+ax.set_title(models['logistic_regression'].best_estimator_.__class__.__name__)
+plot_confusion_matrix(conf_mat=cm,
+                      show_absolute=True,
+                      show_normed=True,
+                      colorbar=True, figure=fig, axis=ax)
+
+ax.set_xlabel('Predicted label')
+ax.set_ylabel('True label')
+
+plt.savefig(str(OUTPUT_FOLDER / 'confusion_matrix_logistic_regression.pdf'), bbox_inches='tight')
+plt.show()
+
+# +
+precisions, recalls, thresholds = precision_recall_curve(y_test, y_score)
+
+# Compute the zero skill model line
+# It will depend on the fraction of observations belonging to the positive class
+zero_skill = len(y_test[y_test==1]) / len(y_test)
+
+# Compute the perfect model line
+perfect_precision = np.ones_like(recalls)
+perfect_recall = np.linspace(0, 1, num=len(perfect_precision))
+
+plt.plot(recalls, precisions, 'r-', label='Logistic')
+plt.plot([0, 1], [zero_skill, zero_skill], 'b--', label='Zero skill')
+plt.plot(perfect_recall, perfect_precision, 'g--', linewidth=2, label='Perfect model')
+plt.xlabel('Recall')
+plt.ylabel('Precision')
+plt.axis([0, 1, 0, 1])
+#plt.grid()
+plt.title('Precision Recall curve in Logistic Regression')
+plt.legend()
+plt.show()
+# -
+
+# ### Model comparison
+
+# +
+fig, axes = plt.subplots(nrows=2, ncols=3, figsize=(12,7))#, height_ratios = [1,3])
 axes = axes.flatten()
 
 rows = []
 i = 0
 roc_details = {}
 
-for name, pipeline in pipeline_cv.items():
-
-    model = pipeline.best_estimator_.named_steps['classifier']
+for name, model in models.items():
 
     # Make predictions on the testing set
-    #y_pred = pipeline.predict(X_test)
-    y_pred = (pipeline.predict_proba(X_test)[:,1] >= 0.44).astype(bool) # set threshold as 0.44
-
-    # Calculate the accuracy score
-    accuracy = accuracy_score(y_test, y_pred)
+    y_score = model.predict_proba(X_test_unscaled[final_features])[:,1]
+    y_pred = (y_score >= classification_threshold).astype(bool)
 
     # Calculate the confusion matrix
     cm = confusion_matrix(y_test, y_pred)
     #sns.heatmap(cm, annot=True, cmap='coolwarm', fmt='d', ax=axes[0,i])
-    axes[i].set_title(model.__class__.__name__)
+    axes[i].set_title(model.best_estimator_.__class__.__name__)
     plot_confusion_matrix(conf_mat=cm,
                           show_absolute=True,
                           show_normed=True,
@@ -1963,12 +2090,11 @@ for name, pipeline in pipeline_cv.items():
     axes[i].set_ylabel('True label')
 
     # Calculate the ROC curve
-    y_score = pipeline.predict_proba(X_test)[:,1]
     fpr, tpr, _ = roc_curve(y_test, y_score)
     roc_auc = auc(fpr, tpr)
 
     # Save for later
-    roc_details[model.__class__.__name__] = {
+    roc_details[model.best_estimator_.__class__.__name__] = {
         'fpr': fpr,
         'tpr': tpr,
         'roc_auc': roc_auc
@@ -1976,9 +2102,8 @@ for name, pipeline in pipeline_cv.items():
 
     # Save for later
     row = {
-        'Model': model.__class__.__name__,
-        'ROC AUC': roc_auc,
-        'Accuracy': accuracy,
+        'Model': model.best_estimator_.__class__.__name__,
+        'AUC': roc_auc,
     }
 
     # Append the row to the list
@@ -1988,33 +2113,6 @@ for name, pipeline in pipeline_cv.items():
 
 plt.tight_layout()
 plt.savefig(str(OUTPUT_FOLDER / 'confusion_matrices.pdf'), bbox_inches='tight')
-plt.show()
-
-# +
-fig, ax = plt.subplots(figsize=(8,8))
-
-model = pipeline_cv['random_forest'].best_estimator_.named_steps['classifier']
-
-# Make predictions on the testing set
-#y_pred = pipeline.predict(X_test)
-y_pred = (pipeline_cv['random_forest'].predict_proba(X_test)[:,1] >= 0.44).astype(bool) # set threshold as 0.44
-
-# Calculate the accuracy score
-accuracy = accuracy_score(y_test, y_pred)
-
-# Calculate the confusion matrix
-cm = confusion_matrix(y_test, y_pred)
-#sns.heatmap(cm, annot=True, cmap='coolwarm', fmt='d', ax=axes[0,i])
-ax.set_title(model.__class__.__name__)
-plot_confusion_matrix(conf_mat=cm,
-                      show_absolute=True,
-                      show_normed=True,
-                      colorbar=True, figure=fig, axis=ax)
-
-ax.set_xlabel('Predicted label')
-ax.set_ylabel('True label')
-
-plt.savefig(str(OUTPUT_FOLDER / 'confusion_matrix_random_forest.pdf'), bbox_inches='tight')
 plt.show()
 
 # +
@@ -2039,7 +2137,7 @@ plt.show()
 # -
 
 df_performance = pd.DataFrame(rows)
-df_performance = df_performance.sort_values('ROC AUC', ascending=False)
+df_performance = df_performance.sort_values('AUC', ascending=False)
 df_performance
 
 df_performance.to_latex(
@@ -2051,318 +2149,110 @@ df_performance.to_latex(
     label='tab:performance'
 )
 
-# ### Deep model analysis
+# ### Export for web app
 
-# #### Logistic Regression
+# Having assessed the performance of the model, refit on the entire dataset and export for the webapp
 
-# Even though it's not the most performing model, we continue analyzing it for its simplicity and interpretability.
-#
-# Inspect the best configuration:
+final_features
 
-best_pipeline_logistic = pipeline_cv['logistic_regression']
-
-best_pipeline_logistic.best_params_
-
-# Extract the classifier
-classifier = best_pipeline_logistic.best_estimator_.named_steps['classifier']
-
-# See if the penalty discarded any variable:
-
-len(classifier.coef_[0]) == len(X_train.columns)
-
-# Since it didn't, let us try to reduce the model with backward selection implemented by [`SequentialFeatureSelector`](https://rasbt.github.io/mlxtend/user_guide/feature_selection/SequentialFeatureSelector/) in `mlxtend`, and then perform a second final hyperparameter tuning.
-
-# +
-from mlxtend.feature_selection import SequentialFeatureSelector
-
-# Sequential Backward Selection
-sfs = SequentialFeatureSelector(
-    classifier,
-    k_features=6,
-    forward=False,
-    floating=False,
-    scoring='roc_auc',
-    verbose=1,
-    cv=5,
-    n_jobs=-1).fit(X_train, y_train)
+final_features_webapp = [
+    'prothrombin.activity',
+    'type.of.heart.failure',
+    'basophil.ratio',
+    'NYHA.cardiac.function.classification',
+    'basophil.count',
+    'partial.pressure.of.carbon.dioxide',
+    'D.dimer',
+    'international.normalized.ratio',
+    'monocyte.count',
+    'sodium',
+    'occupation',
+    'creatinine.enzymatic.method',
+    'diabetes',
+    'dischargeDay'
+]
 
 # +
-from mlxtend.plotting import plot_sequential_feature_selection as plot_sfs
+cols_numerical, cols_categorical = get_num_cat(df)
+cols_numerical = cols_numerical.tolist()
+cols_categorical = cols_categorical.tolist()
+cols_categorical.remove(target_var)
 
-plot_sfs(sfs.get_metric_dict(), kind='std_dev',figsize=(10, 8))
+imputer = KNNImputer(n_neighbors=5)
+X = pd.concat([pd.DataFrame(imputer.fit_transform(X[cols_numerical]), columns=cols_numerical).reset_index(), X[cols_categorical].reset_index()], axis=1)
 
-plt.title('Sequential Backward Selection')
-plt.xticks(np.arange(5, 138, 5.0))
-plt.grid()
-plt.savefig(str(OUTPUT_FOLDER / 'feature_selection_backward_logistic.pdf'), bbox_inches='tight')
-plt.show()
+
+
+
+# +
+X = X[final_features]
+
+# qui salva tutto
 # -
 
-# Train it again with 15 variables to be selected, as a good tradeoff between performance and number of features.
-
-sfs = SequentialFeatureSelector(
-    classifier,
-    k_features=15,
-    forward=False,
-    floating=False,
-    scoring='roc_auc',
-    verbose=2,
-    cv=5,
-    n_jobs=-1).fit(X_train, y_train)
-
-print('Selected features:')
-print(sfs.k_feature_names_)
-
-important_features_lr = set(sfs.k_feature_names_)
-
-# From 0.680109 AUC we went down to:
-
-print(f'AUC: {sfs.k_score_:.4f}')
-
-# Create a reduced version of the data.
-
-X_train_sfs = pd.DataFrame(sfs.transform(X_train), columns=sfs.k_feature_names_)
-X_test_sfs = pd.DataFrame(sfs.transform(X_test), columns=sfs.k_feature_names_)
-
-# Now train again the model, performing a deeper hyperparameter tuning
+cols_numerical, cols_categorical = get_num_cat(X)
 
 # +
-model = LogisticRegression(max_iter=10000)
+# Initialize the OneHotEncoder
+encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore', drop='if_binary')
 
-param_grid =  {
-    'C': np.logspace(-3, 3, 30),
-    'random_state': [SEED],
-    'class_weight': [class_weights]
-}
+# Fit the encoder on the training data
+encoder.fit(X[cols_categorical])
 
-grid_search = GridSearchCV(
-     model,
-     param_grid=param_grid,
-     cv=StratifiedKFold(n_splits=5, shuffle=True, random_state=SEED),
-     scoring='roc_auc',
-     refit='AUC',
-     return_train_score=True,
-     verbose=0
-)
+# Transform the categorical columns in both train and test data
+X_encoded = pd.DataFrame(encoder.transform(X[cols_categorical]), columns=encoder.get_feature_names_out(cols_categorical))
 
-grid_search.fit(X_train_sfs, y_train)
+# Concatenate the encoded features with the original numerical columns
+X = pd.concat([X.drop(cols_categorical, axis=1).reset_index(drop=True), X_encoded.reset_index(drop=True)], axis=1)
+
+
+#with open(str(OUTPUT_FOLDER / 'encoder.pkl'), 'wb') as handle:
+#    pickle.dump(encoder, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+
+
+
+    
 # -
 
-grid_search.best_params_
+final_model = LogisticRegression(max_iter=1000, penalty='l2', C=9, class_weight=class_weights)
+final_model.fit(X, y)
 
-print(f'AUC: {grid_search.score(X_test_sfs, y_test):.4f}')
-
-# [This website](https://stats.oarc.ucla.edu/other/mult-pkg/faq/general/faq-how-do-i-interpret-odds-ratios-in-logistic-regression/) provides an insightful interpretation of the coefficients in a logistic regression model.
-
-classifier = grid_search.best_estimator_
-
-fig, ax = plt.subplots(figsize=(8,8))
-coeff = pd.DataFrame()
-coeff['feature'] = X_train_sfs.columns
-coeff['beta'] = classifier.coef_[0]
-coeff['exp_beta'] = np.exp(coeff['beta'])
-coeff = coeff.sort_values(by=['beta'])
-sns.barplot(data=coeff[abs(coeff.beta) > 0.05], x='beta', y='feature', color='c')
-plt.title('Coefficients in Logistic Regression')
-plt.savefig(str(OUTPUT_FOLDER / 'feature_importance_weightsLogisticRegression.pdf'), bbox_inches='tight')
-plt.show()
-
-var_name_scale = dict(zip(scaler.get_feature_names_out().tolist(), scaler.scale_.tolist()))
-var_name_scale
-
-coeff['unscaled_exp_beta'] = np.nan
-for index, row in coeff.iterrows():    
-    if row.feature in var_name_scale.keys():
-        coeff.at[index,'unscaled_exp_beta'] = np.exp(row.beta / var_name_scale[row.feature])    
-
-coeff
-
-# +
-y_pred = grid_search.predict_proba(X_test_sfs)[:,1]
-precisions, recalls, thresholds = precision_recall_curve(y_test, y_pred)
-
-# Compute the zero skill model line
-# It will depend on the fraction of observations belonging to the positive class
-zero_skill = len(y_test[y_test==1]) / len(y_test)
-
-# Compute the perfect model line
-perfect_precision = np.ones_like(recalls)
-perfect_recall = np.linspace(0, 1, num=len(perfect_precision))
-
-plt.plot(recalls, precisions, 'r-', label='Logistic')
-plt.plot([0, 1], [zero_skill, zero_skill], 'b--', label='Zero skill')
-plt.plot(perfect_recall, perfect_precision, 'g--', linewidth=2, label='Perfect model')
-plt.xlabel('Recall')
-plt.ylabel('Precision')
-plt.axis([0, 1, 0, 1])
-#plt.grid()
-plt.title('Precision Recall curve in Logistic Regression')
-plt.legend()
-plt.show()
-# -
-
-# #### DecisionTreeClassifier
-
-# Extract the classifier
-classifier = pipeline_cv['decision_tree_classifier'].best_estimator_.named_steps['classifier']
-
-from sklearn import tree
-text_representation = tree.export_text(classifier)
-with open('decistion_tree.log', 'w') as f:
-    f.write(text_representation)
-
-# The `plot_tree` returns annotations for the plot, to not show them in the notebook I assigned returned value to `_`
-
-fig = plt.figure(figsize=(25,20))
-_ = tree.plot_tree(classifier,
-                   feature_names=X_train.columns,
-                   class_names=['No','Yes'])
-
-# We can export as a figure but we must use `graphviz`
-
-export_graphviz(classifier,
-                out_file=str(OUTPUT_FOLDER / 'decision_tree.dot'),
-                feature_names = X_test.columns.tolist(),
-                class_names=['0','1'],
-                filled=True)
-
-# !dot -Tpng output/decision_tree.dot -o output/decision_tree.png -Gdpi=600
-Image(filename = str(OUTPUT_FOLDER / 'decision_tree.png'))
-
-importance, sorted_indices = np.sort(classifier.feature_importances_), np.argsort(classifier.feature_importances_)
-importance, sorted_indices = importance[-10:], sorted_indices[-10:]
-importance, sorted_indices = importance[::-1], sorted_indices[::-1]
-sns.barplot(x=importance, y=X_train.columns[sorted_indices], color='c')
-plt.title('Feature Importance in Decision Tree')
-plt.xlabel('Mean decrease in impurity')
-plt.ylabel('Features')
-plt.savefig(str(OUTPUT_FOLDER / 'feature_importance_DecisionTreeClassifier.pdf'), bbox_inches='tight')
-plt.show()
-
-# #### Random Forest
-
-classifier = pipeline_cv['random_forest'].best_estimator_.named_steps['classifier']
-
-fig, ax = plt.subplots(figsize=(8,6))
-# Feature Importance
-importance, sorted_indices = np.sort(classifier.feature_importances_), np.argsort(classifier.feature_importances_)
-importance, sorted_indices = importance[-30:], sorted_indices[-30:]
-importance, sorted_indices = importance[::-1], sorted_indices[::-1]
-sns.barplot(x=importance, y=X_train.columns[sorted_indices], color='c')
-plt.xlabel('Mean decrease in impurity')
-plt.ylabel('Features')
-plt.title('Feature Importance in Random Forest')
-plt.savefig(str(OUTPUT_FOLDER / 'feature_importance_RandomForestClassifier.pdf'), bbox_inches='tight')
-plt.show()
-
-df_importance = pd.DataFrame({
-    'name': X_train.columns,
-    'importance': classifier.feature_importances_
-})
-
-df_importance = df_importance.sort_values(by=['importance'], ascending=False)
-df_importance.head(10)
-
-df_importance.head(10).to_latex(
-    str(OUTPUT_FOLDER / 'importance_top10_rf.tex'),
-    index=False,
-    formatters={"name": str.upper},
-    float_format="{:.4f}".format,
-    caption="Top 10 feature importance.",
-    label='tab:importance-rf'
-)
-
-important_features_rf = set(df_importance.head(30).name)
-
-oob_error = 1 - classifier.oob_score_
-oob_error
-
-important_features_rf
-
-important_features_lr
-
-important_features_rf & important_features_lr
-
-# ### Explaining predictions with SHAP
-
-# +
-new_data = X.iloc[0].to_frame().T
-#y.iloc[0] False
-
-# Encode
-new_data_encoded = pd.DataFrame(encoder.transform(new_data[categorical_features]), columns=encoder.get_feature_names_out(categorical_features))
-new_data = pd.concat([new_data.drop(categorical_features, axis=1).reset_index(drop=True), new_data_encoded.reset_index(drop=True)], axis=1)
-
-# Impute
-new_data = pd.DataFrame(imputer.transform(new_data), columns = new_data.columns)
-
-new_data_unscaled = new_data.copy()
-
-# Scale
-new_data[numerical_features] = scaler.transform(new_data[numerical_features])
-
-# Load the SHAP explainer
-explainer = shap.TreeExplainer(pipeline_cv['random_forest'].best_estimator_.named_steps['classifier'])
-
-shap_values = explainer(new_data)
-
-
-idx = 0
-exp = shap.Explanation(
-    shap_values.values[:,:,1],
-    shap_values.base_values[:,1],
-    shap_values.data,
-    display_data=new_data_unscaled,
-    feature_names=new_data.columns)
-shap.plots.waterfall(exp[idx], max_display=10, show=False)
-plt.savefig(str(OUTPUT_FOLDER / 'shap.pdf'), bbox_inches='tight')
-plt.show()
-# -
-
-pipeline_cv['random_forest'].best_estimator_.named_steps['classifier'].predict_proba(new_data)[0][1]
-
-# +
-# ensemble TODO togliere
-
-predictions = []
-
-# Make predictions with each model
-for name, pipeline in pipeline_cv.items():
-
-    if name in ['xgboost', 'random_forest', 'logistic_regression', 'ada_boost']:
-        # Make predictions on the testing set
-        y_score = pipeline.predict_proba(X_test)#[:,1]
-        predictions.append(y_score)
-
-
-# Take the average of predictions
-ensemble_predictions = np.mean(predictions, axis=0)
-
-# Determine the final class by taking the argmax
-final_predictions = np.argmax(ensemble_predictions, axis=1)
-# -
-
-accuracy_score(y_test, final_predictions)
-
-# +
-# Plot the ROC curve
-fig, ax = plt.subplots(figsize=(8,8))
-
-fpr, tpr, _ = roc_curve(y_test, ensemble_predictions[:,1])
+#y_pred = (grid_search.predict_proba(X_test_unscaled[list(sfs.k_feature_names_)])[:,1] >= 0.5).astype(bool) # set threshold as 0.44
+y_score = final_model.predict_proba(X)[:,1]
+fpr, tpr, _ = roc_curve(y, y_score)
 roc_auc = auc(fpr, tpr)
+roc_auc
 
-ax.plot([0, 1], [0, 1], linestyle='--', color='gray')
-ax.set_xlim([0.0, 1.0])
-ax.set_ylim([0.0, 1.05])
-ax.set_xlabel('False Positive Rate')
-ax.set_ylabel('True Positive Rate')
+# +
+#with open(str(OUTPUT_FOLDER / 'categorical_features.pkl'), 'wb') as handle:
+#    pickle.dump(categorical_features, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
+#with open(str(OUTPUT_FOLDER / 'numerical_features.pkl'), 'wb') as handle:
+#    pickle.dump(numerical_features, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-ax.plot(fpr, tpr, label='Ensemble' + ' (AUC = %0.4f)' % roc_auc)
-
-ax.set_title('ROC Curve comparison')
-ax.legend(loc="lower right")
-ax.set_aspect('equal')
-ax.set_aspect('equal')
-plt.savefig(str(OUTPUT_FOLDER / 'roc_ensemble.pdf'), bbox_inches='tight')
-plt.show()
+# def generate_column_info(dataframe):
+#     column_info = {}
+#     for column in dataframe.drop([target_var], axis=1).columns:
+#         column_type = dataframe[column].dtype
+#         if column_type == 'object' or pd.api.types.is_categorical_dtype(column_type):
+#             unique_values = dataframe[column].unique().tolist()
+#             column_info[column] = {"type": "category", "value": unique_values}
+#         elif pd.api.types.is_bool_dtype(column_type):
+#             unique_values = dataframe[column].unique().tolist()
+#             column_info[column] = {"type": "binary", "value": unique_values}
+#         elif pd.api.types.is_numeric_dtype(column_type):
+#             min_value = dataframe[column].min()
+#             max_value = dataframe[column].max()
+#             if pd.api.types.is_integer_dtype(column_type):
+#                 column_info[column] = {"type": "integer", "value": [min_value, max_value]}
+#             else:
+#                 column_info[column] = {"type": "continuous", "value": [min_value, max_value]}
+#     return column_info
+# 
+# # Generate column information dictionary
+# column_info = generate_column_info(df)
+# 
+# # Dump into file
+# with open(str(OUTPUT_FOLDER / 'column_info.pkl'), 'wb') as handle:
+#     pickle.dump(column_info, handle, protocol=pickle.HIGHEST_PROTOCOL)
