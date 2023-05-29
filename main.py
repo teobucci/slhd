@@ -1466,7 +1466,9 @@ rf_selector = SelectFromModel(
     RandomForestClassifier(
         criterion='entropy',
         max_depth=10,
-        n_estimators=250
+        n_estimators=250,
+        random_state=SEED,
+        class_weight=class_weights
     ),
     max_features=50
 )
