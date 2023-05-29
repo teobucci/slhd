@@ -215,13 +215,12 @@ import matplotlib.pyplot as plt
 # %matplotlib inline
 # %config InlineBackend.figure_format='retina'
 
-from sklearn.feature_selection import SelectFromModel
+from sklearn.feature_selection import SelectFromModel, VarianceThreshold, SequentialFeatureSelector
 from sklearn.model_selection import train_test_split, GridSearchCV, StratifiedKFold
 # from sklearn.model_selection import cross_val_score, cross_val_predict
 # from sklearn.experimental import enable_iterative_imputer
 # from sklearn.impute import IterativeImputer
 from sklearn.impute import SimpleImputer, KNNImputer
-# from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier, export_graphviz
 from sklearn.ensemble import RandomForestClassifier, BaggingClassifier, AdaBoostClassifier
@@ -237,13 +236,9 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.utils import class_weight
 import scipy.cluster.hierarchy as spc
-from collections import Counter
-from imblearn.over_sampling import SMOTE
-import xgboost as xgb
-import shap
 
-from IPython.display import Image
 from mlxtend.plotting import plot_confusion_matrix
+from mlxtend.plotting import plot_sequential_feature_selection as plot_sfs
 # -
 
 # Fix the seed for reproducibility later.
@@ -757,8 +752,6 @@ cols_numerical, cols_categorical = get_num_cat(df)
 # Removing numerical variables with 0 variance, i.e. constant variables.
 
 # +
-from sklearn.feature_selection import VarianceThreshold
-
 selector = VarianceThreshold(threshold=0)
 selector.fit(df[cols_numerical])
 
@@ -1786,10 +1779,6 @@ selected_features
 
 classifier = LogisticRegression(C=0.1, max_iter=10000, random_state=SEED, class_weight=class_weights)
 
-# +
-from mlxtend.feature_selection import SequentialFeatureSelector
-
-# Sequential Backward Selection
 sfs_backward = SequentialFeatureSelector(
     classifier,
     k_features=1,
@@ -1801,8 +1790,6 @@ sfs_backward = SequentialFeatureSelector(
     n_jobs=-1).fit(X_train[selected_features], y_train)
 
 # +
-from mlxtend.plotting import plot_sequential_feature_selection as plot_sfs
-
 plot_sfs(sfs_backward.get_metric_dict(), kind='std_dev',figsize=(10, 8))
 
 plt.title('Sequential Backward Selection')
