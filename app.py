@@ -3,7 +3,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 
-classification_threshold = 0.5
+CLASSIFICATION_THRESHOLD = 0.5
 
 # Read the model using pickle
 with open('./output/final_model.pkl', 'rb') as f:
@@ -53,7 +53,7 @@ def main():
     """
 
     # Set the title
-    st.title('Heart Failure: predicting readmission after 6 months')
+    st.title('Heart Failure: predicting hospital re-admission after 6 months')
 
     # Set the subheader
     st.subheader('A Streamlit app to predict readmission after 6 months')
@@ -63,6 +63,20 @@ def main():
 
     # Set the text
     st.markdown('The data used to train the model was given during the course of Statistical Learning for Healthcare Data.')
+
+    # Set the text
+    st.markdown(
+        """
+        Authors:
+        - Teo Bucci ([@teobucci](https://github.com/teobucci))
+        - Giulia Montani ([@GiuliaMontani](https://github.com/GiuliaMontani))
+        - Alice Traversa ([@AliceTraversa](https://github.com/AliceTraversa))
+        """
+    )
+
+    # Display instructions
+    st.write("### Instructions")
+    st.write("Fill in the fields in the sidebar with the patient's information and click on the 'Predict' button to get the prediction.")
 
     generate_sidebar(column_info)
 
@@ -77,7 +91,7 @@ def main():
 
         # Predict class and probabilities
         y_score = final_model.predict_proba(new_data)[0][1]
-        y_pred = (y_score >= classification_threshold).astype(bool)
+        y_pred = (y_score >= CLASSIFICATION_THRESHOLD).astype(bool)
 
         # Display the prediction
         st.write("### Prediction")
