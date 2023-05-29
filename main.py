@@ -269,7 +269,7 @@ DATA_FOLDER = Path() / "hospitalized-patients-with-heart-failure-integrating-ele
 df = pd.read_csv((DATA_FOLDER / "dat.csv"), index_col=1)
 df = df.drop(columns=df.columns[0], axis=1)
 
-# #### Drugs integration
+# ### Drugs integration
 
 df_drugs = pd.read_csv((DATA_FOLDER / "dat_md.csv"), index_col=1)
 df_drugs = df_drugs.drop(columns=df_drugs.columns[0], axis=1)
@@ -279,50 +279,36 @@ pd.DataFrame(df_drugs['Drug_name'].unique(), columns=['name'])
 # To reduce the number of drugs (now they are 18) we researched their active ingredients and functionalities to capture some similarities. Keeping in mind that only the effects concerning the treatment of heart failure are of interest to us, we divided the medicines into 4 categories:
 #
 # **Diuretics**
-#     
-#     Furosemide tablet
-#     
-#     Furosemide injection
-#     
-#     Torasemide tablet
-#     
-#     Hydrochlorothiazide tablet
-#     
-#     Spironolactone tablet
-#     
+#
+# - Furosemide tablet
+# - Furosemide injection
+# - Torasemide tablet
+# - Hydrochlorothiazide tablet
+# - Spironolactone tablet
+#
 # **Vasodilatory**
 #
-#     Meglumine Adenosine Cyclophosphate
+# - Meglumine Adenosine Cyclophosphate
+# - Milrinone injection
+# - Deslanoside injection
+# - Nitroglycerin injection
+# - Isoprenaline Hydrochloride injection
+# - Shenfu injection
+# - Isosorbide Mononitrate Sustained Release tablet
+# - sulfotanshinone sodium injection (\*)
 #
-#     Milrinone injection
-#
-#     Deslanoside injection
-#
-#     Nitroglycerin injection
-#
-#     Isoprenaline Hydrochloride injection
-#     
-#     Shenfu injection
-#     
-#     Isosorbide Mononitrate Sustained Release tablet
-#     
-#     sulfotanshinone sodium injection (*)
-#     
 # **Inhibitor**
 #
-#     Benazepril hydrochloride tablet
-#     
-#     Atorvastatin calcium tablet
-#     
-#     Valsartan Dispersible tablet
+# - Benazepril hydrochloride tablet
+# - Atorvastatin calcium tablet
+# - Valsartan Dispersible tablet
 #
 # **Increse force of heart contraction**
 #
-#     Digoxin tablet
+# - Digoxin tablet
+# - Dobutamine hydrochloride injection
 #     
-#     Dobutamine hydrochloride injection
-#     
-# (*) Sulfotanshinone sodium injection is a compound derived from traditional Chinese medicine, commonly found in the plant Salvia miltiorrhiza.
+# (\*) Sulfotanshinone sodium injection is a compound derived from traditional Chinese medicine, commonly found in the plant Salvia miltiorrhiza.
 # Salvia miltiorrhiza and its constituents, including sulfotanshinone, have been studied for their potential cardiovascular effects. They are reported to possess antioxidant, anti-inflammatory, and vasodilatory properties. Vasodilation refers to the widening or relaxation of blood vessels, leading to increased blood flow and potentially lowering blood pressure.
 #
 
