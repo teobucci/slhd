@@ -1477,6 +1477,35 @@ selected_feature_names_rf = [X_train.columns[index] for index in selected_featur
 
 print(f'Selected {len(selected_feature_names_rf)} features:')
 selected_feature_names_rf
+
+# +
+df_importance = pd.DataFrame({
+    'feature': X_train.columns,
+    'importance': rf_selector.estimator_.feature_importances_
+})
+
+df_importance = df_importance.sort_values(by=['importance'], ascending=False).iloc[:10]
+df_importance
+# -
+
+df_importance.head(10).to_latex(
+    str(OUTPUT_FOLDER / 'importance_top10_rf.tex'),
+    index=False,
+    formatters={"name": str.upper},
+    float_format="{:.4f}".format,
+    caption="Top 10 feature importance.",
+    label='tab:importance-rf'
+)
+
+# +
+fig, ax = plt.subplots(figsize=(6,4))
+
+sns.barplot(x='importance', y='feature', data=df_importance, color='c')
+plt.xlabel('Mean decrease in impurity')
+plt.ylabel('Features')
+plt.title('Feature Importance in Random Forest')
+plt.savefig(str(OUTPUT_FOLDER / 'feature_importance_RandomForestClassifier.pdf'), bbox_inches='tight')
+plt.show()
 # -
 
 # Let's see the intersections.
@@ -1549,7 +1578,7 @@ sfs_forward.subsets_[10]['feature_names']
 
 # As we expected, they don't perfectly match. Take the union as final set of features:
 
-final_features = list(set(sfs.subsets_[10]['feature_names']) | set(sfs_forward.subsets_[10]['feature_names']))
+final_features = list(set(sfs_backward.subsets_[10]['feature_names']) | set(sfs_forward.subsets_[10]['feature_names']))
 final_features
 
 # ### Model selection
@@ -1878,41 +1907,6 @@ df_performance.to_latex(
     label='tab:performance'
 )
 
-# #### Random Forest
-
-classifier = pipeline_cv['random_forest'].best_estimator_.named_steps['classifier']
-
-fig, ax = plt.subplots(figsize=(8,6))
-# Feature Importance
-importance, sorted_indices = np.sort(classifier.feature_importances_), np.argsort(classifier.feature_importances_)
-importance, sorted_indices = importance[-30:], sorted_indices[-30:]
-importance, sorted_indices = importance[::-1], sorted_indices[::-1]
-sns.barplot(x=importance, y=X_train.columns[sorted_indices], color='c')
-plt.xlabel('Mean decrease in impurity')
-plt.ylabel('Features')
-plt.title('Feature Importance in Random Forest')
-plt.savefig(str(OUTPUT_FOLDER / 'feature_importance_RandomForestClassifier.pdf'), bbox_inches='tight')
-plt.show()
-
-df_importance = pd.DataFrame({
-    'name': X_train.columns,
-    'importance': classifier.feature_importances_
-})
-
-df_importance = df_importance.sort_values(by=['importance'], ascending=False)
-df_importance.head(10)
-
-df_importance.head(10).to_latex(
-    str(OUTPUT_FOLDER / 'importance_top10_rf.tex'),
-    index=False,
-    formatters={"name": str.upper},
-    float_format="{:.4f}".format,
-    caption="Top 10 feature importance.",
-    label='tab:importance-rf'
-)
-
-important_features_rf = set(df_importance.head(30).name)
-
 # ### Export for web app
 
 # +
@@ -1951,8 +1945,6 @@ final_features = [
     'dischargeDay',
     'diabetes'
 ]
-
-
 
 # +
 cols_numerical, cols_categorical = get_num_cat(df)
