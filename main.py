@@ -1650,8 +1650,6 @@ models = {}
 # %%time
 
 for name, model in models_config.items():
-    if not name == 'logistic_regression':
-        continue
     grid_search = GridSearchCV(
         models_config[name]['model'],
         param_grid=models_config[name]['param_grid'],
@@ -1659,19 +1657,19 @@ for name, model in models_config.items():
         scoring="roc_auc",
         refit="AUC",
         return_train_score=True,
-        verbose=1
+        verbose=0
     )
     grid_search.fit(X_train_unscaled[final_features], y_train)
     models[name] = grid_search
-    print(f'{name:30}| train AUC = {grid_search.score(X_train_unscaled[final_features], y_train):.3f} | test AUC = {grid_search.score(X_test_unscaled[final_features], y_test):.3f}')
+    print(f'{name:30}| train AUC = {grid_search.score(X_train_unscaled[final_features], y_train):.4f} | test AUC = {grid_search.score(X_test_unscaled[final_features], y_test):.4f}')
     print('-'*80)
 # -
 
 # Save for later
 
 # +
-# with open(str(OUTPUT_FOLDER / 'models.pkl'), 'wb') as handle:
-#     pickle.dump(models, handle, protocol=pickle.HIGHEST_PROTOCOL)
+with open(str(OUTPUT_FOLDER / 'models.pkl'), 'wb') as handle:
+    pickle.dump(models, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 with open(str(OUTPUT_FOLDER / 'models.pkl'), 'rb') as handle:
     models = pickle.load(handle)
