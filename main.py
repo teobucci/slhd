@@ -1521,6 +1521,8 @@ X_test = pd.DataFrame(imputer.transform(X_test), columns = X_test.columns)
 
 # #### Feature engineering
 
+# Try adding the first PCs to the dataset and see whether they are selected by our method.
+
 # +
 pca = PCA(n_components=5)  # Specify the number of principal components you want
 pca.fit(X_train[cols_numerical])
@@ -1531,6 +1533,11 @@ test_pca = pd.DataFrame(data=pca.transform(X_test[cols_numerical]), columns=['PC
 X_train = pd.concat([X_train, train_pca], axis=1)
 X_test = pd.concat([X_test, test_pca], axis=1)
 # -
+
+# Let's add the log-transformation of `glutamic.pyruvic.transaminase`
+
+X_train['glutamic.pyruvic.transaminase_log'] = X_train['glutamic.pyruvic.transaminase'].apply(lambda x: np.log(x+0.001))
+X_test['glutamic.pyruvic.transaminase_log'] = X_test['glutamic.pyruvic.transaminase'].apply(lambda x: np.log(x+0.001))
 
 cols_numerical, cols_categorical = get_num_cat(df)
 
