@@ -215,7 +215,7 @@ import matplotlib.pyplot as plt
 # %matplotlib inline
 # %config InlineBackend.figure_format='retina'
 
-from sklearn.feature_selection import SelectFromModel, VarianceThreshold, SequentialFeatureSelector
+from sklearn.feature_selection import SelectFromModel, VarianceThreshold
 from sklearn.model_selection import train_test_split, GridSearchCV, StratifiedKFold
 # from sklearn.model_selection import cross_val_score, cross_val_predict
 # from sklearn.experimental import enable_iterative_imputer
@@ -237,6 +237,7 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.utils import class_weight
 import scipy.cluster.hierarchy as spc
 
+from mlxtend.feature_selection import SequentialFeatureSelector
 from mlxtend.plotting import plot_confusion_matrix
 from mlxtend.plotting import plot_sequential_feature_selection as plot_sfs
 # -
