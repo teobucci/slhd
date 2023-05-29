@@ -1817,9 +1817,13 @@ for name, model in models_config.items():
     )
     grid_search.fit(X_train_unscaled[final_features], y_train)
     models[name] = grid_search
-    print(f'{name:30}| train AUC = {grid_search.score(X_train_unscaled[final_features], y_train):.4f} | test AUC = {grid_search.score(X_test_unscaled[final_features], y_test):.4f}')
-    print('-'*80)
 # -
+
+# Check the output results.
+
+for name, model in models.items():
+    print(f'{name:30}| train AUC = {model.score(X_train_unscaled[final_features], y_train):.4f} | test AUC = {model.score(X_test_unscaled[final_features], y_test):.4f}')
+    print('-'*80)
 
 # Save for later
 
