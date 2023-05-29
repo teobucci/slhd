@@ -1425,14 +1425,19 @@ class_weights
 
 # ### Feature selection
 
-# The `LogisticRegression` and the `RandomForestClassifier` are both suited for feature selection. Trying to take advantage of both worlds, we develop a feature selection method based on the following:
-# - Train a `LogisticRegression` with strong $L^1$ penalty to select a set $S_1$ of features
-# - Train a `RandomForestClassifier` and create an $S_2$ set of features made by the top 30 features by impurity decrease importance
-# - Create a set $S_3 = S_1 \cup S_2$ and use it to train another `LogisticRegression`, which is simple and easily interpretable
-# - Perform a backward feature selection
-# - Finally, perform a hyperparameter tuning
+# Ideally we want to perform some kind of backward selection. However, since the initial number of features is 127, the process is very computationally intensive (after a quick pilot run, about 20 seconds per feature to be removed). So to speed up the process we develop the following method to discard some features, trying to retain as much information as possible. We employ a `LogisticRegression` and a `RandomForestClassifier`, which are both suited for feature selection. Trying to take advantage of both worlds, we perform the following steps:
+#
+# - Train a `LogisticRegression` with strong $L^1$ penalty to select a set $S_\text{lr}$ of features.
+# - Train a `RandomForestClassifier` and create an $S_\text{rf}$ set of features made by the top 30 features by impurity decrease importance.
+# - Create a set $S_\text{reduced} = S_\text{lr} \cup S_\text{rf}$
+#
+# We can now perform a backward selection based on this $S_\text{reduced}$ set of features, and inspecting the evolution of our performance index (the AUC) we select a suitable number of features $S^\star_1$, similarly to an elbow rule. Then, since the results are often different, we perform a forward selection from 0 to 10 features on the same model to get the set $S^\star_2$, and finally we take the union of the two as our final features set $S^\star = S^\star_1 \cup S^\star_2$.
+#
+# This will be later fed to a model selection part where can try many models, since the feature set is now very small.
 
 print(f'Initial number of features: {X_train.shape[1]}')
+
+# #### Selection with LogisticRegression
 
 # +
 logistic_selector = SelectFromModel(
@@ -1452,6 +1457,9 @@ selected_feature_names_lr = [X_train.columns[index] for index in selected_featur
 
 print(f'Selected {len(selected_feature_names_lr)} features:')
 selected_feature_names_lr
+# -
+
+# #### Selection with RandomForestClassifier
 
 # +
 rf_selector = SelectFromModel(
@@ -1475,6 +1483,8 @@ selected_feature_names_rf
 
 set(selected_feature_names_rf) & set(selected_feature_names_lr)
 
+# #### Adding extra variables
+
 # We see that neither of the methods selected the presence of diabetes, while we think it could be meaninfgul. So we take the union and add `diabetes_True`.
 
 # +
@@ -1485,6 +1495,8 @@ if not 'diabetes_True' in selected_features:
 selected_features
 # -
 
+# #### Backward selection
+
 # Let's perform backward selection on another `LogisticRegression`
 
 classifier = LogisticRegression(C=0.1, max_iter=10000, random_state=SEED, class_weight=class_weights)
@@ -1493,7 +1505,7 @@ classifier = LogisticRegression(C=0.1, max_iter=10000, random_state=SEED, class_
 from mlxtend.feature_selection import SequentialFeatureSelector
 
 # Sequential Backward Selection
-sfs = SequentialFeatureSelector(
+sfs_backward = SequentialFeatureSelector(
     classifier,
     k_features=1,
     forward=False,
@@ -1506,7 +1518,7 @@ sfs = SequentialFeatureSelector(
 # +
 from mlxtend.plotting import plot_sequential_feature_selection as plot_sfs
 
-plot_sfs(sfs.get_metric_dict(), kind='std_dev',figsize=(10, 8))
+plot_sfs(sfs_backward.get_metric_dict(), kind='std_dev',figsize=(10, 8))
 
 plt.title('Sequential Backward Selection')
 plt.xticks(np.arange(0, 70, 5))
@@ -1515,21 +1527,24 @@ plt.savefig(str(OUTPUT_FOLDER / 'feature_selection_backward_logistic.pdf'), bbox
 plt.show()
 # -
 
-# Sequential Backward Selection
-sfs = SequentialFeatureSelector(
+# #### Forward selection
+
+sfs_forward = SequentialFeatureSelector(
     classifier,
-    k_features=10,
-    forward=False,
+    k_features=30,
+    forward=True,
     floating=False,
     scoring='roc_auc',
-    verbose=0,
+    verbose=2,
     cv=StratifiedKFold(n_splits=5, shuffle=True, random_state=SEED),
     n_jobs=-1).fit(X_train[selected_features], y_train)
 
-X_train_sfs = pd.DataFrame(sfs.transform(X_train[selected_features]), columns=sfs.k_feature_names_)
-X_test_sfs = pd.DataFrame(sfs.transform(X_test[selected_features]), columns=sfs.k_feature_names_)
+sfs_backward.subsets_[10]['feature_names']
 
-sfs.k_feature_names_
+sfs_forward.subsets_[10]['feature_names']
+
+final_features = list(set(sfs.subsets_[10]['feature_names']) | set(sfs_forward.subsets_[10]['feature_names']))
+final_features
 
 # ### Model selection
 
@@ -1596,6 +1611,8 @@ models = {}
 
 # perform grid search cross-validation for each model and output the test accuracy of the best model
 for name, model in models_config.items():
+    if not name == 'logistic_regression':
+        continue
     grid_search = GridSearchCV(
         models_config[name]['model'],
         param_grid=models_config[name]['param_grid'],
@@ -1603,11 +1620,11 @@ for name, model in models_config.items():
         scoring="roc_auc",
         refit="AUC",
         return_train_score=True,
-        verbose=0
+        verbose=1
     )
-    grid_search.fit(X_train_unscaled[list(sfs.k_feature_names_)], y_train)
+    grid_search.fit(X_train_unscaled[final_features], y_train)
     models[name] = grid_search
-    print(f'{name:30}| train AUC = {grid_search.score(X_train_unscaled[list(sfs.k_feature_names_)], y_train):.3f} | test AUC = {grid_search.score(X_test_unscaled[list(sfs.k_feature_names_)], y_test):.3f}')
+    print(f'{name:30}| train AUC = {grid_search.score(X_train_unscaled[final_features], y_train):.3f} | test AUC = {grid_search.score(X_test_unscaled[final_features], y_test):.3f}')
     print('-'*80)
 
 # +
