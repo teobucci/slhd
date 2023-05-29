@@ -946,7 +946,8 @@ df.loc[df['respiration'] == 0, 'respiration'] = np.nan
 
 get_outliers(df, 'height', threshold=3)
 
-#df.loc[df['height'] <= 1.25, ['ageCat','height']]
+df.loc[df['height'] <= 1.25, ['ageCat','height']]
+
 df.loc[df['height'] <= 1.25, 'height'] = np.nan
 
 get_outliers(df, 'weight', threshold=3)
@@ -957,71 +958,70 @@ get_outliers(df, 'body.temperature', threshold=6)
 
 get_outliers(df, 'BMI', threshold=1)
 
-# According to the World Health Organization (WHO) a healthy subject is indicated by a BMI between 18.5 and 24.9
-# The threshold value of BMI in adults is 25 for overweight and 30 for obesity.
-# In the underweight condition, the BMI does not reach the value of 18.5
+# According to the World Health Organization (WHO) a healthy subject is indicated by a `BMI` between 18.5-24.9.
 #
+# The threshold value of `BMI` in adults is 25 for overweight and 30 for obesity.
+#
+# In the underweight condition, the `BMI` does not reach the value of 18.5.
 
 df.loc[(df['BMI'] >= 100) | (df['BMI'] == 0), 'BMI'] = np.nan
 
 get_outliers(df, 'fio2', threshold=3)
 
-# fio2 is the fraction of inspired oxygenation (%).
+# `fio2` is the fraction of inspired oxygenation (%).
 #
-# fiO2 is 21(%) if the patient is in spontaneous breathing without oxygen supplements.
+# `fio2` is 21(%) if the patient is in spontaneous breathing without oxygen supplements.
 #
-# If the patient has an oxygen supplement the fiO2 is a fraction variable according to the amount of Oxygen inhaled, which depends on various factors: oxygen flows, presence or absence of reservoir, respiratory rate, total volume
+# If the patient has an oxygen supplement the `fio2` is a fraction variable according to the amount of Oxygen inhaled, which depends on various factors: oxygen flows, presence or absence of reservoir, respiratory rate, total volume.
 #
-# The fio2 can be setted by the clinician himself
+# The `fio2` can be setted by the clinician himself.
 #
 # Even though 100% is not unfeasible, we decide to discard it to avoid numerical instabilities.
 
 df.loc[(df['fio2'] == 100), 'fio2'] = np.nan
-#df.loc[(df['fio2'] >= 60), 'fio2'] = np.nan
 
 get_outliers(df, 'systolic.blood.pressure', threshold=3)
 
-# In a healthy subject the systolic pressur must be around 120 mmHg
-# Subjects with pressure >140 mmHg suffer of hypertension
-# The patient who has a pressure equal to 50 mmHg is probably affected by hypotension
-# Values = 0 or >200 are outliers
+# In a healthy subject the `systolic.blood.pressure` must be around 120 mmHg.
+#
+# Subjects with pressure >140 mmHg suffer of hypertension.
+#
+# The patient who has a pressure equal to 50 mmHg is probably affected by hypotension.
+#
+# Values = 0 or >200 are outliers.
 
 df.loc[(df['systolic.blood.pressure'] >= 200) | (df['systolic.blood.pressure'] == 0), 'systolic.blood.pressure'] = np.nan
 
-# +
-#df.loc[df['systolic.blood.pressure'] == 0, 'systolic.blood.pressure'] = np.nan
-# -
-
 get_outliers(df, 'diastolic.blood.pressure', threshold=4)
 
-# In a healthy subject the diastolic pressur must be around 80 mmHg
-# Subjects with pressure >110 mmHg suffer of hypertension
+# In a healthy subject the `diastolic.blood.pressure` must be around 80 mmHg.
+#
+# Subjects with pressure >110 mmHg suffer of hypertension.
 
 df.loc[(df['diastolic.blood.pressure'] >= 110) | (df['diastolic.blood.pressure'] == 0), 'diastolic.blood.pressure'] = np.nan
 
-# +
-#df.loc[df['diastolic.blood.pressure'] == 0, 'diastolic.blood.pressure'] = np.nan
-# -
-
 get_outliers(df, 'map', threshold=3)
 
-# Map (Mean Arterial pressure)
-# The normal MAP range is between 70 and 100 mmHg.
-# Mean arterial pressures that deviate from this range for prolonged periods of time can have drastic negative effects on the body.
+# `map` is the Mean Arterial Pressure.
+#
+# The normal `map` range is 70-100 mmHg.
+#
+# `map` that deviate from this range for prolonged periods of time can have drastic negative effects on the body.
 
 df.loc[df['map'] == 0, 'map'] = np.nan
 
 get_outliers(df, 'left.ventricular.end.diastolic.diameter.LV', threshold=3)
 
-# Left ventricular end diastolic diameter LV (cm) normal range: 3.5 - 5.6 cm
-# From the histogram we can see that the values are not in cm
+# Left Ventricular end Diastolic Diameter LV (cm) normal range: 3.5-5.6 cm.
+#
+# From the histogram we can see that the values are not in cm.
 
 df['left.ventricular.end.diastolic.diameter.LV'].hist()
 plt.show()
 
-# Repeat the outlier analysis
-
 df['left.ventricular.end.diastolic.diameter.LV'] = df['left.ventricular.end.diastolic.diameter.LV'] / 10
+
+# Repeat the outlier analysis
 
 get_outliers(df, 'left.ventricular.end.diastolic.diameter.LV', threshold=3)
 
@@ -1029,33 +1029,31 @@ df.loc[df['left.ventricular.end.diastolic.diameter.LV'] < 0.1, 'left.ventricular
 
 get_outliers(df, 'creatinine.enzymatic.method', threshold=8)
 
-# creatinine.enzymatic.method; normal range:44-110 $\mu$mol/L
+# `creatinine.enzymatic.method` normal range: 44-110 $\mu$mol/L
 
 df.loc[df['creatinine.enzymatic.method'] > 200, 'creatinine.enzymatic.method'] = np.nan
 
 get_outliers(df, 'urea', threshold=4)
 
-# urea (mmol/l), ref:1.7 - 8.3 mmol/L
+# `urea` (mmol/l), ref:1.7 - 8.3 mmol/L
+#
 # Abnormal levels of urea and creatine in the blood may be indicative of renal dysfunction.
-# This means that the kidneys fail to properly eliminate toxic substances in the body
-
-# +
-#controllare il valore e fare la conversione
-#df.loc[df['urea'] >10, 'urea'] = np.nan
-# -
+# This means that the kidneys fail to properly eliminate toxic substances in the body.
 
 get_outliers(df, 'cystatin', threshold=6)
 
-# cystatin (mg/L); ref:0.51–0.98
-# High levels of cysteine in the blood are associated with an increased risk of cardiovascular disease, therefore more likely to suffer diseases such as heart attack, intermittent claudication, ischemic heart disease etc
+# `cystatin` (mg/L); ref: 0.51–0.98.
+#
+# High levels of cysteine in the blood are associated with an increased risk of cardiovascular disease, therefore more likely to suffer diseases such as heart attack, intermittent claudication, ischemic heart disease etc.
 
 df.loc[df['cystatin'] >=10, 'cystatin'] = np.nan
 
 get_outliers(df, 'white.blood.cell', threshold=6)
 
-# white blood cell count (*10^9/L); ref: 4 -10
+# `white.blood.cell` count (\*10^9/L); ref: 4-10
+#
 # Leukocytosis, which is the increase in the number of white blood cells above 11, is often caused by the normal response of the body to fight an infection or by certain drugs such as corticosteroids
-# threshold can be setted >= 11.6
+# threshold can be setted >= 11.6.
 
 df.loc[df['white.blood.cell'] >=11.6, 'white.blood.cell'] = np.nan
 
@@ -1072,36 +1070,41 @@ df.loc[df['eosinophil.ratio'] > 30, 'eosinophil.ratio'] = np.nan
 
 get_outliers(df, 'basophil.count', threshold=8)
 
-# basophil.count(*10^9/L); ref: 0 - 0.1
+# `basophil.count` (\*10^9/L); ref: 0-0.1
+#
 # An higher count of basophilis can be a symptom of chronic myeloid leukemia
 
 df.loc[df['basophil.count'] > 0.280, 'basophil.count'] = np.nan
 
 get_outliers(df, 'D.dimer', threshold=8)
 
-# D.dimer(mg/l); ref: 0 - 0.5  
+# `D.dimer` (mg/l); ref: 0-0.5
+#
 # D-dimer is one of the protein fragments generated by the decomposition of clots in the body.
 
 df.loc[df['D.dimer'] > 48, 'D.dimer'] = np.nan
 
 get_outliers(df, 'international.normalized.ratio', threshold=8)
 
-# international.normalized.ratio; ref: 0.8 - 1.5
+# `international.normalized.ratio` ref: 0.8-1.5
 
 df.loc[df['international.normalized.ratio'] > 7, 'international.normalized.ratio'] = np.nan
 
 get_outliers(df, 'activated.partial.thromboplastin.time', threshold=8)
 
-# activated.partial.thromboplastin.time(s); ref: 20 -40  
-# Having a high activated.partial.thromboplastin.time means that the coagulation process of the body is lengthened 
+# `activated.partial.thromboplastin.time` (s) ref: 20-40  
+#
+# Having a high `activated.partial.thromboplastin.time` means that the coagulation process of the body is lengthened.
 
 df.loc[df['activated.partial.thromboplastin.time'] > 105, 'activated.partial.thromboplastin.time'] = np.nan
 
 get_outliers(df, 'thrombin.time', threshold=3)
 
-# thrombin.time (s); ref: 14-21  
-# Thrombin is an enzyme involved in fibrinogen coagulation factor, whose activity is measured by Thrombin Time (TT)  
-# When platelets or clotting factors are not present in adequate quantities or do not work, thrombotic or bleeding episodes may occur
+# `thrombin.time` (s); ref: 14-21
+#
+# Thrombin is an enzyme involved in fibrinogen coagulation factor, whose activity is measured by Thrombin Time (TT).
+#
+# When platelets or clotting factors are not present in adequate quantities or do not work, thrombotic or bleeding episodes may occur.
 
 df.loc[df['thrombin.time'] > 78, 'thrombin.time'] = np.nan
 
@@ -1126,11 +1129,11 @@ df.loc[df['prothrombin.time.ratio'] > 7, 'prothrombin.time.ratio'] = np.nan
 
 get_outliers(df, 'sodium', threshold=8)
 
-# sodium(mmol/L); ref:137 - 147
+# `sodium` (mmol/L); ref: 137-147
 
 get_outliers(df, 'potassium', threshold=8)
 
-# potassium(mmol/L); ref:3.5 - 5.3
+# `potassium` (mmol/L); ref: 3.5-5.3
 
 df.loc[df['potassium'] > 11, 'potassium'] = np.nan
 
@@ -1140,7 +1143,7 @@ get_outliers(df, 'hydroxybutyrate.dehydrogenase.to.lactate.dehydrogenase', thres
 
 get_outliers(df, 'hydroxybutyrate.dehydrogenase', threshold=8)
 
-# hydroxybutyrate.dehydrogenase(U/L); ref: 90 -180
+# `hydroxybutyrate.dehydrogenase` (U/L); ref: 90-180
 
 df.loc[df['hydroxybutyrate.dehydrogenase'] > 1498, 'hydroxybutyrate.dehydrogenase'] = np.nan
 
@@ -1150,8 +1153,9 @@ df.loc[df['glutamic.oxaloacetic.transaminase'] > 1400, 'glutamic.oxaloacetic.tra
 
 get_outliers(df, 'creatine.kinase', threshold=8)
 
-# creatine.kinase (IU/L); ref: 22 -270  
-# An exponential increase in creatine kinase generally indicates that there has been a recent muscle or heart damage
+# `creatine.kinase` (IU/L); ref: 22-270
+#
+# An exponential increase in creatine kinase generally indicates that there has been a recent muscle or heart damage.
 
 df.loc[df['creatine.kinase'] > 3000, 'creatine.kinase'] = np.nan
 
@@ -1169,8 +1173,9 @@ df.loc[df['alkaline.phosphatase'] > 1000, 'alkaline.phosphatase'] = np.nan
 
 get_outliers(df, 'indirect.bilirubin', threshold=8)
 
-# indirect.bilirubin (umol/L); ref: 0-16  
-# Indirect bilirubin is the difference between total and direct bilirubin
+# `indirect.bilirubin` (umol/L); ref: 0-16
+#
+# Indirect bilirubin is the difference between total and direct bilirubin.
 
 df.loc[df['indirect.bilirubin'] > 90, 'indirect.bilirubin'] = np.nan
 
@@ -1180,28 +1185,31 @@ df.loc[df['glutamic.pyruvic.transaminase'] > 1800, 'glutamic.pyruvic.transaminas
 
 get_outliers(df, 'globulin', threshold=8)
 
-# globulin (g/L); ref: 20-40  
+# `globulin` (g/L); ref: 20-40
 
 df.loc[df['globulin'] > 88, 'globulin'] = np.nan
 
 get_outliers(df, 'direct.bilirubin', threshold=8)
 
-# direct.bilirubin (umol/L); ref: 0-6.8  
-# Bilirubin is a substance made when your body breaks down red blood cells. This is a normal process. Bilirubin is also part of bile, which your liver makes to help digest the food you eat
+# `direct.bilirubin` (umol/L); ref: 0-6.8
+#
+# Bilirubin is a substance made when your body breaks down red blood cells. This is a normal process. Bilirubin is also part of bile, which your liver makes to help digest the food you eat.
 
 df.loc[df['direct.bilirubin'] > 10, 'direct.bilirubin'] = np.nan
 
 get_outliers(df, 'total.bilirubin', threshold=8)
 
-# total.bilirubin(umol/l); ref: 2-20.4  
+# `total.bilirubin` (umol/l); ref: 2-20.4
 
 df.loc[df['total.bilirubin'] > 160, 'total.bilirubin'] = np.nan
 
 get_outliers(df, 'total.bile.acid', threshold=8)
 
-# total.bile.acid(umol/l); ref: 0-20  
-# Bile Acids are synthesised in the liver and secreted into the bile. Their function is to facilitate the excretion of fat soluble waste products into the gut
-# Bile acids are increased in patients with acute hepatitis, chronic hepatitis, liver sclerosis, liver cancer and obstetric cholestatis
+# `total.bile.acid` (umol/l); ref: 0-20
+#
+# Bile Acids are synthesised in the liver and secreted into the bile. Their function is to facilitate the excretion of fat soluble waste products into the gut.
+#
+# Bile acids are increased in patients with acute hepatitis, chronic hepatitis, liver sclerosis, liver cancer and obstetric cholestatis.
 
 df.loc[df['total.bile.acid'] > 120, 'total.bile.acid'] = np.nan
 
