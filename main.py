@@ -1878,6 +1878,14 @@ models['logistic_regression'].best_params_
 # = \log \left( \frac{p(\boldsymbol{X})}{1-p(\boldsymbol{X})} \right) 
 # = \beta_0 + \beta_1 X_1 + \cdots + \beta_p X_p
 # $$
+#
+# where
+#
+# $$
+# \boldsymbol{X} = [ X_1 \, X_2 \cdots X_p] \in \mathbb{R}^{n \times p}
+# \quad
+# \boldsymbol{\beta} = [ \beta_0 \, \beta_1 \, \beta_2 \cdots \beta_p] \in \mathbb{R}^{p+1}
+# $$
 
 # +
 coeff = pd.DataFrame()
@@ -1888,6 +1896,15 @@ coeff = coeff.sort_values(by=['beta'])
 
 coeff
 # -
+
+coeff.to_latex(
+    str(OUTPUT_FOLDER / 'final_lr_coeff.tex'),
+    index=False,
+    formatters={"name": str.upper},
+    float_format="{:.4f}".format,
+    caption="Logistic Regression coefficients.",
+    label='tab:lr-coeff'
+)
 
 # [This website](https://stats.oarc.ucla.edu/other/mult-pkg/faq/general/faq-how-do-i-interpret-odds-ratios-in-logistic-regression/) provides an insightful interpretation of the coefficients in a logistic regression model.
 
