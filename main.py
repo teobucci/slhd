@@ -648,6 +648,8 @@ for variable, dominant_category in dominant_categories.items():
 drop_cols
 # -
 
+# We can see that almost all patients took a `Drugs_Diuretics`, so it has been discarded and therefore not important for our task.
+
 df = df.drop(drop_cols, axis=1)
 cols_numerical, cols_categorical = get_num_cat(df)
 
@@ -1261,7 +1263,7 @@ plt.show()
 # +
 col_inspect = cols_categorical.values.tolist()
 col_inspect.remove(target_var)
-#col_inspect = ['Killip.grade', 'ageCat']
+col_inspect = [c for c in col_inspect if c not in ['Drugs_IFHC', 'Drugs_Inhibitor', 'Drugs_Vasodilatory']]
 
 # Adjust subplots and figsize
 fig, axes = plt.subplots(4, 5,figsize=[15,15])
@@ -1614,6 +1616,8 @@ print(f'Selected {len(selected_feature_names_lr)} features:')
 selected_feature_names_lr
 # -
 
+# Among the drugs, `Drugs_IFHC_True` has been selected.
+
 # #### Selection with RandomForestClassifier
 
 # +
@@ -1634,6 +1638,9 @@ selected_feature_names_rf = [X_train.columns[index] for index in selected_featur
 
 print(f'Selected {len(selected_feature_names_rf)} features:')
 selected_feature_names_rf
+# -
+
+# No drug has been selected.
 
 # +
 df_importance = pd.DataFrame({
@@ -1731,6 +1738,8 @@ sfs_forward.subsets_[10]['feature_names']
 
 final_features = list(set(sfs_backward.subsets_[10]['feature_names']) | set(sfs_forward.subsets_[10]['feature_names']))
 final_features
+
+# None of the drugs made it to the final selection phase, so overall we can say that they are not that important to predict the target, and it makes some sense, since the drugs may vary in dosage quantity and their effect may not be see in 6 months. However, among them, the one that proved to be most informative is the `IFHC` group.
 
 # ### Model selection
 
