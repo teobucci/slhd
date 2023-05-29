@@ -1638,6 +1638,8 @@ for name, model in models_config.items():
 
 # ## 3. Results
 
+# ### Model analysis
+
 # Inspect the best configuration.
 
 models['logistic_regression'].best_params_
@@ -1653,16 +1655,43 @@ models['logistic_regression'].best_params_
 
 models['logistic_regression'].best_estimator_.coef_
 
-# +
-y_pred = (models['logistic_regression'].predict_proba(X_test_unscaled[final_features])[:,1] >= 0.5).astype(bool) # set threshold as 0.44
+# ### Classification performance
+
+# Print the AUC
+
+AUC = models['logistic_regression'].score(X_test_unscaled[final_features], y_test)
+print(f'AUC: {AUC:.4f}')
+
+# Set a threshold for the score and print the classification metrics.
+
+classification_threshold = 0.50
+y_pred = (models['logistic_regression'].predict_proba(X_test_unscaled[final_features])[:,1] >= classification_threshold).astype(bool)
 
 report = classification_report(y_test, y_pred, output_dict=True)
 pd.DataFrame(report).transpose()
 
-# +
-AUCCC = models['logistic_regression'].score(X_test_unscaled[final_features], y_test)
+# Print the confusion matrix
 
-print(f'AUC: {AUCCC:.4f}')
+# +
+fig, ax = plt.subplots(figsize=(8,8))
+
+# Calculate the accuracy score
+accuracy = accuracy_score(y_test, y_pred)
+
+# Calculate the confusion matrix
+cm = confusion_matrix(y_test, y_pred)
+#sns.heatmap(cm, annot=True, cmap='coolwarm', fmt='d', ax=axes[0,i])
+ax.set_title(models['logistic_regression'].best_estimator_.__class__.__name__)
+plot_confusion_matrix(conf_mat=cm,
+                      show_absolute=True,
+                      show_normed=True,
+                      colorbar=True, figure=fig, axis=ax)
+
+ax.set_xlabel('Predicted label')
+ax.set_ylabel('True label')
+
+plt.savefig(str(OUTPUT_FOLDER / 'confusion_matrix_logistic_regression.pdf'), bbox_inches='tight')
+plt.show()
 
 
 # -
@@ -1735,9 +1764,6 @@ for name, model in models.items():
     #y_pred = pipeline.predict(X_test)
     y_pred = (model.predict_proba(X_test_sfs)[:,1] >= 0.5).astype(bool) # set threshold as 0.44
 
-    # Calculate the accuracy score
-    accuracy = accuracy_score(y_test, y_pred)
-
     # Calculate the confusion matrix
     cm = confusion_matrix(y_test, y_pred)
     #sns.heatmap(cm, annot=True, cmap='coolwarm', fmt='d', ax=axes[0,i])
@@ -1766,7 +1792,6 @@ for name, model in models.items():
     row = {
         'Model': model.__class__.__name__,
         'ROC AUC': roc_auc,
-        'Accuracy': accuracy,
     }
 
     # Append the row to the list
@@ -1776,33 +1801,6 @@ for name, model in models.items():
 
 plt.tight_layout()
 plt.savefig(str(OUTPUT_FOLDER / 'confusion_matrices.pdf'), bbox_inches='tight')
-plt.show()
-
-# +
-fig, ax = plt.subplots(figsize=(8,8))
-
-model = pipeline_cv['random_forest'].best_estimator_.named_steps['classifier']
-
-# Make predictions on the testing set
-#y_pred = pipeline.predict(X_test)
-y_pred = (pipeline_cv['random_forest'].predict_proba(X_test)[:,1] >= 0.44).astype(bool) # set threshold as 0.44
-
-# Calculate the accuracy score
-accuracy = accuracy_score(y_test, y_pred)
-
-# Calculate the confusion matrix
-cm = confusion_matrix(y_test, y_pred)
-#sns.heatmap(cm, annot=True, cmap='coolwarm', fmt='d', ax=axes[0,i])
-ax.set_title(model.__class__.__name__)
-plot_confusion_matrix(conf_mat=cm,
-                      show_absolute=True,
-                      show_normed=True,
-                      colorbar=True, figure=fig, axis=ax)
-
-ax.set_xlabel('Predicted label')
-ax.set_ylabel('True label')
-
-plt.savefig(str(OUTPUT_FOLDER / 'confusion_matrix_random_forest.pdf'), bbox_inches='tight')
 plt.show()
 
 # +
