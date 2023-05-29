@@ -1653,7 +1653,23 @@ models['logistic_regression'].best_params_
 # = \beta_0 + \beta_1 X_1 + \cdots + \beta_p X_p
 # $$
 
-models['logistic_regression'].best_estimator_.coef_
+betas = models['logistic_regression'].best_estimator_.coef_[0]
+betas
+
+# [This website](https://stats.oarc.ucla.edu/other/mult-pkg/faq/general/faq-how-do-i-interpret-odds-ratios-in-logistic-regression/) provides an insightful interpretation of the coefficients in a logistic regression model.
+
+fig, ax = plt.subplots(figsize=(8,8))
+coeff = pd.DataFrame()
+coeff['feature'] = X_test_unscaled[final_features].columns
+coeff['beta'] = betas
+coeff['exp_beta'] = np.exp(coeff['beta'])
+coeff = coeff.sort_values(by=['beta'])
+sns.barplot(data=coeff[abs(coeff.beta) > 0.00], x='beta', y='feature', color='c')
+plt.title('Coefficients in Logistic Regression')
+#plt.savefig(str(OUTPUT_FOLDER / 'feature_importance_weightsLogisticRegression.pdf'), bbox_inches='tight')
+plt.show()
+
+coeff
 
 # ### Classification performance
 
@@ -1665,7 +1681,8 @@ print(f'AUC: {AUC:.4f}')
 # Set a threshold for the score and print the classification metrics.
 
 classification_threshold = 0.50
-y_pred = (models['logistic_regression'].predict_proba(X_test_unscaled[final_features])[:,1] >= classification_threshold).astype(bool)
+y_score = models['logistic_regression'].predict_proba(X_test_unscaled[final_features])[:,1]
+y_pred = (y_score >= classification_threshold).astype(bool)
 
 report = classification_report(y_test, y_pred, output_dict=True)
 pd.DataFrame(report).transpose()
@@ -1693,8 +1710,32 @@ ax.set_ylabel('True label')
 plt.savefig(str(OUTPUT_FOLDER / 'confusion_matrix_logistic_regression.pdf'), bbox_inches='tight')
 plt.show()
 
+# +
+precisions, recalls, thresholds = precision_recall_curve(y_test, y_score)
+
+# Compute the zero skill model line
+# It will depend on the fraction of observations belonging to the positive class
+zero_skill = len(y_test[y_test==1]) / len(y_test)
+
+# Compute the perfect model line
+perfect_precision = np.ones_like(recalls)
+perfect_recall = np.linspace(0, 1, num=len(perfect_precision))
+
+plt.plot(recalls, precisions, 'r-', label='Logistic')
+plt.plot([0, 1], [zero_skill, zero_skill], 'b--', label='Zero skill')
+plt.plot(perfect_recall, perfect_precision, 'g--', linewidth=2, label='Perfect model')
+plt.xlabel('Recall')
+plt.ylabel('Precision')
+plt.axis([0, 1, 0, 1])
+#plt.grid()
+plt.title('Precision Recall curve in Logistic Regression')
+plt.legend()
+plt.show()
+
 
 # -
+
+# ---
 
 # Save for later
 
@@ -1837,55 +1878,6 @@ df_performance.to_latex(
     label='tab:performance'
 )
 
-# ### Deep model analysis
-
-# #### Logistic Regression
-
-# Even though it's not the most performing model, we continue analyzing it for its simplicity and interpretability.
-
-# Since it didn't, let us try to reduce the model with backward selection implemented by [`SequentialFeatureSelector`](https://rasbt.github.io/mlxtend/user_guide/feature_selection/SequentialFeatureSelector/) in `mlxtend`, and then perform a second final hyperparameter tuning.
-
-# [This website](https://stats.oarc.ucla.edu/other/mult-pkg/faq/general/faq-how-do-i-interpret-odds-ratios-in-logistic-regression/) provides an insightful interpretation of the coefficients in a logistic regression model.
-
-classifier = models['logistic_regression'].best_estimator_#grid_search.best_estimator_
-
-fig, ax = plt.subplots(figsize=(8,8))
-coeff = pd.DataFrame()
-coeff['feature'] = X_test_unscaled[list(sfs.k_feature_names_)].columns
-coeff['beta'] = classifier.coef_[0]
-coeff['exp_beta'] = np.exp(coeff['beta'])
-coeff = coeff.sort_values(by=['beta'])
-sns.barplot(data=coeff[abs(coeff.beta) > 0.00], x='beta', y='feature', color='c')
-plt.title('Coefficients in Logistic Regression')
-#plt.savefig(str(OUTPUT_FOLDER / 'feature_importance_weightsLogisticRegression.pdf'), bbox_inches='tight')
-plt.show()
-
-coeff
-
-# +
-y_pred = grid_search.predict_proba(X_test_sfs)[:,1]
-precisions, recalls, thresholds = precision_recall_curve(y_test, y_pred)
-
-# Compute the zero skill model line
-# It will depend on the fraction of observations belonging to the positive class
-zero_skill = len(y_test[y_test==1]) / len(y_test)
-
-# Compute the perfect model line
-perfect_precision = np.ones_like(recalls)
-perfect_recall = np.linspace(0, 1, num=len(perfect_precision))
-
-plt.plot(recalls, precisions, 'r-', label='Logistic')
-plt.plot([0, 1], [zero_skill, zero_skill], 'b--', label='Zero skill')
-plt.plot(perfect_recall, perfect_precision, 'g--', linewidth=2, label='Perfect model')
-plt.xlabel('Recall')
-plt.ylabel('Precision')
-plt.axis([0, 1, 0, 1])
-#plt.grid()
-plt.title('Precision Recall curve in Logistic Regression')
-plt.legend()
-plt.show()
-# -
-
 # #### Random Forest
 
 classifier = pipeline_cv['random_forest'].best_estimator_.named_steps['classifier']
@@ -1921,7 +1913,7 @@ df_importance.head(10).to_latex(
 
 important_features_rf = set(df_importance.head(30).name)
 
-# ### Explaining predictions with SHAP
+# ### Export for web app
 
 # +
 new_data = X.iloc[0].to_frame().T
