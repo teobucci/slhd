@@ -1539,16 +1539,23 @@ sfs_forward = SequentialFeatureSelector(
     cv=StratifiedKFold(n_splits=5, shuffle=True, random_state=SEED),
     n_jobs=-1).fit(X_train[selected_features], y_train)
 
+# Inspect the 10 features selected backward:
+
 sfs_backward.subsets_[10]['feature_names']
 
+# Inspect the 10 features selected forward:
+
 sfs_forward.subsets_[10]['feature_names']
+
+# As we expected, they don't perfectly match. Take the union as final set of features:
 
 final_features = list(set(sfs.subsets_[10]['feature_names']) | set(sfs_forward.subsets_[10]['feature_names']))
 final_features
 
 # ### Model selection
 
-# define the models and their parameter grids for grid search
+# Define the models and their parameter grids for grid search.
+
 models_config = {
     'logistic_regression': {
         'model': LogisticRegression(max_iter=10000),
@@ -1602,14 +1609,15 @@ models_config = {
     }
 }
 
-# According to [the documentation](https://scikit-learn.org/stable/modules/cross_validation.html#stratified-k-fold) we choose to use the `StratifiedKFold` for doing cross-validation, choosing `n_splits=5` to have a validation set of `1/n_splits=0.20`, and `shuffle=True`.
-
 models = {}
+
+# Perform grid search cross-validation for each model and output the test AUC.
+#
+# We do so on the `X_train_unscaled` version of the dataset, which we saw gives a better performance and doesn't require to unscale the coefficients for interpreting the ODDS ratio.
 
 # +
 # %%time
 
-# perform grid search cross-validation for each model and output the test accuracy of the best model
 for name, model in models_config.items():
     if not name == 'logistic_regression':
         continue
@@ -1626,54 +1634,33 @@ for name, model in models_config.items():
     models[name] = grid_search
     print(f'{name:30}| train AUC = {grid_search.score(X_train_unscaled[final_features], y_train):.3f} | test AUC = {grid_search.score(X_test_unscaled[final_features], y_test):.3f}')
     print('-'*80)
-
-# +
-# # %%time
-# 
-# # perform grid search cross-validation for each model and output the test accuracy of the best model
-# for name, model in models_config.items():
-#     grid_search = GridSearchCV(
-#         models_config[name]['model'],
-#         param_grid=models_config[name]['param_grid'],
-#         cv=StratifiedKFold(n_splits=5, shuffle=True, random_state=SEED),
-#         scoring="roc_auc",
-#         refit="AUC",
-#         return_train_score=True,
-#         verbose=0
-#     )
-#     grid_search.fit(X_train_sfs, y_train)
-#     models[name] = grid_search
-#     print(f'{name:30}| train AUC = {grid_search.score(X_train_sfs, y_train):.3f} | test AUC = {grid_search.score(X_test_sfs, y_test):.3f}')
-#     print('-'*80)
-
-# logistic_regression           | train AUC = 0.674 | test AUC = 0.654
-# --------------------------------------------------------------------------------
-# random_forest                 | train AUC = 0.784 | test AUC = 0.661
-# --------------------------------------------------------------------------------
-# knn                           | train AUC = 0.676 | test AUC = 0.602
-# --------------------------------------------------------------------------------
-# decision_tree_classifier      | train AUC = 0.682 | test AUC = 0.602
-# --------------------------------------------------------------------------------
-# mlp                           | train AUC = 0.743 | test AUC = 0.626
-# --------------------------------------------------------------------------------
-# naive_bayes                   | train AUC = 0.660 | test AUC = 0.635
-# --------------------------------------------------------------------------------
-# CPU times: user 2min 41s, sys: 9.96 s, total: 2min 51s
-# Wall time: 1min 8s
 # -
 
-models['logistic_regression'].best_estimator_.coef_
+# ## 3. Results
+
+# Inspect the best configuration.
 
 models['logistic_regression'].best_params_
 
+# Inspect the $\beta_i$ coefficients of the model:
+#
+# $$
+# \operatorname{logit}(p(\boldsymbol{X}))
+# = \log (\operatorname{odds}(p(\boldsymbol{X})))
+# = \log \left( \frac{p(\boldsymbol{X})}{1-p(\boldsymbol{X})} \right) 
+# = \beta_0 + \beta_1 X_1 + \cdots + \beta_p X_p
+# $$
+
+models['logistic_regression'].best_estimator_.coef_
+
 # +
-y_pred = (grid_search.predict_proba(X_test_unscaled[list(sfs.k_feature_names_)])[:,1] >= 0.5).astype(bool) # set threshold as 0.44
+y_pred = (models['logistic_regression'].predict_proba(X_test_unscaled[final_features])[:,1] >= 0.5).astype(bool) # set threshold as 0.44
 
 report = classification_report(y_test, y_pred, output_dict=True)
 pd.DataFrame(report).transpose()
 
 # +
-AUCCC = models['logistic_regression'].score(X_test_unscaled[list(sfs.k_feature_names_)], y_test)
+AUCCC = models['logistic_regression'].score(X_test_unscaled[final_features], y_test)
 
 print(f'AUC: {AUCCC:.4f}')
 
