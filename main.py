@@ -316,7 +316,7 @@ pd.DataFrame(df_drugs['Drug_name'].unique(), columns=['name'])
 #
 # - Digoxin tablet
 # - Dobutamine hydrochloride injection
-#     
+#
 # (\*) Sulfotanshinone sodium injection is a compound derived from traditional Chinese medicine, commonly found in the plant Salvia miltiorrhiza.
 # Salvia miltiorrhiza and its constituents, including sulfotanshinone, have been studied for their potential cardiovascular effects. They are reported to possess antioxidant, anti-inflammatory, and vasodilatory properties. Vasodilation refers to the widening or relaxation of blood vessels, leading to increased blood flow and potentially lowering blood pressure.
 #
@@ -659,7 +659,7 @@ cols_numerical, cols_categorical = get_num_cat(df)
 selector = VarianceThreshold(threshold=0)
 selector.fit(df[cols_numerical])
 
-const_col = [column for column in cols_numerical 
+const_col = [column for column in cols_numerical
           if column not in cols_numerical[selector.get_support()]]
 
 const_col
@@ -798,7 +798,7 @@ def analyze_correlation(df, columns, threshold=0.8):
 
 # For each of the variables with 50%-60% missingness, we have the column in the sub-50% to which it's most correlated, and with which value (and a threshold).
 
-df_correlation_analysis = analyze_correlation(df[cols_numerical], cols_numerical_missing) 
+df_correlation_analysis = analyze_correlation(df[cols_numerical], cols_numerical_missing)
 df_correlation_analysis
 
 # Extract columns with a correlation above a threshold
@@ -1092,7 +1092,7 @@ df.loc[df['international.normalized.ratio'] > 7, 'international.normalized.ratio
 
 get_outliers(df, 'activated.partial.thromboplastin.time', threshold=8)
 
-# `activated.partial.thromboplastin.time` (s) ref: 20-40  
+# `activated.partial.thromboplastin.time` (s) ref: 20-40
 #
 # Having a high `activated.partial.thromboplastin.time` means that the coagulation process of the body is lengthened.
 
@@ -1754,7 +1754,7 @@ final_features
 models_config = {
     'logistic_regression': {
         'model': LogisticRegression(max_iter=10000),
-        'param_grid': {            
+        'param_grid': {
             'penalty': ['l1', 'l2'],
             'solver': ['saga'],
             'C': np.logspace(-3, 2, 20),
@@ -1887,7 +1887,7 @@ models['logistic_regression'].best_params_
 # $$
 # \operatorname{logit}(p(\boldsymbol{X}))
 # = \log (\operatorname{odds}(p(\boldsymbol{X})))
-# = \log \left( \frac{p(\boldsymbol{X})}{1-p(\boldsymbol{X})} \right) 
+# = \log \left( \frac{p(\boldsymbol{X})}{1-p(\boldsymbol{X})} \right)
 # = \beta_0 + \beta_1 X_1 + \cdots + \beta_p X_p
 # $$
 #
