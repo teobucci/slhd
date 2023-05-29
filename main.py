@@ -1824,14 +1824,13 @@ for name, model in models_config.items():
 # Save for later
 
 # +
-with open(str(OUTPUT_FOLDER / 'models.pkl'), 'wb') as handle:
-    pickle.dump(models, handle, protocol=pickle.HIGHEST_PROTOCOL)
+# with open(str(OUTPUT_FOLDER / 'models.pkl'), 'wb') as handle:
+#     pickle.dump(models, handle, protocol=pickle.HIGHEST_PROTOCOL)
+# -
 
 with open(str(OUTPUT_FOLDER / 'models.pkl'), 'rb') as handle:
     models = pickle.load(handle)
 
-
-# -
 
 # ## 3. Results
 
