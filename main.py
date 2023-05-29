@@ -1897,28 +1897,6 @@ df_performance.to_latex(
 
 # ### Export for web app
 
-# +
-new_data = X.iloc[0].to_frame().T
-#y.iloc[0] False
-
-# Encode
-new_data_encoded = pd.DataFrame(encoder.transform(new_data[categorical_features]), columns=encoder.get_feature_names_out(categorical_features))
-new_data = pd.concat([new_data.drop(categorical_features, axis=1).reset_index(drop=True), new_data_encoded.reset_index(drop=True)], axis=1)
-
-# Impute
-new_data = pd.DataFrame(imputer.transform(new_data), columns = new_data.columns)
-
-new_data_unscaled = new_data.copy()
-
-# Scale
-new_data[numerical_features] = scaler.transform(new_data[numerical_features])
-
-# Load the SHAP explainer
-explainer = shap.TreeExplainer(pipeline_cv['random_forest'].best_estimator_.named_steps['classifier'])
-
-shap_values = explainer(new_data)
-# -
-
 # Having assessed the performance of the model, refit on the entire dataset and export for the webapp
 
 final_features
