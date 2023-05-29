@@ -1888,44 +1888,6 @@ plt.legend()
 plt.show()
 # -
 
-# #### DecisionTreeClassifier
-
-# Extract the classifier
-classifier = pipeline_cv['decision_tree_classifier'].best_estimator_.named_steps['classifier']
-
-from sklearn import tree
-text_representation = tree.export_text(classifier)
-with open('decistion_tree.log', 'w') as f:
-    f.write(text_representation)
-
-# The `plot_tree` returns annotations for the plot, to not show them in the notebook I assigned returned value to `_`
-
-fig = plt.figure(figsize=(25,20))
-_ = tree.plot_tree(classifier,
-                   feature_names=X_train.columns,
-                   class_names=['No','Yes'])
-
-# We can export as a figure but we must use `graphviz`
-
-export_graphviz(classifier,
-                out_file=str(OUTPUT_FOLDER / 'decision_tree.dot'),
-                feature_names = X_test.columns.tolist(),
-                class_names=['0','1'],
-                filled=True)
-
-# !dot -Tpng output/decision_tree.dot -o output/decision_tree.png -Gdpi=600
-Image(filename = str(OUTPUT_FOLDER / 'decision_tree.png'))
-
-importance, sorted_indices = np.sort(classifier.feature_importances_), np.argsort(classifier.feature_importances_)
-importance, sorted_indices = importance[-10:], sorted_indices[-10:]
-importance, sorted_indices = importance[::-1], sorted_indices[::-1]
-sns.barplot(x=importance, y=X_train.columns[sorted_indices], color='c')
-plt.title('Feature Importance in Decision Tree')
-plt.xlabel('Mean decrease in impurity')
-plt.ylabel('Features')
-plt.savefig(str(OUTPUT_FOLDER / 'feature_importance_DecisionTreeClassifier.pdf'), bbox_inches='tight')
-plt.show()
-
 # #### Random Forest
 
 classifier = pipeline_cv['random_forest'].best_estimator_.named_steps['classifier']
