@@ -1811,20 +1811,20 @@ models = {}
 # We do so on the `X_train_unscaled` version of the dataset, which we saw gives a better performance and doesn't require to unscale the coefficients for interpreting the ODDS ratio.
 
 # +
-# %%time
-
-for name, model in models_config.items():
-    grid_search = GridSearchCV(
-        models_config[name]['model'],
-        param_grid=models_config[name]['param_grid'],
-        cv=StratifiedKFold(n_splits=5, shuffle=True, random_state=SEED),
-        scoring="roc_auc",
-        refit="AUC",
-        return_train_score=True,
-        verbose=0
-    )
-    grid_search.fit(X_train_unscaled[final_features], y_train)
-    models[name] = grid_search
+# # %%time
+# 
+# for name, model in models_config.items():
+#     grid_search = GridSearchCV(
+#         models_config[name]['model'],
+#         param_grid=models_config[name]['param_grid'],
+#         cv=StratifiedKFold(n_splits=5, shuffle=True, random_state=SEED),
+#         scoring="roc_auc",
+#         refit="AUC",
+#         return_train_score=True,
+#         verbose=0
+#     )
+#     grid_search.fit(X_train_unscaled[final_features], y_train)
+#     models[name] = grid_search
 # -
 
 # Check the output results.
