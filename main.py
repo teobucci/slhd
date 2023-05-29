@@ -270,6 +270,8 @@ DATA_FOLDER = Path() / "hospitalized-patients-with-heart-failure-integrating-ele
 df = pd.read_csv((DATA_FOLDER / "dat.csv"), index_col=1)
 df = df.drop(columns=df.columns[0], axis=1)
 
+target_var = 're.admission.within.6.months'
+
 # ### Drugs integration
 
 df_drugs = pd.read_csv((DATA_FOLDER / "dat_md.csv"), index_col=1)
@@ -1340,7 +1342,6 @@ plt.show()
 
 # #### Barplot of categorical variables
 
-target_var = 're.admission.within.6.months'
 
 # Plot the categorical variables, except the target.
 
