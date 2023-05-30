@@ -55,14 +55,13 @@ def main():
     # Set the title
     st.title('Heart Failure: predicting hospital re-admission after 6 months')
 
-    # Set the subheader
-    st.subheader('A Streamlit app to predict readmission after 6 months')
-
     # Set the text
-    st.markdown('This app will predict whether a patient will be readmitted to the hospital within 6 months of their initial visit.')
+    st.markdown(
+        """
+        This app will predict whether a patient will be readmitted to the hospital within 6 months of their initial visit. Check the source code here: [GitHub](https://github.com/teobucci/slhd)
+        """
+        )
 
-    # Set the text
-    st.markdown('The data used to train the model was given during the course of Statistical Learning for Healthcare Data.')
 
     # Set the text
     st.markdown(
@@ -76,7 +75,7 @@ def main():
 
     # Display instructions
     st.write("### Instructions")
-    st.write("Fill in the fields in the sidebar with the patient's information and click on the 'Predict' button to get the prediction.")
+    st.write("Fill in the fields in the sidebar with the patient's information and click on the **Predict** button to get the prediction.")
 
     generate_sidebar(column_info)
 
@@ -84,6 +83,10 @@ def main():
     if st.sidebar.button("Predict"):
         # Create a single-row DataFrame based on the column information
         new_data = pd.DataFrame(input_data, index=['user_input'])
+
+        # Log transform
+        new_data['glutamic.pyruvic.transaminase_log'] = new_data['glutamic.pyruvic.transaminase'].apply(lambda x: np.log(x+0.001))
+        new_data = new_data.drop('glutamic.pyruvic.transaminase', axis=1)
 
         # Encode
         new_data_encoded = pd.DataFrame(encoder.transform(new_data[cols_categorical]), columns=encoder.get_feature_names_out(cols_categorical))
@@ -94,19 +97,19 @@ def main():
         y_pred = (y_score >= CLASSIFICATION_THRESHOLD).astype(bool)
 
         # Display the prediction
-        st.write("### Prediction")
-        st.write("The patient will be readmitted within 6 months: ", y_pred)
+        #st.write("### Prediction")
+        #st.write("The patient will be readmitted within 6 months: ", y_pred)
 
         # Display the prediction probabilities
         st.write("### Prediction probabilities")
 
         # Assign a string of risk based on the probability
         if y_score < 0.3:
-            output_string = "Low"
+            output_string = "🟢 Low"
         elif y_score < 0.7:
-            output_string = "Medium"
+            output_string = "🟡 Medium"
         else:
-            output_string = "High"
+            output_string = "🔴 High"
         
         st.write(f"Risk that the patient will be readmitted within 6 months: {output_string} ({np.round(y_score, 2)}/1)")
 
