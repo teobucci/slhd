@@ -61,8 +61,9 @@ conda install --file requirements.txt
 ```
 
 # Usage
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/teobucci/slhd/HEAD?labpath=main.ipynb)
 
-The file [`main.ipynb`](./main.ipynb) contains all the analysis. [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/teobucci/slhd/HEAD?labpath=main.ipynb)
+The file [`main.ipynb`](./main.ipynb) contains all the analysis.
 
 The final web app is [available here](https://teobucci-slhd-app-3iahgf.streamlit.app/).
 
