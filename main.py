@@ -623,7 +623,7 @@ df.shape
 # Create an utility to quickly get the names of numerical and categorical features.
 
 def get_num_cat(dataframe):
-    return dataframe.select_dtypes(include=['float64', 'int64']).columns, dataframe.select_dtypes(include=['category', 'bool']).columns
+    return dataframe.select_dtypes(include=['float64', 'int64']).columns, dataframe.select_dtypes(include=['object', 'category', 'bool']).columns
 
 
 # ### Removing low-variance variables
@@ -645,6 +645,7 @@ for variable, dominant_category in dominant_categories.items():
     if dominant_frequency > threshold:
         drop_cols.append(variable)
 
+print(f'Number of columns: {len(drop_cols)}')
 drop_cols
 # -
 
@@ -662,6 +663,7 @@ selector.fit(df[cols_numerical])
 const_col = [column for column in cols_numerical
           if column not in cols_numerical[selector.get_support()]]
 
+print(f'Number of columns: {len(const_col)}')
 const_col
 # -
 
@@ -741,7 +743,7 @@ plt.show()
 threshold = 0.60
 
 missing_cols = numerical_missing[numerical_missing>(threshold*100)].index.tolist()
-print(f'Columns with % of NaNs greater than {threshold:.0%}:')
+print(f'Number of columns with % of NaNs greater than {threshold:.0%}: {len(missing_cols)}')
 missing_cols
 
 df = df.drop(missing_cols, axis=1)
@@ -803,6 +805,7 @@ df_correlation_analysis
 
 # Extract columns with a correlation above a threshold
 drop_cols = df_correlation_analysis[df_correlation_analysis['most_correlated_column'].notnull()].index.tolist()
+print(f'Number of columns: {len(drop_cols)}')
 drop_cols
 
 df = df.drop(drop_cols, axis=1)
@@ -836,7 +839,7 @@ def plot_clustered_correlation_matrix(dataframe, name='clustered_correlation_mat
     plt.show()
 
 
-plot_clustered_correlation_matrix(df[cols_numerical_missing], name='clustered_correlation_matrix1')
+plot_clustered_correlation_matrix(df[cols_numerical_missing], name='clustered_correlation_matrix')
 
 # Since we can see a very correlated block of 4 variables in the upper-left corner, mostly related to oxygen level, let's just keep `oxygen.saturation`.
 
@@ -1286,6 +1289,7 @@ for idx, col_name in enumerate(col_inspect):
     plt.title(col_name)
 
 fig.tight_layout()
+plt.savefig(str(OUTPUT_FOLDER / 'plot_categorical.pdf'), bbox_inches='tight')
 plt.show()
 # -
 
@@ -1296,6 +1300,7 @@ sns.countplot(x=target_var, data=df, palette='magma')
 plt.xticks(fontsize=8, rotation=45) # Rotates X-Axis Ticks by 45-degrees
 plt.ylabel('')
 plt.title(target_var)
+plt.savefig(str(OUTPUT_FOLDER / 'plot_target.pdf'), bbox_inches='tight')
 plt.show()
 
 n_pos = df.loc[df['re.admission.within.6.months'] == 1].shape[0]
@@ -1337,39 +1342,6 @@ print(f"{hf_type_both/len(df.index):.2%} with type Both")
 diabetes_counts = df.diabetes.value_counts()
 diabetes_true = diabetes_counts[True]
 print(f"{diabetes_true/len(df.index):.2%} with diabetes")
-
-# As final step, plot some numerical features distribution separately with the respect to the target to see if we have some hints in features that separate well.
-
-# +
-col_inspect = [
-    'direct.bilirubin',
-    'prothrombin.activity',
-    'neutrophil.ratio',
-    'glomerular.filtration.rate',
-    'uric.acid',
-    'urea',
-    'creatinine.enzymatic.method',
-    'CCI.score',
-    'map',
-    'diastolic.blood.pressure'
-]
-
-# Adjust subplots and figsize
-fig, axes = plt.subplots(2, 5,figsize=[14,7])
-axes = axes.flatten()
-
-for idx, col_name in enumerate(col_inspect):
-    plt.sca(axes[idx]) # set the current Axes
-    sns.kdeplot(df[df[target_var] == 0][col_name], fill=True, label="Target 0")
-    sns.kdeplot(df[df[target_var] == 1][col_name], fill=True, label="Target 1")
-    plt.legend(loc='lower right')
-    plt.xticks(fontsize=8, rotation = 45) # Rotates X-Axis Ticks by 45-degrees
-    plt.ylabel('')
-
-fig.tight_layout()
-plt.savefig(str(OUTPUT_FOLDER / 'distribution_wrt_target.pdf'), bbox_inches='tight')
-plt.show()
-# -
 
 # ### Correlation analysis
 
@@ -1473,6 +1445,20 @@ df.shape
 
 # ### Modeling
 
+df = df.astype({
+    'DestinationDischarge': 'category',
+    'admission.ward': 'category',
+    'admission.way': 'category',
+    'occupation': 'category',
+    'discharge.department': 'category',
+    'type.of.heart.failure': 'category',
+    'NYHA.cardiac.function.classification': 'category',
+    'Killip.grade': 'category',
+    'type.II.respiratory.failure': 'category',
+    'oxygen.inhalation': 'category',
+    'gender': 'category'
+})
+
 cols_numerical, cols_categorical = get_num_cat(df)
 
 # Make sure the values of categorical don't contain strange characters, because after encoding this might break XGBoost, specifically the `ageCat` variable.
@@ -1574,7 +1560,7 @@ class_weights
 
 # ### Feature selection
 
-# Ideally we want to perform some kind of backward selection. However, since the initial number of features is 127, the process is very computationally intensive (after a quick pilot run, about 20 seconds per feature to be removed). So to speed up the process we develop the following method to discard some features, trying to retain as much information as possible. We employ a `LogisticRegression` and a `RandomForestClassifier`, which are both suited for feature selection. Trying to take advantage of both worlds, we perform the following steps:
+# Ideally we want to perform some kind of backward selection. However, since the initial number of features is 131, the process is very computationally intensive (after a quick pilot run, about 20 seconds per feature to be removed). So to speed up the process we develop the following method to discard some features, trying to retain as much information as possible. We employ a `LogisticRegression` and a `RandomForestClassifier`, which are both suited for feature selection. Trying to take advantage of both worlds, we perform the following steps:
 #
 # - Train a `LogisticRegression` with strong $L^1$ penalty to select a set $S_\text{lr}$ of features.
 # - Train a `RandomForestClassifier` and create an $S_\text{rf}$ set of features made by the top 30 features by impurity decrease importance.
@@ -1688,15 +1674,24 @@ len(selected_features)
 
 classifier = LogisticRegression(C=0.1, max_iter=10000, random_state=SEED, class_weight=class_weights)
 
-sfs_backward = SequentialFeatureSelector(
-    classifier,
-    k_features=1,
-    forward=False,
-    floating=False,
-    scoring='roc_auc',
-    verbose=2,
-    cv=StratifiedKFold(n_splits=5, shuffle=True, random_state=SEED),
-    n_jobs=-1).fit(X_train[selected_features], y_train)
+# +
+# sfs_backward = SequentialFeatureSelector(
+#     classifier,
+#     k_features=1,
+#     forward=False,
+#     floating=False,
+#     scoring='roc_auc',
+#     verbose=2,
+#     cv=StratifiedKFold(n_splits=5, shuffle=True, random_state=SEED),
+#     n_jobs=-1).fit(X_train[selected_features], y_train)
+
+# +
+# with open(str(OUTPUT_FOLDER / 'sfs_backward.pkl'), 'wb') as handle:
+#     pickle.dump(sfs_backward, handle, protocol=pickle.HIGHEST_PROTOCOL)
+# -
+
+with open(str(OUTPUT_FOLDER / 'sfs_backward.pkl'), 'rb') as handle:
+    sfs_backward = pickle.load(handle)
 
 # +
 plot_sfs(sfs_backward.get_metric_dict(), kind='std_dev',figsize=(10, 8))
@@ -1722,15 +1717,24 @@ removed_features
 
 # #### Forward selection
 
-sfs_forward = SequentialFeatureSelector(
-    classifier,
-    k_features=30,
-    forward=True,
-    floating=False,
-    scoring='roc_auc',
-    verbose=2,
-    cv=StratifiedKFold(n_splits=5, shuffle=True, random_state=SEED),
-    n_jobs=-1).fit(X_train[selected_features], y_train)
+# +
+# sfs_forward = SequentialFeatureSelector(
+#     classifier,
+#     k_features=30,
+#     forward=True,
+#     floating=False,
+#     scoring='roc_auc',
+#     verbose=2,
+#     cv=StratifiedKFold(n_splits=5, shuffle=True, random_state=SEED),
+#     n_jobs=-1).fit(X_train[selected_features], y_train)
+
+# +
+# with open(str(OUTPUT_FOLDER / 'sfs_forward.pkl'), 'wb') as handle:
+#     pickle.dump(sfs_forward, handle, protocol=pickle.HIGHEST_PROTOCOL)
+# -
+
+with open(str(OUTPUT_FOLDER / 'sfs_forward.pkl'), 'rb') as handle:
+    sfs_forward = pickle.load(handle)
 
 # Inspect the 10 features selected backward:
 
@@ -1746,6 +1750,39 @@ final_features = list(set(sfs_backward.subsets_[10]['feature_names']) | set(sfs_
 final_features
 
 # None of the drugs made it to the final selection phase, so overall we can say that they are not that important to predict the target, and it makes some sense, since the drugs may vary in dosage quantity and their effect may not be see in 6 months. However, among them, the one that proved to be most informative is the `IFHC` group.
+
+# As final step, plot some numerical features distribution separately with the respect to the target to see if we have some hints in features that separate well.
+
+# +
+col_inspect = [
+    'direct.bilirubin',
+    'prothrombin.activity',
+    'neutrophil.ratio',
+    'glomerular.filtration.rate',
+    'uric.acid',
+    'urea',
+    'creatinine.enzymatic.method',
+    'CCI.score',
+    'map',
+    'diastolic.blood.pressure'
+]
+
+# Adjust subplots and figsize
+fig, axes = plt.subplots(2, 5,figsize=[14,7])
+axes = axes.flatten()
+
+for idx, col_name in enumerate(col_inspect):
+    plt.sca(axes[idx]) # set the current Axes
+    sns.kdeplot(df[df[target_var] == 0][col_name], fill=True, label="Target 0")
+    sns.kdeplot(df[df[target_var] == 1][col_name], fill=True, label="Target 1")
+    plt.legend(loc='lower right')
+    plt.xticks(fontsize=8, rotation = 45) # Rotates X-Axis Ticks by 45-degrees
+    plt.ylabel('')
+
+fig.tight_layout()
+plt.savefig(str(OUTPUT_FOLDER / 'distribution_wrt_target.pdf'), bbox_inches='tight')
+plt.show()
+# -
 
 # ### Model selection
 
@@ -1899,6 +1936,8 @@ models['logistic_regression'].best_params_
 # \boldsymbol{\beta} = [ \beta_0 \, \beta_1 \, \beta_2 \cdots \beta_p] \in \mathbb{R}^{p+1}
 # $$
 
+final_features
+
 # +
 coeff = pd.DataFrame()
 coeff['feature'] = X_test_unscaled[final_features].columns
@@ -1929,7 +1968,7 @@ plt.savefig(str(OUTPUT_FOLDER / 'feature_importance_weightsLogisticRegression.pd
 plt.show()
 # -
 
-# ### Classification performance
+# ### Performance evaluation
 
 # Print the AUC
 
@@ -2099,19 +2138,6 @@ final_features_webapp = [
     'diabetes',
     'dischargeDay'
 ]
-
-df = df.astype({
-    'DestinationDischarge': 'category',
-    'admission.ward': 'category',
-    'admission.way': 'category',
-    'occupation': 'category',
-    'discharge.department': 'category',
-    'type.of.heart.failure': 'category',
-    'NYHA.cardiac.function.classification': 'category',
-    'Killip.grade': 'category',
-    'type.II.respiratory.failure': 'category',
-    'oxygen.inhalation': 'category'
-})
 
 # +
 cols_numerical, cols_categorical = get_num_cat(df)
