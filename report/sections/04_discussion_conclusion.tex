@@ -1,0 +1,42 @@
+%!TEX root = ../report.tex
+\section{Discussion and conclusion}
+
+The two better performing models are \gls{rf} and the \gls{lr} with comparable \gls{auc}, but we chose the latter one for the sake of interpretability. The GaussianNB shows promising performance, while we clearly discard the neural network approach by MLPClassifier.
+
+Looking at the coefficients of the \gls{lr} in \autoref{tab:lr-coeff} there is a strong effect caused by the presence of \texttt{diabetes}, which accounts for an odds ratio of 1.5 and the presence of a \texttt{NYHA} of level 4, which accounts for an odds ratio of 1.43 in favour of a re-admission. Having suffered from a \gls{hf} of both Left and Right ventricula also accounts for an odds ratio of 1.7, the strongest of all.
+
+Higher \texttt{D.dimer} and log-transformed \texttt{glutamic.pyruvic.transaminase} were associated with lower risk of re-admission. Strangely, if the patient belonged to the \texttt{farmer} class of \texttt{occupation}, this accounted for a protective odds ratio of about 0.5, but this is likely caused by some external confounder, such as diet and habits of Chinese farmers.
+
+One of the goals was to address drugs importance. None of the 4 categories of drugs identified in \autoref{sec:data-cleaning} made it to the final set of features, so we can't affirm that they are more relevant in predicting re-admission rather than biomarkers. It makes some sense, since the drugs may vary in dosage quantity and their effect may not be seen in 6 months
+However, among them, the one that proved to be most informative was the \gls{ifhc} that made it to the $S_{\text{reduced}}$ set of features.
+
+%\footcite{Chen2023Predicting}
+
+%admission ward, type of heart failure, NYHA cardiac function classification, diabetes, uric acid, mean hemoglobin volume, basophil count, platelet hematocrit, D dimer, discharge day
+
+%NYHA cardiac function classification, discharge day, uric urea, mean hemoglobin volume, diabetes, and basophil count were associated with higher re-admission risk; when their levels were higher, the patients’ scores were higher. D dimer and platelet hematocrit were associated with lower re-admission. Length of stay in the hospital was also positively associated with the risk of six-month re-admission in HF patients.
+
+\subsection{Comparison with previous models}
+
+%CIT 10.1002/ehf2.12419 developed on datasets with 47 variables and \num{10757} patients in a 30-day prediction obtained an \gls{auc} of 0.501 with RF and 0.628 with MLP. Similar results hold for other studies CIT 
+In previous studies\footcite{Sharma2022Predicting} about a 30-day prediction framework, an \gls{auc} of 0.654 was reached using XGBoost, but the authors benefited from having data about prior hospitalization which were ranked as the most important features. Our model was trained without such data and less samples and provided a slightly better performance. The other important variables are aligned with our findings, like sodium and day of discharge.
+
+\subsection{Limitations}
+
+Limitations of this analysis are the difficulty in comparing results with other papers, given that different dataset provide very different variables.
+
+This analysis is also quite biased given that the sample is not representative of the global population, as it comes from a city in China.
+
+Our model also lacked data coming from electrocardiography, which would be well suited for the task.
+
+\subsection{Further development}
+
+We focused on simplicity and interpretability, but for the sake of performance only, one could keep more variables selected by the step-wise methods.
+
+Furthermore, one could explore more advanced classifiers such as XGBoost or AdaBoost, and try an interpretation path through the Shapely value.
+
+It would be interesting to repeat the analysis for the 28-day re-admission and see how the results change; however, this task is not said to be easier given a more prominent imbalance in the data for this class.
+
+\subsection{Recommendations}
+
+Overall we recommend a better management of missing values and a closer look to units of measure. We also iterate about checking the three variables mentioned in \autoref{sec:outlier-analysis}.

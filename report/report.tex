@@ -1,0 +1,97 @@
+\documentclass[conference,compsoc,11pt]{IEEEtran}
+
+\usepackage{multirow}
+\usepackage{amsmath}
+\usepackage{dsfont}
+\usepackage{bm}
+\usepackage{booktabs}
+\usepackage{graphics}
+
+\usepackage{bookmark}% loads hyperref too
+    \hypersetup{
+        %pdftitle={Fundamentos de C\'alculo},
+        %pdfsubject={C\'alculo diferencial},
+        bookmarksnumbered=true,
+        bookmarksopen=true,
+        bookmarksopenlevel=1,
+        hidelinks,% remove border and color
+        pdfstartview=Fit, % Fits the page to the window.
+        pdfpagemode=UseOutlines, %Determines how the file is opening in Acrobat; the possibilities are UseNone, UseThumbs (show thumbnails), UseOutlines (show bookmarks), FullScreen, UseOC (PDF 1.5), and UseAttachments (PDF 1.6). If no mode if explicitly chosen, but the bookmarks option is set, UseOutlines is used.
+    }
+
+\usepackage{siunitx}
+    
+\usepackage[style=verbose]{biblatex}
+\addbibresource{./bibliography.bib}
+
+\usepackage[OT1]{fontenc}
+\usepackage{glossaries} % certain packages that must be loaded before glossaries, if they are required: hyperref, babel, polyglossia, inputenc and fontenc
+\setacronymstyle{long-short}
+\newacronym{hf}{HF}{Heart Failure}
+\newacronym{lr}{LR}{Logistic Regression}
+\newacronym{rf}{RF}{Random Forest}
+\newacronym{roc}{ROC}{Receiver Operating Characteristic}
+\newacronym{auc}{AUC}{Area Under Curve}
+\newacronym{ifhc}{IFHC}{Increase Force of Heart Contraction}
+
+% *** CITATION PACKAGES ***
+%
+%\ifCLASSOPTIONcompsoc
+%  \usepackage[nocompress]{cite}
+%\else
+%  \usepackage{cite}
+%\fi
+
+% *** GRAPHICS RELATED PACKAGES ***
+%
+\ifCLASSINFOpdf
+\else
+\fi
+
+%\hyphenation{op-tical net-works semi-conduc-tor}
+\usepackage{graphicx}
+\graphicspath{ {../output/} }
+
+
+\begin{document}
+
+\title{Heart Failure: predicting hospital re-admission after 6 months\\
+\large Statistical Learning for Healthcare Data (056867) -- A.Y. 2022/2023\\
+Prof. M. Ferrario and Prof. A. M. Paganoni}
+
+\author{
+    \IEEEauthorblockN{
+        Teo Bucci\IEEEauthorrefmark{1},
+        Giulia Montani\IEEEauthorrefmark{1}
+        and Alice Traversa\IEEEauthorrefmark{2}}
+    \IEEEauthorblockA{
+        \IEEEauthorrefmark{1}M.Sc. Mathematical Engineering
+        \IEEEauthorrefmark{2}M.Sc. Biomedical Engineering,
+        Politecnico di Milano\\
+        Email: \{teo.bucci, giulia.montani, alice.traversa\}@mail.polimi.it\\
+        Code available at: \href{https://github.com/teobucci/slhd}{\texttt{github.com/teobucci/slhd}}
+    }
+}
+
+\maketitle
+
+%\begin{abstract}
+%\end{abstract}
+\IEEEpeerreviewmaketitle
+
+\input{sections/01_introduction}
+
+\input{sections/02_materials_methods}
+
+\input{sections/03_results}
+
+\input{sections/04_discussion_conclusion}
+
+% Max 4-5 pages
+
+%\begin{thebibliography}{1}
+%\bibitem{IEEEhowto:perez}
+%L. Perez and J. Wang}, \emph{The Effectiveness %of Data Augmentation in Image Classification %using Deep Learning} - \relax Stanford %University, 2017.
+%\end{thebibliography}
+
+\end{document}

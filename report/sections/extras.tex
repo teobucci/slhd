@@ -1,0 +1,47 @@
+% From \autoref{tab:performance} we can see that the \gls{rf} has the best performance overall, and in a pure prediction framework is the model we propose.
+% 
+% \gls{rf} bring the useful benefit of providing feature importances. During training, feature thresholds are used to split the data into multiple groups, and a measure of mixing-ness is used to assess the gain in information.
+
+% Two such common measures are:
+% 
+% \begin{itemize}
+%     \item the Gini index, measured at a certain node
+%     \begin{align*}
+%     \operatorname{Gini} = 1-\sum_{i=1}^2 p(i)^2 = (p^{2}+(1-p)^{2})  
+%     \end{align*}
+%     where $p(i)$ is the proportion of elements of class $i$ in that node.
+%     \item the Entropy, measured at a certain node
+%     \begin{align*}
+%     \operatorname{Entropy} = -\sum_{i=1}^2 p(i)^2 \log_2 p(i)
+%     \end{align*}
+% \end{itemize}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+% \subsubsection{Explaining predictions}
+% 
+% One flaw of the \gls{rf} model is that it's not easy to interpret new predictions. That is why we turned to a novel technique to explain the drivers of a certain prediction.
+% 
+% The Shapley value\footcite{Shapley195317} is a method for assigning payouts to players depending on their contribution to the total payout. Its idea can be extended to prediction models in statistics in the following way: we say that the $j$-th feature contributes $\Phi_j$ to the prediction of a particular instance compared to the average prediction for the dataset.
+% 
+% To estimate $\Phi_j$ we used the Python library \texttt{SHAP}\footcite{NIPS2017_8a20a862}.
+% 
+% \autoref{fig:shap} shows an example: the baseline is the prediction the model would do with all missing values, and for each feature we have the contribution to the final score.
+% 
+% \begin{figure}[htpb]
+% \centering
+% \includegraphics[width=3.1in]{img/shap.pdf}
+% \caption{SHAP waterfall plot for the first entry of the dataset.}
+% \label{fig:shap}
+% \end{figure}

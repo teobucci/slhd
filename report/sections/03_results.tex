@@ -1,0 +1,88 @@
+%!TEX root = ../report.tex
+\section{Results}
+
+\subsection{Model comparison}
+
+\autoref{tab:performance} shows the performance of the different models on the test set after the hyperparameter tuning.
+Even though it's not the most performing model, we choose the \gls{lr} for its superior interpretability and simplicity, at the cost of just one percentage point in performance with respect to the \gls{rf}.
+
+\autoref{fig:roc-comparison} shows the \gls{roc} curves of all the models.
+
+\input{../output/performance_table}
+
+\begin{figure}[htpb]
+    \centering
+    \includegraphics[width=3.1in]{roc_comparison.pdf}
+    \caption{\gls{roc} curves comparison.}
+    \label{fig:roc-comparison}
+\end{figure}
+
+% \subsection{Cross-validation inspection}
+
+% \autoref{fig:crossvalidation_curve} shows the evolution of the CV for the final model.
+
+% \begin{figure}[htpb]
+%     \centering
+%     \includegraphics[width=3.1in]{crossvalidation_curve.pdf}
+%     \caption{Training evolution.}
+%     \label{fig:crossvalidation_curve}
+% \end{figure}
+
+\subsection{Model analysis}
+
+Given a vector of variables $\bm{X} = X_1, \dots, X_p$ the \gls{lr} model assumes the following relation between the variables and a prediction score $p(\bm{X})$, where $\beta_0, \beta_1, \dots, \beta_p$ are unknown real coefficients to be numerically estimated.
+\begin{align*}
+    \operatorname{logit}(p(\bm{X})) &= \log (\operatorname{odds}(p(\bm{X}))) = \log \left( \frac{p(\bm{X})}{1-p(\bm{X})} \right)\\
+    & = \beta_0 + \beta_1 X_1 + \cdots + \beta_p X_p
+\end{align*}
+% Where the odds are therefore
+% \begin{align*}
+%     \operatorname{odds}p(\bm{X}) = \frac{p(\bm{X})}{1-p(\bm{X})} = e^{\beta_0 + \beta_1 X_1 + \cdots + \beta_p X_p}
+% \end{align*}
+% One can easily find the inverse relation
+% \begin{align*}
+%     p(\bm{X}) &= \frac{\exp(\beta_0 + \beta_1 X_1 + \cdots + \beta_p X_p)}{1+\exp(\beta_0 + \beta_1 X_1 + \cdots + \beta_p X_p)}
+% \end{align*}
+We can give an interpretation to the coefficients: if $\bm{1}_i$ is a vector of all zeros, and with a $1$ in $i$-th position:
+\begin{align*}
+\operatorname{OR}_i &= \frac{\operatorname{odds}(\bm{X}+\bm{1}_i)}{\operatorname{odds}(\bm{X})} = \frac{\left(\frac{p(\bm{X}+\bm{1}_i)}{1 - p(\bm{X}+\bm{1}_i)}\right)}{\left(\frac{p(\bm{X})}{1 - p(\bm{X})}\right)}\\
+&= \frac{e^{\beta_0 + \beta_1 X_1 + \cdots + \beta_i (X_i + 1) + \cdots + \beta_p X_p}}{e^{\beta_0 + \beta_1 X_1 + \cdots + \beta_i X_i + \cdots + \beta_p X_p}} = e^{\beta_i}
+\end{align*}
+The odds multiply by $e^{\beta_i}$ for every 1-unit increase in $X_i$.
+% 
+% However, since we scaled the numerical data before fitting the model, the coefficient is intended for a 1-unit increase in the \emph{scaled} variable, but with some manipulation we can retrieve the effect for the original variable.
+% \begin{align*}
+% \operatorname{OR}_i = \frac{e^{\beta_i (\frac{(X_i+1)-\mu}{\sigma})}}{e^{\beta_i \frac{X_i-\mu}{\sigma}}} = e^{\frac{\beta_i}{\sigma}}
+% \end{align*}
+
+%In \autoref{fig:feature-importance-logistic-regression} we have the coefficients of the \gls{lr} for visualizing importance
+In \autoref{tab:lr-coeff} we report the $\beta_i$ coefficients for the final model, together with $e^{\beta_i}$.
+
+% \begin{figure}[htpb]
+%     \centering
+%     \includegraphics[width=3.1in]{feature_importance_weightsLogisticRegression.pdf}
+%     \caption{Coefficients of the \gls{lr}.}
+%     \label{fig:feature-importance-logistic-regression}
+% \end{figure}
+
+\input{../output/final_lr_coeff}
+
+\subsection{Performance evaluation}
+
+The confusion matrix produced by the \gls{lr} obtained with the default threshold of Scikit-learn (0.5) can be seen in \autoref{fig:confusion}, while \autoref{tab:classification-report} contains all the classification metrics.
+
+\begin{figure}[htpb]
+\centering
+\includegraphics[width=3.1in]{confusion_matrix_LR.pdf}
+\caption{Normalized confusion matrix.}
+\label{fig:confusion}
+\end{figure}
+
+\input{../output/classification_report}
+
+\subsection{Web App}
+
+Trying to address the needs of clinicians who need user friendly tools to put our statistical results into practice, we developed a web app using the Python library \texttt{streamlit}, to easily input values and get predictions from our final model.
+
+The web app is accessible through the following link:
+\url{https://teobucci-slhd-app-3iahgf.streamlit.app/}
