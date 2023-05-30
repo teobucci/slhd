@@ -61,6 +61,7 @@ conda install --file requirements.txt
 ```
 
 # Usage
+
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/teobucci/slhd/HEAD?labpath=main.ipynb)
 
 The file [`main.ipynb`](./main.ipynb) contains all the analysis.
@@ -69,9 +70,7 @@ The final web app is [available here](https://teobucci-slhd-app-3iahgf.streamlit
 
 # Final results
 
-The final report can be found here:
-
-- [`Stochastic_Block_Model_Prior_with_Ordering_Constraints_for_Gaussian_Graphical_Models.pdf`](./report/Stochastic_Block_Model_Prior_with_Ordering_Constraints_for_Gaussian_Graphical_Models.pdf)
+Check out the final [`report.pdf`](./report/report.pdf).
 
 # Authors
 
