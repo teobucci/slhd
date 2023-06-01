@@ -1,13 +1,20 @@
 %!TEX root = ../report.tex
 \section{Discussion and conclusion}
 
-The two better performing models are \gls{rf} and the \gls{lr} with comparable \gls{auc}, but we chose the latter one for the sake of interpretability. The GaussianNB shows promising performance, while we clearly discard the neural network approach by MLPClassifier.
+The two most performing models are the \gls{rf} and the \gls{lr} with comparable \gls{auc}, but we chose the latter one for the sake of interpretability. The GaussianNB shows promising performance, while we clearly discard the neural network approach by MLPClassifier.
 
-Looking at the coefficients of the \gls{lr} in \autoref{tab:lr-coeff} there is a strong effect caused by the presence of \texttt{diabetes}, which accounts for an odds ratio of 1.5 and the presence of a \texttt{NYHA} of level 4, which accounts for an odds ratio of 1.43 in favour of a re-admission. Having suffered from a \gls{hf} of both Left and Right ventricula also accounts for an odds ratio of 1.7, the strongest of all.
+Looking at the coefficients of the \gls{lr} in \autoref{tab:lr-coeff} there is a strong effect caused by the presence of diabetes, which accounts for an increase in the odds ratio by 1.5; in fact, it is known that diabetes can be responsible for the development of lesions in arteries that are the basis of major cardiovascular diseases.
+The presence of a level 4 NYHA accounts for an increase in the odds of 1.43 in favour of a re-admission, an it is indeed symptomatic of severe \gls{hf}, which causes the patient to be bedridden or have serious limitations in their daily activities.
+Having suffered from a \gls{hf} of both Left and Right ventricles also accounts for an increase in the odds of 1.7, the strongest of all.
 
-Higher \texttt{D.dimer} and log-transformed \texttt{glutamic.pyruvic.transaminase} were associated with lower risk of re-admission. Strangely, if the patient belonged to the \texttt{farmer} class of \texttt{occupation}, this accounted for a protective odds ratio of about 0.5, but this is likely caused by some external confounder, such as diet and habits of Chinese farmers.
+Higher D-dimer and log-transformed glutamic-pyruvic transaminase were associated with lower risk of re-admission.
+D-dimer, in healthy conditions, should not be present in the blood, except when a coagulation process is active. High D-dimer values may be a symptom of an increased level of tissue repair following \gls{hf}. However, according to the literature, a high value is not sufficient to confirm this hypothesis.
+Strangely, if the patient belonged to the farmer group of occupation, it accounted for a protective odds ratio of about 0.5, but this is likely caused by some external confounder, such as diet and habits of Chinese farmers.
 
-One of the goals was to address drugs importance. None of the 4 categories of drugs identified in \autoref{sec:data-cleaning} made it to the final set of features, so we can't affirm that they are more relevant in predicting re-admission rather than biomarkers. It makes some sense, since the drugs may vary in dosage quantity and their effect may not be seen in 6 months
+One of the goals was to address drugs importance. None of the 4 categories of drugs identified in \autoref{sec:data-cleaning} made it to the final set of features, so we can't affirm that they are more relevant in predicting re-admission rather than biomarkers.
+
+In fact, according to clinical practice,\footcite{Lonn2000Regular} most patients are treated with both diuretics -- to counteract fluid retention -- and vasodilators -- to prevent the formation of clots -- making these drugs ineffective in predicting readmission to 6 months.
+Inhibitors are also poor predictors, as is shown in the literature, because of how different the effect can be on different patients.
 However, among them, the one that proved to be most informative was the \gls{ifhc} that made it to the $S_{\text{reduced}}$ set of features.
 
 %\footcite{Chen2023Predicting}

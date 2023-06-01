@@ -30,18 +30,18 @@ In healthcare datasets, missing values are a big concern. The first step was to 
     \item among the categorical variables, 1 contained NaNs, which was \texttt{occupation} 1.34\% of missing, which we imputed with the most frequent.
 \end{itemize}
 
-\autoref{fig:missing-values} shows the percentages of missing values in the numerical variables.
+% \autoref{fig:missing-values} shows the percentages of missing values in the numerical variables.
 
-\begin{figure}[htpb]
-    \centering
-    \includegraphics[width=3.1in]{missing_values_percentages.pdf}
-    \caption{Percentage of missing values.}
-    \label{fig:missing-values}
-\end{figure}
+% \begin{figure}[htpb]
+%     \centering
+%     \includegraphics[width=3.1in]{missing_values_percentages.pdf}
+%     \caption{Percentage of missing values.}
+%     \label{fig:missing-values}
+% \end{figure}
 
 All 14 variables with over 60\% missing were discarded, while for those with 50\% to 60\% missing we computed whether there was any variable in the sub-50\% missing part of the dataset with more than 0.80 correlation. If that was the case, we discarded them: 9 variables were removed.
 
-Finally, among the remaining ones in the 50\% to 60\% missing range we computed the correlation matrix, clustered with hierarchical clustering, with the aim of seeing a clearer block structure, see \autoref{fig:clustered-correlation-matrix}. With this techniques we discarded two more variables.
+Finally, among the remaining ones in the 50\% to 60\% missing range we computed the correlation matrix, clustered with hierarchical clustering, with the aim of seeing a clearer block structure, see \autoref{fig:clustered-correlation-matrix}. With this techniques we discarded 2 more variables.
 
 \begin{figure}[htpb]
     \centering
@@ -49,8 +49,6 @@ Finally, among the remaining ones in the 50\% to 60\% missing range we computed 
     \caption{Correlation matrix of variables with 50\%-60\% missing values.}
     \label{fig:clustered-correlation-matrix}
 \end{figure}
-
-As last step we noticed that the \texttt{leukemia} variable presented the same value in all patients, so we discarded it.
 
 \subsubsection{Outlier analysis}\label{sec:outlier-analysis}
 
@@ -66,7 +64,7 @@ where $\bar{X}$ is the sample mean and $s$ is the sample standard deviation.
 
 A threshold of 3 or above was applied to detect them, depending on the specific variable.
 
-After this procedure, there were still three variables that showed possible outliers: \texttt{eosinophil.count}, \texttt{high.sensitivity.troponin} and \texttt{glutamic.pyruvic.transaminase}. However, these variables were marked by many models as important, so we decided to keep them anyways without changes. We suspect there may have been discordances in inserting the values, i.e. for some patients with some unit of measure, for other patients with another unit. We strongly recommend double checking these variables.
+After this procedure, there were still three variables that showed possible outliers: \texttt{eosinophil.count}, \texttt{high.sensitivity.troponin} and \texttt{glutamic.pyruvic.transaminase}. However, these variables were marked by many models as important, so we decided to keep them anyway without changes. We suspect there may have been discordances in inserting the values, i.e. for some patients with some unit of measure, for other patients with another unit. We strongly recommend double checking these variables.
 
 \subsubsection{Removing low variance variables}
 
@@ -90,7 +88,7 @@ Categorical variables were encoded using one-hot encoding.
 
 \subsubsection{Preprocessing numerical data}
 
-Numerical variables were imputed using a KNN imputer with 5 neighbors and then standardized for letting the training converge.
+Numerical variables were imputed using a KNN imputer with 5 neighbours and then standardized for letting the training converge.
 
 \subsubsection{Class imbalance}
 
@@ -102,27 +100,28 @@ The main metric used to compare models was the \gls{auc} under the \gls{roc} cur
 
 \subsection{Feature selection}
 
-Ideally we wanted to perform a backward selection. However, since the initial number of features is 131, the process is very computationally intensive (about 20 seconds per feature to be removed). To speed up the process we developed the following method:
+Ideally we wanted to perform a backward selection. However, since the initial number of features is 131, the process is very computationally intensive (about 20 seconds per feature to be removed) and greedy, so we would risk discarding important variables too soon. To speed up the process we developed the following method:
 
 \begin{itemize}
     \item Train a \gls{lr} with strong $L^1$ penalty to select a set $S_\text{LR}$ of features.
     \item Train a \gls{rf} and create an $S_\text{RF}$ set of features made by the top 30 features by impurity decrease importance.
-    \item Create a set $S_\text{reduced} = S_\text{LR} \cup S_\text{RF}$.
+    \item Create a set $S_\text{reduced} = S_\text{LR} \cup S_\text{RF}$. The reason for this is that the way \gls{lr} and \gls{rf} select variables is very different, in fact the intersection $S_\text{LR} \cap S_\text{RF}$ was very small. In this way we take advantage of both.
 \end{itemize}
 
 We could now perform a backward selection based on this $S_\text{reduced}$ set of features, and inspecting the evolution of the \gls{auc} we selected a suitable number of features $S^\star_1$. Then, since the results are often different, we performed a forward selection from 0 to 10 features on the same model to get the set $S^\star_2$, and finally we took the union of the two as our final features set $S^\star = S^\star_1 \cup S^\star_2$ of 13 variables.
 
 For visualization purposes, in \autoref{fig:distribution-target} we plotted the KDE of some features in $S^\star$ separately with the respect to the target.
 
-It's really clear the difference in distribution of the \texttt{creatinine.enzymatic.method}, we expect it to be very significant in the final models.
+It's really clear the difference in distribution of the \texttt{creatinine.enzymatic.method}, we expect it to be important in the final model.
 
 \begin{figure}
     \centering
     \includegraphics[width=3.1in]{distribution_wrt_target.pdf}
-    \caption{Distribution with the respect to the target.}
+    \caption{Distribution with the respect to the target of sodium and creatinine enzymatic method.}
     \label{fig:distribution-target}
 \end{figure}
 
 \subsubsection{Model selection}
 
-We trained 6 different classifiers on the unscaled selected features with cross-validation to tune the hyperparameters. The CV approach was a \texttt{StratifiedKFold} with 5 folds.
+We trained 6 different classifiers on the unscaled selected features with a 5-fold stratified cross-validation to tune the hyperparameters.
+Besides those, we made an attempt with an SVM, but the training failed to converge except on the scaled data (which makes interpretability harder) and didn't perform well, therefore we don't include it.

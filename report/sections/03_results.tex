@@ -4,7 +4,7 @@
 \subsection{Model comparison}
 
 \autoref{tab:performance} shows the performance of the different models on the test set after the hyperparameter tuning.
-Even though it's not the most performing model, we choose the \gls{lr} for its superior interpretability and simplicity, at the cost of just one percentage point in performance with respect to the \gls{rf}.
+Even if it's not the most performing model, we choose the \gls{lr} as final model for its interpretability and simplicity, at the cost of just one percentage point in performance with respect to the \gls{rf}.
 
 \autoref{fig:roc-comparison} shows the \gls{roc} curves of all the models.
 
@@ -30,7 +30,7 @@ Even though it's not the most performing model, we choose the \gls{lr} for its s
 
 \subsection{Model analysis}
 
-Given a vector of variables $\bm{X} = X_1, \dots, X_p$ the \gls{lr} model assumes the following relation between the variables and a prediction score $p(\bm{X})$, where $\beta_0, \beta_1, \dots, \beta_p$ are unknown real coefficients to be numerically estimated.
+Given a vector of variables $\bm{X} = X_1, \dots, X_p$ the \gls{lr} model assumes the following relationship between the variables and a prediction score $p(\bm{X})$, where $\beta_0, \beta_1, \dots, \beta_p$ are unknown real coefficients to be numerically estimated.
 \begin{align*}
     \operatorname{logit}(p(\bm{X})) &= \log (\operatorname{odds}(p(\bm{X}))) = \log \left( \frac{p(\bm{X})}{1-p(\bm{X})} \right)\\
     & = \beta_0 + \beta_1 X_1 + \cdots + \beta_p X_p
@@ -69,7 +69,7 @@ In \autoref{tab:lr-coeff} we report the $\beta_i$ coefficients for the final mod
 
 \subsection{Performance evaluation}
 
-The confusion matrix produced by the \gls{lr} obtained with the default threshold of Scikit-learn (0.5) can be seen in \autoref{fig:confusion}, while \autoref{tab:classification-report} contains all the classification metrics.
+The confusion matrix produced by the \gls{lr} obtained with the default 0.5 threshold of Scikit-learn can be seen in \autoref{fig:confusion}, while \autoref{tab:classification-report} contains all the classification metrics. The Accuracy is 0.6370.
 
 \begin{figure}[htpb]
 \centering
