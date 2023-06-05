@@ -1,13 +1,20 @@
 %----------------------------------------------------------------------------------------
 %	PACKAGES AND THEMES
 %----------------------------------------------------------------------------------------
-\documentclass[aspectratio=169,xcolor=dvipsnames]{beamer}
+\documentclass[aspectratio=169,xcolor=dvipsnames,handout]{beamer}
 \usetheme{SimplePlus}
+\usepackage{fontawesome}
+\usepackage{bm}
 
 \usepackage{hyperref}
 \usepackage{graphicx} % Allows including images
 \graphicspath{ {../output/} }
 \usepackage{booktabs} % Allows the use of \toprule, \midrule and \bottomrule in tables
+\usepackage{subcaption}
+
+\usepackage[style=ieee]{biblatex}
+\setbeamertemplate{bibliography item}{\insertbiblabel}
+\addbibresource{../report/bibliography.bib}
 
 \usepackage{pgf-pie} % Allows creating pie charts
 
@@ -33,9 +40,9 @@
 
 \author[]{Teo Bucci, Giulia Montani and Alice Traversa}
 
-\institute[NTU] % Your institution as it will appear on the bottom of every slide, may be shorthand to save space
+\institute[] % Your institution as it will appear on the bottom of every slide, may be shorthand to save space
 {
-    Politecnico di Milano% Your institution for the title page
+    \includegraphics[width=3cm]{logo_polimi}%Politecnico di Milano% Your institution for the title page
 }
 \date{June 6, 2023} % Date, can be changed to a custom date
 
@@ -51,10 +58,10 @@
     \titlepage
 \end{frame}
 
-\begin{frame}{Overview}
-    % Throughout your presentation, if you choose to use \section{} and \subsection{} commands, these will automatically be printed on this slide as an overview of your presentation
-    \tableofcontents
-\end{frame}
+% \begin{frame}{Overview}
+%     % Throughout your presentation, if you choose to use \section{} and \subsection{} commands, these will automatically be printed on this slide as an overview of your presentation
+%     \tableofcontents
+% \end{frame}
 
 
 % 10 minuti
@@ -98,10 +105,14 @@
         \item 64.3 million in 2017.
     \end{itemize}
     
-    Patients diagnosed with HF will be re-admitted once within a year and 20\% will be re-admitted twice or more.
+    \textbf{Half} of the patients diagnosed with HF will be re-admitted \textbf{once within a year} and 20\% will be re-admitted twice or more.
+    \pause
+    \begin{block}{Primary goal of the project}
+        Develop a \textbf{prediction} model with focus on \textbf{interpretability}.
+    \end{block}
 
-    \begin{block}{Goal of the project}
-        Develop a prediction model with focus on interpretability.
+    \begin{block}{Parallel objective}
+        Assess the \textbf{importance of drugs} assumption.
     \end{block}
 
 \end{frame}
@@ -114,35 +125,40 @@
 
 %------------------------------------------------
 
-\begin{frame}{Data Overview}
-    \begin{columns}[c]
-        \column{.6\textwidth}
+\begin{frame}{Data}
+    \begin{columns}[t]
+        \column{.7\textwidth}
         \begin{itemize}
-            \item 2008 patients admitted to a hospital
+            \item 2008 patients admitted to a hospital, of which were discarded:
+            \begin{itemize}
+                \item 57 dead patients
+                \item 5 patients with inconsistent information
+            \end{itemize}
+            
             \item 168 variables provided, including:
-            \begin{enumerate}
+            \begin{itemize}
                 \item Demographic data (height, sex, occupation, \ldots).
                 \item Medical history (diabetes, comorbidities, \ldots).
                 \item Clinical measurements (pressure, hemoglobyn, \ldots).
                 \item Drugs taken.
-            \end{enumerate}
+                \item Re-hospitalizations prior to 6 months (discarded).
+            \end{itemize}
         \end{itemize}
-        \begin{alertblock}{Inconsistencies}
-            57 dead patients and all information on re-hospitalizations prior to 6 months are removed
-        \end{alertblock}
+        \pause
 
-        \column{.4\textwidth}
         \begin{figure}
+        \centering
+
+        \begin{minipage}{.3\textwidth}
             \begin{tikzpicture}
                 \fill[Blue] (0,0) rectangle (2.5,0.5);
                 \fill[Gray!90] (2.5,0) rectangle (2,0.5);
                 \node at (1.25,0.25) [align=center] {\footnotesize \color{white}86.07\%};
                 \node at (1.25,0.7) {\tiny [59-69] age range};
             \end{tikzpicture}
-        \end{figure}
-
-        \begin{figure}
-            \resizebox{0.6\textwidth}{!}{
+        \end{minipage}%
+        \begin{minipage}{.3\textwidth}
+            \resizebox{\textwidth}{!}{
             \begin{tikzpicture}
                 \pie[
                     color={CarnationPink, Blue},
@@ -157,10 +173,9 @@
             \end{tikzpicture}
             }
             %\caption{Distribution of Sex.}
-        \end{figure}
-
-        \begin{figure}
-            \resizebox{0.6\textwidth}{!}{
+        \end{minipage}%
+        \begin{minipage}{.3\textwidth}
+            \resizebox{\textwidth}{!}{
             \begin{tikzpicture}[font=\scriptsize]
                 \pie[
                     sum=auto,
@@ -175,32 +190,59 @@
             \end{tikzpicture}
             }
             %\caption{Distribution of Heart Failure types.}
+        \end{minipage}
         \end{figure}
+
+        \column{.3\textwidth}
+        \pause
+        \begin{figure}[htpb]
+            \centering
+            \includegraphics[width=\textwidth]{plot_target.pdf}
+            \captionsetup{font=tiny} % Set the caption font size to small
+            \caption{Target distribution.}
+        \end{figure}
+        
 
     \end{columns}
 \end{frame}
+
+% \begin{frame}{Pipeline}
+% \begin{enumerate}
+%     \item Data cleaning
+%     \item Handle missing values
+%     \item Dimensionality reduction
+%     \begin{itemize}
+%         \item Outlier analysis
+%         \item Low variance variables
+%         \item Correlation analysis
+%     \end{itemize}
+%     \item Feature selection
+%     \item Model selection
+%     \item Evaluation
+% \end{enumerate}
+% \end{frame}
 
 %------------------------------------------------
 
 \begin{frame}{Handling missing values}
 
-    \begin{columns}[t]
+    \begin{columns}[c]
         \column{.45\textwidth}
+        \textbf{Categorical features}
+        
+        \begin{itemize}
+            \item \texttt{Occupation} 1.34\%
+            \item Imputation: most frequent
+        \end{itemize}
+
+        \vspace{0.5cm}
+        \pause
         \textbf{Numerical features}
 
         \begin{itemize}
             \item 14 features with over 60\% missing are discarded
             \item 9 features between 50\% and 60\% are discarded after further analysis
             \item Imputation: KNN with 5 neighbors 
-        \end{itemize}
-
-        \vspace{0.5cm}
-        
-        \textbf{Categorical features}
-        
-        \begin{itemize}
-            \item \texttt{Occupation} 1.34\%
-            \item Imputation: most frequent
         \end{itemize}
 
         \column{.55\textwidth} 
@@ -217,14 +259,14 @@
 
 %------------------------------------------------
 
-\begin{frame}{Pruning variables}
+\begin{frame}{Dimensionality reduction}
 \begin{itemize}
     \item \textbf{Outlier analysis}
     \begin{enumerate}
         \item Identification:
             \begin{itemize}
-                \item Sample Z-scores
-                \item Physiological possibility of outlier values checked using literature.
+                \item Sample Z-scores.
+                \item Physiological limits checked using literature.
             \end{itemize}
         \item Replace with \text{NaN} for imputation.
     \end{enumerate}
@@ -251,7 +293,7 @@ minimum height=1cm,
 text width=4cm,
 text centered, 
 draw=black, 
-fill=CornflowerBlue]
+fill=CornflowerBlue!70]
 
 \tikzstyle{method2} = [rectangle, rounded corners, 
 minimum width=4cm, 
@@ -259,7 +301,7 @@ minimum height=1cm,
 text width=4cm,
 text centered, 
 draw=black, 
-fill=Peach]
+fill=Peach!70]
 
 \tikzstyle{union1} = [rectangle, 
 minimum width=1cm, 
@@ -279,14 +321,14 @@ draw=Red]
     \centering
         \begin{tikzpicture}[node distance=2cm]
             \node (RF) [method1] {Random Forest
-            \tiny{Set of 30 features : $S_{RF}$}};
-            \node (LR) [method1, below of=RF] {Logistic Regression
-            \tiny{Strong $L^{1}$ penalty : $S_{LR}$}};
+            \tiny{Set of 30 features: $S_{RF}$}};
+            \node (LR) [method1, below of=RF] {Logistic Regression\\
+            \tiny{Strong $L^{1}$ penalty: $S_{LR}$}};
             \node (U1) [union1, right of = LR, yshift= 1cm, xshift = 1cm] {\tiny{$S_{RF}\cup S_{LR}$}};
             \node (BS) [method2, right of = U1, yshift = 1cm, xshift = 1cm] {Backward
-            \\ \tiny{Based on AUC evolution : $S^{\star}_{1}$}};
+            \\ \tiny{Elbow threshold: $S^{\star}_{1}$}};
             \node (FS) [method2, right of = U1, yshift = -1cm, xshift = 1cm] {Forward 
-            \\ \tiny{Select 10 : $S^{\star}_{2}$ }};
+            \\ \tiny{Elbow threshold: $S^{\star}_{2}$ }};
             \node (U2) [union2, right of = FS, yshift= 1cm, xshift = 2cm] {\tiny{$S = S^{\star}_{1}\cup S^{\star}_{2}$}};
     
             \draw [->] (RF) -- (U1);
@@ -310,28 +352,33 @@ draw=Red]
 
     \begin{block}{Strength of the method}
     \begin{itemize}
-        \item Faster than backward selection
-        \item Take advantages of both RF and LR
-        \item Final set of 13 selected variables.
+        \item Faster than performing backward selection immediately.
+        \item Takes away a lot of the \emph{greedyness}.
+        \item Takes advantages of both RF and LR (intersection is very small).
     \end{itemize}
     \end{block}
+    Final set of 13 selected variables.
 
     
 \end{frame}
 
 %------------------------------------------------
-\begin{frame}{Modelling choice}
+\begin{frame}{Model selection}
+
+Train 6 different classifiers.
 
 \textbf{Metric}
 \begin{itemize}
-    \item Area Under Curve (AUC) under the Receiver Operating Characteristic (ROC) curve.
+    \item Compare performance between models using \textbf{AUC}.
 \end{itemize}
 \textbf{Training setting} 
 \begin{itemize}
-    \item Stratified 5-fold cross-validation (CV).
+    \item Preprocessing: one-hot encoding and scaling.
+    \item \textbf{Tune hyperparameters} with GridSearchCV.
+    \item Evaluate performance using \textbf{Stratified 5-fold} cross-validation (CV).
     \item 85:15 stratified train-test ratio.
-    \item Seed always set for reproducibility.
-    \item Class imbalance: \alert{39.6\%} of observations belonging to class 1, addressed by passing class weights based on sample proportions.
+    \item Always set seed for reproducibility.
+    \item Class imbalance addressed by passing class weights based on sample proportions.
 \end{itemize}
     
 \end{frame}
@@ -381,7 +428,15 @@ draw=Red]
 \end{frame}
 
 
+\begin{frame}{Results (cont.)}
 
+\begin{figure}[htpb]
+            \centering
+            \includegraphics[width=0.7\textwidth]{confusion_matrices_annot}
+            \caption{Confusion matrices comparison (threshold: 0.5).}
+        \end{figure}
+
+\end{frame}
 
 %------------------------------------------------
 
@@ -389,49 +444,56 @@ draw=Red]
 
     \begin{columns}[c]
 
-        \column{.5\textwidth} 
-        \begin{figure}[htpb]
-            \centering
-            \includegraphics[width=1.6in]{confusion_matrix_LR.pdf}
-            \caption{Normalized confusion matrix of the LR.}
-            \label{fig:confusion}
-        \end{figure}
-
+        \column{.3\textwidth}
+        Logistic Regression (threshold: 0.5):
+        \begin{itemize}
+            \item Accuracy: \textbf{0.6370}
+            \item Precision: 0.5368
+            \item Recall: 0.6293
+            \item F1-score: 0.5794
+        \end{itemize}
+% \vspace*{0.5cm}
+% \textbf{Interpretation} of the model:
+% \begin{align*}
+% \operatorname{OR}_i &= \frac{\operatorname{odds}(\bm{X}+\bm{1}_i)}{\operatorname{odds}(\bm{X})} = \cdots = e^{\beta_i}
+% \end{align*}
+% The odds multiply by $e^{\beta_i}$ for every 1-unit increase in $X_i$.
+    
         \column{.5\textwidth}
         \centering
-        \begin{table}
-            \resizebox{0.8\textwidth}{!}{
-            \begin{tabular}{lrrrr}
-            \toprule
-            {} &  precision &  recall &  f1-score &  support \\
-            \midrule
-            False        &     0.7244 &  0.6420 &    0.6807 &      176 \\
-            True         &     \textbf{0.5368} &  \textbf{0.6293} &    \textbf{0.5794} &      116 \\
-            macro avg    &     0.6306 &  0.6357 &    0.6300 &      292 \\
-            weighted avg &     0.6498 &  0.6370 &    0.6405 &      292 \\
-            \bottomrule
-            \end{tabular}
-            }
-            \caption{Classification report.}
-        \end{table}
-        Accuracy: 0.6370
+        \begin{figure}[htpb]
+            \centering
+            \includegraphics[width=\textwidth]{precision_recall_curve_LR}
+            \caption{LR Precision-Recall curve.}
+        \end{figure}
+        % \begin{figure}[htpb]
+        %     \centering
+        %     \includegraphics[width=\textwidth]{confusion_matrix_LR.pdf}
+        %     \caption{Normalized confusion matrix.}
+        % \end{figure}
+        % \begin{table}
+        %     \resizebox{0.8\textwidth}{!}{
+        %     \begin{tabular}{lrrrr}
+        %     \toprule
+        %     Accuracy &  Precision &  Recall &  F1-score \\
+        %     \midrule
+        %     0.6370         &     0.5368 &  0.6293 &    0.5794\\
+        %     \bottomrule
+        %     \end{tabular}
+        %     }
+        %     \caption{Classification report.}
+        % \end{table}
         
     \end{columns}
-
-    \vspace{0.5cm}
-    Deployment in a \textbf{web app} for easy usage:\\
-    \url{https://teobucci-slhd-app-3iahgf.streamlit.app/}
-
 \end{frame}
 
+%------------------------------------------------
+\section{Conclusions}
+%------------------------------------------------
+
 
 %------------------------------------------------
-\section{Discussion and conclusion}
-%------------------------------------------------
-
-
-%------------------------------------------------
-\begin{frame}{Discussion and conclusion}
+\begin{frame}{Conclusions}
 
     \begin{columns}[c]
 
@@ -474,24 +536,50 @@ draw=Red]
             \end{tabular}
         }
             \caption{LR coefficients.}
-            \label{tab:my_label}
         \end{table}
 
-
-
         \column{.5\textwidth}
-        \centering
+        We found very meaningful connections with clinical facts:
         \begin{itemize}
-            \item Farmers are less likely to be re-admitted (probably external confounder).
-            \item D-dimer seems associated with tissue repair.
-            \item Higher discharge day (i.e. longer stay in hospital) is associated with higher risk.
-            \item Level 4 NYHA, presence of diabetes and having suffered a Whole HF highly associated with re-admission.
+            \item \textbf{Farmers} are less likely to be re-admitted (probably external confounder).
+            \item \textbf{D-dimer} seems associated with tissue repair.
+            \item Higher \textbf{discharge day} (i.e. longer stay in hospital) is associated with higher risk.
+            \item \textbf{Level 4 NYHA}, presence of \textbf{diabetes} and having suffered a \textbf{Whole HF} highly associated with re-admission.
         \end{itemize}
     \end{columns}
     
 \end{frame}
 
+\begin{frame}{Conclusions (cont.)}
 
+    Regarding \textbf{drugs}, they were divided into 4 categories:
+    \begin{itemize}
+        \item Diuretics
+        \item Vasodilatory
+        \item Inhibitor
+        \item Increase force of heart contraction (IFHC)
+    \end{itemize}
+    \pause
+    Takeaways:
+    \begin{itemize}
+        \item None made it to the final set of features, so their importance is \textbf{not fundamental}.
+        \pause
+        \item \textbf{Most patients} are treated with both \textbf{diuretics and vasodilators}, therefore they don't help separation.
+        \pause
+        \item \textbf{IFHC} made it to the second step of feature selection, so it's the most informative category.
+    \end{itemize}
+
+\end{frame}
+
+
+\begin{frame}{Deployment}
+    \textbf{Web app} for easy usage by clinicians:
+    {\scriptsize\url{https://teobucci-slhd-app-3iahgf.streamlit.app/}}
+    \begin{figure}[htpb]
+        \centering
+        \includegraphics[width=0.7\textwidth]{webapp}
+    \end{figure}
+\end{frame}
 
 
 
@@ -510,7 +598,7 @@ draw=Red]
   \item missing data imputation
   \item lacking data coming from electrocardiography.
 \end{itemize}
-
+\pause
 \textbf{Recommendations}
 \begin{itemize}
   \item better \textbf{management of missing values}
@@ -531,24 +619,27 @@ draw=Red]
 %     This statement requires citation \cite{p1}.
 % \end{frame}
 
-% %------------------------------------------------
-
-% \begin{frame}{References}
-%     % Beamer does not support BibTeX so references must be inserted manually as below
-%     \footnotesize{
-%         \begin{thebibliography}{99}
-%             \bibitem[Smith, 2012]{p1} John Smith (2012)
-%             \newblock Title of the publication
-%             \newblock \emph{Journal Name} 12(3), 45 -- 678.
-%         \end{thebibliography}
-%     }
-% \end{frame}
-
 %------------------------------------------------
 
 \begin{frame}
     \Huge{\centerline{\textbf{Thank You!}}}
+    \begin{center}
+    {\normalsize
+    \faGithub\ \url{https://github.com/teobucci/slhd}}    
+    \end{center}
 \end{frame}
+
+% %------------------------------------------------
+
+\begin{frame}{References}
+    \nocite{Bragazzi2021Burden}
+    \nocite{Groenewegen2020Epidemiology}
+    \nocite{Zhang2021Electronic}
+    \nocite{Lonn2000Regular}
+    \printbibliography
+\end{frame}
+
+
 
 %----------------------------------------------------------------------------------------
 
