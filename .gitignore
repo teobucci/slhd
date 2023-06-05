@@ -163,3 +163,7 @@ hospitalized-patients-with-heart-failure-integrating-electronic-healthcare-recor
 *.gz
 *.xdv
 main.py
+*.nav
+*.out
+*.snm
+*.toc
