@@ -1,7 +1,7 @@
 %----------------------------------------------------------------------------------------
 %	PACKAGES AND THEMES
 %----------------------------------------------------------------------------------------
-\documentclass[aspectratio=169,xcolor=dvipsnames,handout]{beamer}
+\documentclass[aspectratio=169,xcolor=dvipsnames]{beamer}
 \usetheme{SimplePlus}
 \usepackage{fontawesome}
 \usepackage{bm}
@@ -270,14 +270,14 @@
             \end{itemize}
         \item Replace with \text{NaN} for imputation.
     \end{enumerate}
-
+    \pause
     \item \textbf{Low variance variable:}
     Remove \alert{16} variables with more than \alert{95\% dominance}
-
+    \pause
     \item \textbf{Correlation analysis:}
     Remove \alert{12} variables with more than \alert{85\% correlation}
 \end{itemize}
-
+\pause
 Three variables with possible outliers retained due to their importance:
 \begin{itemize}
     \item \texttt{eosinophil.count}
@@ -349,7 +349,7 @@ draw=Red]
     %    \item Take advantages of both RF and LR
     %    \item Final set of 13 selected variables.
     %\end{itemize}
-
+    \pause
     \begin{block}{Strength of the method}
     \begin{itemize}
         \item Faster than performing backward selection immediately.
@@ -428,30 +428,29 @@ Train 6 different classifiers.
 \end{frame}
 
 
-\begin{frame}{Results (cont.)}
+% \begin{frame}{Results (cont.)}
 
-\begin{figure}[htpb]
-            \centering
-            \includegraphics[width=0.7\textwidth]{confusion_matrices_annot}
-            \caption{Confusion matrices comparison (threshold: 0.5).}
-        \end{figure}
+% \begin{figure}[htpb]
+%             \centering
+%             \includegraphics[width=0.7\textwidth]{confusion_matrices_annot}
+%             \caption{Confusion matrices comparison (threshold: 0.5).}
+%         \end{figure}
 
-\end{frame}
+% \end{frame}
 
 %------------------------------------------------
 
-\begin{frame}{Performance evaluation}
+\begin{frame}{Results (cont.)}
 
     \begin{columns}[c]
 
-        \column{.3\textwidth}
-        Logistic Regression (threshold: 0.5):
-        \begin{itemize}
-            \item Accuracy: \textbf{0.6370}
-            \item Precision: 0.5368
-            \item Recall: 0.6293
-            \item F1-score: 0.5794
-        \end{itemize}
+        \column{.6\textwidth}
+        \begin{figure}[htpb]
+            \centering
+            \includegraphics[width=\textwidth]{confusion_matrices_annot_green}
+            \caption{Confusion matrices comparison (threshold: 0.5).}
+        \end{figure}
+        
 % \vspace*{0.5cm}
 % \textbf{Interpretation} of the model:
 % \begin{align*}
@@ -459,18 +458,31 @@ Train 6 different classifiers.
 % \end{align*}
 % The odds multiply by $e^{\beta_i}$ for every 1-unit increase in $X_i$.
     
-        \column{.5\textwidth}
-        \centering
-        \begin{figure}[htpb]
-            \centering
-            \includegraphics[width=\textwidth]{precision_recall_curve_LR}
-            \caption{LR Precision-Recall curve.}
-        \end{figure}
+        \column{.4\textwidth}
+        Logistic Regression performance:
+        \begin{itemize}
+            \item Accuracy: \textbf{0.6370}
+            \item Precision: 0.5368
+            \item Recall: 0.6293
+            \item F1-score: 0.5794
+        \end{itemize}
+        
+
+
+        % \begin{figure}[htpb]
+        %     \centering
+        %     \includegraphics[width=\textwidth]{precision_recall_curve_LR}
+        %     \caption{LR Precision-Recall curve.}
+        % \end{figure}
+
+
         % \begin{figure}[htpb]
         %     \centering
         %     \includegraphics[width=\textwidth]{confusion_matrix_LR.pdf}
         %     \caption{Normalized confusion matrix.}
         % \end{figure}
+
+
         % \begin{table}
         %     \resizebox{0.8\textwidth}{!}{
         %     \begin{tabular}{lrrrr}
