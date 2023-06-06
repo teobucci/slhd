@@ -11,7 +11,7 @@ Project for the _Statistical Learning for Healthcare Data_ course held at Polite
   - [Cloning the Repository](#cloning-the-repository)
   - [Installing the Libraries](#installing-the-libraries)
 - [Usage](#usage)
-- [Final results](#final-results)
+- [Results](#results)
 - [Authors](#authors)
 
 
@@ -68,9 +68,9 @@ The file [`main.ipynb`](./main.ipynb) contains all the analysis.
 
 The final web app is [available here](https://teobucci-slhd-app-3iahgf.streamlit.app/).
 
-# Final results
+# Results
 
-Check out the final [`report.pdf`](./report/report.pdf).
+Check out the final [`report.pdf`](./report/report.pdf) and the final [`presentation.pdf`](./presentation/presentation.pdf).
 
 # Authors
 
