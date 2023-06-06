@@ -461,6 +461,7 @@ Train 6 different classifiers.
         \column{.4\textwidth}
         Logistic Regression performance:
         \begin{itemize}
+            \item AUC: \textbf{0.6702}
             \item Accuracy: \textbf{0.6370}
             \item Precision: 0.5368
             \item Recall: 0.6293
@@ -525,10 +526,10 @@ Train 6 different classifiers.
             \toprule
                                             feature &    beta &  exp\_beta \\
             \midrule
-\rowcolor{green!50}
+\rowcolor{cyan!50}
                                   occupation\_farmer & -0.6973 &    0.4979 \\
                   glutamic.pyruvic.transaminase\_log & -0.1305 &    0.8776 \\
-\rowcolor{green!50}
+\rowcolor{cyan!50}
                                             D.dimer & -0.0911 &    0.9129 \\
                  partial.pressure.of.carbon.dioxide & -0.0261 &    0.9743 \\
                                              sodium & -0.0049 &    0.9951 \\
@@ -551,7 +552,7 @@ Train 6 different classifiers.
         \end{table}
 
         \column{.5\textwidth}
-        We found very meaningful connections with clinical facts:
+        We found meaningful \textbf{interpretations} with clinical facts:
         \begin{itemize}
             \item \textbf{Farmers} are less likely to be re-admitted (probably external confounder).
             \item \textbf{D-dimer} seems associated with tissue repair.
