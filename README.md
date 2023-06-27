@@ -3,6 +3,8 @@
 
 Project for the _Statistical Learning for Healthcare Data_ course held at Politecnico di Milano in the academic year 2022-2023 by Professor Manuela Ferrario and Professor Anna Maria Paganoni.
 
+> 🏆 This was the highest ranking project in its year batch.
+
 <!-- omit from toc -->
 # Table of contents
 
