@@ -167,3 +167,4 @@ main.py
 *.out
 *.snm
 *.toc
+.python-version
